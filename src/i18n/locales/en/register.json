@@ -1,0 +1,73 @@
+{
+  "presets": {
+    "today": "Today",
+    "7d": "Last 7 days",
+    "month": "This month",
+    "all": "All time",
+    "custom": "Custom"
+  },
+  "filters": {
+    "search": "Search voucher no., party, item",
+    "dateRange": "Date range",
+    "fromDate": "From date",
+    "toDate": "To date",
+    "to": "to",
+    "party": "Party",
+    "allParties": "All parties",
+    "cashCounter": "Cash / Counter",
+    "type": "Type",
+    "allTypes": "All types",
+    "invoice": "Invoice",
+    "taxInvoice": "Tax Invoice",
+    "challan": "Challan",
+    "status": "Status",
+    "allStatus": "All status"
+  },
+  "status": {
+    "active": "Active",
+    "cancelled": "Cancelled"
+  },
+  "columns": {
+    "voucher": "Voucher",
+    "date": "Date",
+    "party": "Party",
+    "type": "Type",
+    "items": "Items",
+    "payment": "Payment",
+    "total": "Total (₹)",
+    "status": "Status"
+  },
+  "actions": {
+    "newIssue": "New issue",
+    "viewPrint": "View / Print",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "cancelVoucher": "Cancel voucher"
+  },
+  "summary": {
+    "count_one": "{{count}} voucher",
+    "count_other": "{{count}} vouchers",
+    "cancelled": "({{count}} cancelled)",
+    "activeTotal": "Active total"
+  },
+  "tableLabel": "Stock issue register",
+  "empty": {
+    "none": "No vouchers yet. Press N to create the first one.",
+    "filtered": "No vouchers match these filters."
+  },
+  "hint": "↑ ↓ to move · Enter view & print · E edit · Ctrl D duplicate · C cancel · / search · N new",
+  "cancel": {
+    "title": "Cancel this voucher?",
+    "summary": "for {{party}}, ₹{{amount}}.",
+    "body_one": "The {{count}} item go back into stock. The record stays in the register, marked Cancelled.",
+    "body_other": "The {{count}} items go back into stock. The record stays in the register, marked Cancelled.",
+    "bodyCredit_one": "The {{count}} item go back into stock and the amount is removed from the party balance. The record stays in the register, marked Cancelled.",
+    "bodyCredit_other": "The {{count}} items go back into stock and the amount is removed from the party balance. The record stays in the register, marked Cancelled."
+  },
+  "toast": {
+    "cancelledNoEdit": "Cancelled vouchers cannot be edited. Duplicate it instead.",
+    "alreadyCancelled": "{{number}} is already cancelled.",
+    "cancelled": "Cancelled {{number}}. Stock restored.",
+    "cancelFailed": "Could not cancel"
+  }
+}

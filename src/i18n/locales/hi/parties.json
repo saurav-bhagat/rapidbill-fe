@@ -1,0 +1,51 @@
+{
+  "type": { "customer": "ग्राहक", "department": "विभाग", "branch": "ब्रांच" },
+  "typePlural": { "customer": "ग्राहक", "department": "विभाग", "branch": "ब्रांच" },
+  "columns": { "name": "नाम", "type": "प्रकार", "gstin": "GSTIN", "state": "राज्य", "phone": "फ़ोन", "balance": "बैलेंस" },
+  "unregistered": "रजिस्टर्ड नहीं",
+  "dr": "Dr",
+  "cr": "Cr",
+  "search": "नाम, GSTIN, फ़ोन, राज्य खोजें",
+  "allTypes": "सभी प्रकार",
+  "typeLabel": "प्रकार",
+  "newParty": "नई पार्टी",
+  "count_one": "{{count}} पार्टी",
+  "count_other": "{{count}} पार्टी",
+  "countOf": "{{total}} में से {{shown}} पार्टी",
+  "tableLabel": "पार्टी",
+  "empty": { "none": "अभी कोई पार्टी नहीं है। जोड़ने के लिए N दबाएँ।", "filtered": "कोई पार्टी नहीं मिली।" },
+  "hint": "↑ ↓ चलने के लिए · Enter या E बदलें · Delete हटाएँ · / खोजें · N नई पार्टी",
+  "delete": {
+    "title": "पार्टी हटाएँ?",
+    "confirm": "हटाएँ",
+    "body": "यह <b>{{name}}</b> को हटा देगा। जिस पार्टी पर वाउचर बना है, उसे हटाया नहीं जा सकता।"
+  },
+  "toast": {
+    "inUse_one": "{{name}} पर {{count}} वाउचर है, इसलिए हटाया नहीं जा सकता। इसे बदलें।",
+    "inUse_other": "{{name}} पर {{count}} वाउचर हैं, इसलिए हटाया नहीं जा सकता। इसे बदलें।",
+    "deleted": "{{name}} हटाई गई",
+    "updated": "{{name}} बदली गई",
+    "added": "{{name}} जोड़ी गई",
+    "saveFailed": "पार्टी सेव नहीं हो सकी"
+  },
+  "form": {
+    "editTitle": "पार्टी बदलें",
+    "newTitle": "नई पार्टी",
+    "cancel": "रहने दें",
+    "saveChanges": "बदलाव सेव करें",
+    "addParty": "पार्टी जोड़ें",
+    "name": "नाम *",
+    "type": "प्रकार",
+    "phone": "फ़ोन",
+    "gstin": "GSTIN",
+    "gstinHint": "रजिस्टर्ड न हो तो खाली छोड़ें",
+    "state": "राज्य *",
+    "balance": "बकाया बैलेंस (₹)",
+    "balanceHint": "प्लस = पार्टी से आपको लेना है",
+    "address": "पता",
+    "nameRequired": "नाम ज़रूरी है",
+    "nameExists": "इस नाम की पार्टी पहले से है",
+    "stateMismatch": "राज्य GSTIN से मेल खाना चाहिए",
+    "invalidAmount": "सही रकम डालें"
+  }
+}

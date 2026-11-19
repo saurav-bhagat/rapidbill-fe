@@ -1,0 +1,51 @@
+{
+  "welcome": "Welcome",
+  "newIssue": "New Stock Issue",
+  "noBillsYesterday": "no bills yesterday",
+  "vsYesterday": "{{pct}}% vs yesterday",
+  "tile": {
+    "todayBilling": "Today's billing",
+    "billsToday": "Bills today",
+    "unitsIssued": "{{qty}} units issued",
+    "thisMonth": "This month",
+    "monthSub_one": "{{count}} bill · {{qty}} units",
+    "monthSub_other": "{{count}} bills · {{qty}} units",
+    "taxMonth": "Tax collected this month",
+    "stockValue": "Stock value (at cost)",
+    "itemCount_one": "{{count}} items",
+    "itemCount_other": "{{count}} items"
+  },
+  "trend": {
+    "title": "Billing trend",
+    "range": "Trend range",
+    "days7": "7 days",
+    "days30": "30 days",
+    "empty": "No bills in this period yet.",
+    "aria": "Billing per day for the last {{days}} days",
+    "bar_one": "{{date}} · {{amount}} · {{count}} bill",
+    "bar_other": "{{date}} · {{amount}} · {{count}} bills"
+  },
+  "attention": {
+    "title": "Needs attention",
+    "allGood": "All good",
+    "negative": "Negative stock (update count)",
+    "out": "Out of stock",
+    "low": "Running low",
+    "section": "{{label}} · {{count}}",
+    "nothing": "Nothing here. Good.",
+    "more": "+ {{count}} more",
+    "allAbove": "Every item is above its low-stock level.",
+    "stockValueCost": "Stock value at cost:"
+  },
+  "top": {
+    "title": "Top items this month",
+    "byValue": "by value",
+    "empty": "No items issued this month."
+  },
+  "recent": {
+    "title": "Recent bills",
+    "viewRegister": "View register",
+    "empty": "No bills yet. Press N to make the first one.",
+    "walkIn": "Walk-in"
+  }
+}

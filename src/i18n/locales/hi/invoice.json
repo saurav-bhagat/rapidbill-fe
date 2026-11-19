@@ -1,0 +1,70 @@
+{
+  "title": {
+    "challan": "स्टॉक इश्यू चालान",
+    "taxInvoice": "टैक्स इनवॉइस",
+    "invoice": "इनवॉइस"
+  },
+  "cancelled": "रद्द",
+  "noTax": "कोई टैक्स नहीं लगाया गया",
+  "internalTransfer": "आंतरिक स्टॉक ट्रांसफ़र",
+  "phone": "फ़ोन: {{phone}}",
+  "gstin": "GSTIN",
+  "state": "राज्य",
+  "billedTo": "बिल प्राप्तकर्ता",
+  "issuedTo": "जिसे जारी किया",
+  "voucherNo": "वाउचर नं.",
+  "date": "दिनांक",
+  "placeOfSupply": "आपूर्ति का स्थान",
+  "payment": "भुगतान",
+  "reference": "संदर्भ",
+  "payments": {
+    "PAID_CASH": "भुगतान (नकद)",
+    "PAID_UPI": "भुगतान (UPI)",
+    "PAID_BANK": "भुगतान (बैंक)",
+    "CREDIT": "उधार",
+    "INTERNAL": "आंतरिक ट्रांसफ़र"
+  },
+  "cols": {
+    "sno": "क्र.",
+    "description": "विवरण",
+    "hsn": "HSN",
+    "batchExp": "बैच / एक्सपायरी",
+    "qty": "मात्रा",
+    "unit": "इकाई",
+    "mrp": "MRP",
+    "rate": "रेट",
+    "disc": "छूट%",
+    "taxable": "करयोग्य",
+    "amount": "रकम",
+    "gst": "GST%",
+    "total": "कुल"
+  },
+  "hsn": {
+    "taxable": "करयोग्य",
+    "igst": "IGST",
+    "cgst": "CGST",
+    "sgst": "SGST",
+    "rate": "दर",
+    "amt": "रकम",
+    "totalTax": "कुल टैक्स"
+  },
+  "amountInWords": "रकम शब्दों में: ",
+  "totals": {
+    "gross": "कुल योग",
+    "discount": "छूट",
+    "taxableValue": "करयोग्य मूल्य",
+    "netAmount": "शुद्ध रकम",
+    "igst": "IGST",
+    "cgst": "CGST",
+    "sgst": "SGST",
+    "roundOff": "राउंड ऑफ़",
+    "grandTotal": "कुल देय"
+  },
+  "bankUpi": "बैंक / UPI विवरण",
+  "account": "खाता",
+  "ifsc": "IFSC",
+  "upi": "UPI",
+  "terms": "एक बार जारी किया गया माल बिना पूर्व अनुमति के वापस नहीं लिया जाएगा। भूल-चूक लेनी-देनी।",
+  "for": "के लिए",
+  "signatory": "अधिकृत हस्ताक्षरकर्ता"
+}

@@ -1,0 +1,57 @@
+{
+  "language": { "label": "भाषा" },
+  "voucherType": { "challan": "चालान", "taxInvoice": "टैक्स इनवॉइस", "invoice": "इनवॉइस" },
+  "payment": {
+    "PAID_CASH": "भुगतान · नकद",
+    "PAID_UPI": "भुगतान · UPI",
+    "PAID_BANK": "भुगतान · बैंक",
+    "CREDIT": "उधार / खाता",
+    "INTERNAL": "आंतरिक स्टॉक ट्रांसफ़र"
+  },
+  "actions": {
+    "save": "सेव करें",
+    "cancel": "रद्द करें",
+    "close": "बंद करें",
+    "delete": "हटाएँ",
+    "edit": "बदलें",
+    "confirm": "पक्का करें",
+    "back": "पीछे",
+    "next": "आगे",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "search": "खोजें",
+    "add": "जोड़ें",
+    "print": "प्रिंट",
+    "import": "इम्पोर्ट",
+    "export": "एक्सपोर्ट",
+    "reload": "फिर से खोलें"
+  },
+  "status": {
+    "loading": "लोड हो रहा है…",
+    "nothingHere": "अभी यहाँ कुछ नहीं है।"
+  },
+  "nav": {
+    "home": { "label": "होम", "title": "होम" },
+    "newIssue": { "label": "नया स्टॉक इश्यू", "title": "नया स्टॉक इश्यू" },
+    "register": { "label": "इश्यू रजिस्टर", "title": "स्टॉक इश्यू रजिस्टर" },
+    "inventory": { "label": "इन्वेंटरी", "title": "इन्वेंटरी मास्टर" },
+    "parties": { "label": "पार्टियाँ", "title": "पार्टियाँ और विभाग" },
+    "settings": { "label": "सेटिंग्स", "title": "बिज़नेस और प्रिंट सेटिंग्स" }
+  },
+  "layout": {
+    "skipToContent": "सीधे सामग्री पर जाएँ",
+    "primaryNav": "मुख्य मेनू",
+    "expandSidebar": "साइडबार खोलें",
+    "collapseSidebar": "साइडबार छोटा करें",
+    "collapse": "छोटा करें",
+    "keyboardShortcuts": "कीबोर्ड शॉर्टकट"
+  },
+  "ui": {
+    "typeToConfirm": "पक्का करने के लिए <w>{{word}}</w> टाइप करें"
+  },
+  "errorBoundary": {
+    "title": "कुछ गड़बड़ हो गई",
+    "body": "स्क्रीन में अचानक कोई त्रुटि आ गई। आपका सेव किया डेटा सुरक्षित है। दोबारा खोलने से अक्सर ठीक हो जाता है।",
+    "reload": "RapidBill दोबारा खोलें"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "welcome": "स्वागत है",
+  "newIssue": "नया स्टॉक इश्यू",
+  "noBillsYesterday": "कल कोई बिल नहीं था",
+  "vsYesterday": "कल से {{pct}}%",
+  "tile": {
+    "todayBilling": "आज की बिलिंग",
+    "billsToday": "आज के बिल",
+    "unitsIssued": "{{qty}} यूनिट जारी",
+    "thisMonth": "इस महीने",
+    "monthSub_one": "{{count}} बिल · {{qty}} यूनिट",
+    "monthSub_other": "{{count}} बिल · {{qty}} यूनिट",
+    "taxMonth": "इस महीने वसूला टैक्स",
+    "stockValue": "स्टॉक की कीमत (लागत पर)",
+    "itemCount_one": "{{count}} आइटम",
+    "itemCount_other": "{{count}} आइटम"
+  },
+  "trend": {
+    "title": "बिलिंग का रुझान",
+    "range": "रुझान की अवधि",
+    "days7": "7 दिन",
+    "days30": "30 दिन",
+    "empty": "इस अवधि में अभी कोई बिल नहीं।",
+    "aria": "पिछले {{days}} दिनों की रोज़ की बिलिंग",
+    "bar_one": "{{date}} · {{amount}} · {{count}} बिल",
+    "bar_other": "{{date}} · {{amount}} · {{count}} बिल"
+  },
+  "attention": {
+    "title": "ध्यान दें",
+    "allGood": "सब ठीक",
+    "negative": "माइनस स्टॉक (गिनती सुधारें)",
+    "out": "स्टॉक ख़त्म",
+    "low": "कम स्टॉक",
+    "section": "{{label}} · {{count}}",
+    "nothing": "यहाँ कुछ नहीं। बढ़िया।",
+    "more": "+ {{count}} और",
+    "allAbove": "हर आइटम कम-स्टॉक सीमा से ऊपर है।",
+    "stockValueCost": "लागत पर स्टॉक की कीमत:"
+  },
+  "top": {
+    "title": "इस महीने के टॉप आइटम",
+    "byValue": "रकम के हिसाब से",
+    "empty": "इस महीने कोई आइटम जारी नहीं हुआ।"
+  },
+  "recent": {
+    "title": "हाल के बिल",
+    "viewRegister": "रजिस्टर देखें",
+    "empty": "अभी कोई बिल नहीं। पहला बिल बनाने के लिए N दबाएँ।",
+    "walkIn": "वॉक-इन"
+  }
+}

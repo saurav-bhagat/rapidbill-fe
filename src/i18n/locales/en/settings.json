@@ -1,0 +1,96 @@
+{
+  "loading": "Loading…",
+  "tax": {
+    "title": "Tax",
+    "hint": "Choose once. You can change it later; old bills keep the tax they were saved with.",
+    "businessType": "Business type",
+    "gst": "GST business",
+    "nonGst": "Non-GST business",
+    "gstOn": "GST is added to every Tax Invoice (CGST+SGST or IGST). Challans can be with or without tax.",
+    "gstOff": "No tax is charged anywhere. Bills show item amount only, with no GST columns, HSN summary or tax split. The GSTIN is optional."
+  },
+  "language": {
+    "title": "Language",
+    "hint": "Screen language is saved in this browser. Print language is used on invoices and challans.",
+    "screen": "Screen language",
+    "print": "Invoice print language",
+    "printHint": "A Hindi screen can still print English bills, or the other way round."
+  },
+  "business": {
+    "title": "Business",
+    "hint": "Printed at the top of every invoice and challan.",
+    "companyName": "Company name *",
+    "address": "Address",
+    "phone": "Phone",
+    "gstinRequired": "GSTIN *",
+    "gstinOptional": "GSTIN (optional)",
+    "state": "State *",
+    "stateHintGst": "Decides CGST+SGST vs IGST on every bill",
+    "stateHintNonGst": "Shown on invoices"
+  },
+  "billing": {
+    "title": "Billing",
+    "hint": "Defaults for new vouchers.",
+    "prefix": "Voucher prefix",
+    "prefixHint": "Numbers look like SI-2026-0001",
+    "defaultType": "Default voucher type",
+    "taxInvoice": "Tax Invoice",
+    "invoice": "Invoice",
+    "challan": "Challan",
+    "overIssue": "When quantity is more than stock",
+    "overIssueLabel": "Over-issue policy",
+    "block": "Block the sale",
+    "warn": "Warn, but allow (stock goes negative)",
+    "roundOff": "Round off the grand total to the nearest rupee by default"
+  },
+  "printing": {
+    "title": "Printing",
+    "paper": "Default paper size",
+    "paperLabel": "Paper size",
+    "a4": "A4",
+    "a5": "A5 half page"
+  },
+  "bank": {
+    "title": "Bank & UPI",
+    "hint": "Shown at the bottom of invoices.",
+    "bankName": "Bank and branch",
+    "account": "Account number",
+    "ifsc": "IFSC",
+    "upi": "UPI ID",
+    "upiHint": "Printed as text, no QR code yet"
+  },
+  "data": {
+    "title": "Data",
+    "hint": "Everything is stored in this browser only.",
+    "reset": "Reset demo data",
+    "clear": "Clear all data",
+    "explain": "Reset replaces everything, including these settings, with the sample company, 18 items, 5 parties and 3 vouchers. Clear removes items, parties, vouchers and stock history but keeps the settings above.",
+    "resetTitle": "Reset demo data?",
+    "resetConfirm": "Reset everything",
+    "resetBody": "All items, parties, vouchers, stock history and settings are replaced with the demo set. This cannot be undone.",
+    "clearTitle": "Clear all data?",
+    "clearConfirm": "Delete all data",
+    "clearBody": "Every item, party, voucher and stock movement is permanently deleted. Your company settings are kept. This cannot be undone."
+  },
+  "errors": {
+    "companyName": "Company name is needed on every invoice",
+    "gstinNeeded": "Enter your GSTIN, or switch to Non-GST business above",
+    "stateMismatch": "GSTIN says state {{code}}",
+    "prefix": "1 to 6 letters or digits",
+    "upi": "Looks like name@bank",
+    "ifsc": "IFSC is 11 characters, like CNRB0000412"
+  },
+  "footer": {
+    "unsaved": "You have unsaved changes",
+    "saved": "All changes saved",
+    "discard": "Discard",
+    "save": "Save settings",
+    "toastSaved": "Settings saved",
+    "saveFailed": "Could not save settings"
+  },
+  "leave": {
+    "title": "Leave without saving?",
+    "confirm": "Leave and discard",
+    "body": "Your settings changes have not been saved."
+  }
+}

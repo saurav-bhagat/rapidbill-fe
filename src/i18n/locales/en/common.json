@@ -1,0 +1,57 @@
+{
+  "language": { "label": "Language" },
+  "voucherType": { "challan": "Challan", "taxInvoice": "Tax Invoice", "invoice": "Invoice" },
+  "payment": {
+    "PAID_CASH": "Paid · Cash",
+    "PAID_UPI": "Paid · UPI",
+    "PAID_BANK": "Paid · Bank",
+    "CREDIT": "Credit / Ledger",
+    "INTERNAL": "Internal stock transfer"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "search": "Search",
+    "add": "Add",
+    "print": "Print",
+    "import": "Import",
+    "export": "Export",
+    "reload": "Reload"
+  },
+  "status": {
+    "loading": "Loading…",
+    "nothingHere": "Nothing here yet."
+  },
+  "nav": {
+    "home": { "label": "Home", "title": "Home" },
+    "newIssue": { "label": "New Stock Issue", "title": "New Stock Issue" },
+    "register": { "label": "Issue Register", "title": "Stock Issue Register" },
+    "inventory": { "label": "Inventory", "title": "Inventory Master" },
+    "parties": { "label": "Parties", "title": "Parties & Departments" },
+    "settings": { "label": "Settings", "title": "Business & Print Settings" }
+  },
+  "layout": {
+    "skipToContent": "Skip to content",
+    "primaryNav": "Primary",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "collapse": "Collapse",
+    "keyboardShortcuts": "Keyboard shortcuts"
+  },
+  "ui": {
+    "typeToConfirm": "Type <w>{{word}}</w> to confirm"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "body": "The screen hit an unexpected error. Your saved data is safe. Reloading usually fixes it.",
+    "reload": "Reload RapidBill"
+  }
+}

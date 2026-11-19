@@ -1,0 +1,51 @@
+{
+  "type": { "customer": "Customer", "department": "Department", "branch": "Branch" },
+  "typePlural": { "customer": "Customers", "department": "Departments", "branch": "Branches" },
+  "columns": { "name": "Name", "type": "Type", "gstin": "GSTIN", "state": "State", "phone": "Phone", "balance": "Balance" },
+  "unregistered": "Unregistered",
+  "dr": "Dr",
+  "cr": "Cr",
+  "search": "Search name, GSTIN, phone, state",
+  "allTypes": "All types",
+  "typeLabel": "Type",
+  "newParty": "New party",
+  "count_one": "{{count}} parties",
+  "count_other": "{{count}} parties",
+  "countOf": "{{shown}} of {{total}} parties",
+  "tableLabel": "Parties",
+  "empty": { "none": "No parties yet. Press N to add one.", "filtered": "No parties match." },
+  "hint": "↑ ↓ to move · Enter or E to edit · Delete to remove · / search · N new party",
+  "delete": {
+    "title": "Delete party?",
+    "confirm": "Delete",
+    "body": "This removes <b>{{name}}</b>. Parties used on a voucher can't be deleted."
+  },
+  "toast": {
+    "inUse_one": "{{name}} has {{count}} voucher and can't be deleted. Edit it instead.",
+    "inUse_other": "{{name}} has {{count}} vouchers and can't be deleted. Edit it instead.",
+    "deleted": "Deleted {{name}}",
+    "updated": "Updated {{name}}",
+    "added": "Added {{name}}",
+    "saveFailed": "Could not save party"
+  },
+  "form": {
+    "editTitle": "Edit party",
+    "newTitle": "New party",
+    "cancel": "Cancel",
+    "saveChanges": "Save changes",
+    "addParty": "Add party",
+    "name": "Name *",
+    "type": "Type",
+    "phone": "Phone",
+    "gstin": "GSTIN",
+    "gstinHint": "Leave empty for unregistered parties",
+    "state": "State *",
+    "balance": "Outstanding balance (₹)",
+    "balanceHint": "Positive = party owes you",
+    "address": "Address",
+    "nameRequired": "Name is required",
+    "nameExists": "A party with this name already exists",
+    "stateMismatch": "State must match the GSTIN",
+    "invalidAmount": "Enter a valid amount"
+  }
+}

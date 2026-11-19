@@ -1,0 +1,155 @@
+{
+  "loading": "Loading…",
+  "notFound": "That voucher no longer exists.",
+  "banner": {
+    "editing": "Editing <num>{{number}}</num>. Saving replaces it and re-applies stock; the old quantities are put back first.",
+    "copied": "New voucher copied from <num>{{number}}</num>. Quantities are checked against stock as it is now."
+  },
+  "header": {
+    "voucherNo": "Voucher no.",
+    "voucherNumber": "Voucher number",
+    "issueDate": "Issue date",
+    "voucherType": "Voucher type",
+    "taxInvoiceGst": "Tax Invoice (GST)",
+    "invoice": "Invoice",
+    "challan": "Stock Issue Challan",
+    "tax": "Tax",
+    "yes": "Yes",
+    "no": "No",
+    "issueAt": "Issue at",
+    "rateBasis": "Rate basis",
+    "saleRate": "Sale rate",
+    "costRate": "Cost rate",
+    "partyRecipient": "Party / recipient",
+    "unregistered": "Unregistered",
+    "noTax": "No tax",
+    "interState": "Inter-state · IGST",
+    "intraState": "Intra-state · CGST+SGST",
+    "balance": "Balance",
+    "dr": "Dr",
+    "cr": "Cr",
+    "counterSale": "Counter sale, no party details",
+    "remarksLabel": "Reference / vehicle / remarks",
+    "remarksPlaceholder": "e.g. PO #442, Dispatched to Branch B",
+    "remarks": "Remarks"
+  },
+  "party": {
+    "label": "Party",
+    "cash": "Cash / Counter Issue",
+    "addNamed": "Add “{{name}}” as a new party",
+    "add": "Add a new party"
+  },
+  "grid": {
+    "col": {
+      "item": "Item",
+      "batch": "Batch",
+      "exp": "Exp",
+      "qty": "Qty",
+      "unit": "Unit",
+      "mrp": "MRP",
+      "rate": "Rate",
+      "disc": "Disc %",
+      "gst": "GST %",
+      "amount": "Amount"
+    },
+    "aria": {
+      "item": "Item, row {{n}}",
+      "qty": "qty row {{n}}",
+      "rate": "rate row {{n}}",
+      "disc": "disc row {{n}}",
+      "remove": "Remove row {{n}}"
+    },
+    "enterQty": "Enter a quantity greater than 0",
+    "exceedsStock": "Exceeds stock: {{available}} available",
+    "enterRate": "Enter a valid rate",
+    "discRange": "Discount must be between 0 and 100",
+    "shortNone": "No stock recorded{{across}}.",
+    "shortOnly": "Only {{n}} in stock{{across}}.",
+    "across": " ({{n}} requested for this item across rows)",
+    "reduceQty": "Reduce the quantity to continue.",
+    "canSave": "You can still save; stock shows negative until you update it."
+  },
+  "picker": {
+    "placeholder": "Type name, code or batch. Enter lists all",
+    "item": "Item",
+    "code": "Code",
+    "batch": "Batch",
+    "stock": "Stock",
+    "mrp": "MRP",
+    "rate": "Rate",
+    "gst": "GST",
+    "noMatch": "No item matches. Press <kbd>F2</kbd> to add it.",
+    "noMatchQuery": "No item matches “<q>{{query}}</q>”. Press <kbd>F2</kbd> to add it.",
+    "hint": "↑ ↓ move · Enter select · F2 add new item · Esc close"
+  },
+  "context": {
+    "available": "Available",
+    "mrp": "MRP",
+    "lastPurchase": "Last purchase",
+    "hsn": "HSN",
+    "batch": "Batch",
+    "margin": "Margin",
+    "empty": "Pick an item to see stock, MRP, last purchase rate and margin here."
+  },
+  "totals": {
+    "itemsQty": "Items / Qty",
+    "gross": "Gross",
+    "lineDiscount": "Line discount",
+    "billDiscount": "Bill discount",
+    "taxable": "Taxable",
+    "tax": "Tax",
+    "notApplied": "Not applied",
+    "roundOffStat": "Round-off",
+    "grandTotal": "Grand total (₹)",
+    "payment": "Payment",
+    "billDiscountPlaceholder": "5% or 250",
+    "roundOff": "Round off",
+    "discard": "Discard",
+    "saveNew": "Save & New",
+    "savePrint": "Save & Print"
+  },
+  "flash": {
+    "rowQty": "Row {{n}}: enter a quantity",
+    "addItem": "Add at least one item before saving",
+    "badRate": "A line has an invalid rate",
+    "badDisc": "Discount must be between 0 and 100",
+    "badBillDisc": "Bill discount: use 5% or an amount like 250",
+    "creditParty": "Choose a party for a credit sale",
+    "skipped_one": "{{count}} item no longer in inventory were skipped",
+    "skipped_other": "{{count}} items no longer in inventory were skipped",
+    "exceedCurrent_one": "{{count}} line exceed current stock",
+    "exceedCurrent_other": "{{count}} lines exceed current stock",
+    "exceedAvailable_one": "{{count}} line exceed available stock",
+    "exceedAvailable_other": "{{count}} lines exceed available stock"
+  },
+  "toast": {
+    "updated": "Updated {{number}} · ₹{{amount}}",
+    "saved": "Saved {{number}} · ₹{{amount}}",
+    "itemAdded": "{{name}} added to inventory",
+    "saveFailed": "Could not save voucher"
+  },
+  "print": {
+    "titleChallan": "Stock issue challan {{number}}",
+    "titleTaxInvoice": "Tax invoice {{number}}",
+    "titleInvoice": "Invoice {{number}}",
+    "paperSize": "Paper size",
+    "a5": "A5 half page",
+    "close": "Close",
+    "printPdf": "Print / Save as PDF",
+    "saved": "Saved {{number}}. Stock and ledger are updated.",
+    "backToRegister": "Back to register",
+    "newVoucher": "New voucher"
+  },
+  "discard": {
+    "titleEdit": "Discard your changes?",
+    "titleNew": "Discard this voucher?",
+    "confirm": "Discard",
+    "bodyEdit": "Your edits are dropped and the voucher stays as it was saved.",
+    "bodyNew": "Everything entered on this voucher will be cleared. Nothing has been saved yet."
+  },
+  "leave": {
+    "title": "Leave without saving?",
+    "confirm": "Leave and discard",
+    "body": "This voucher has unsaved items. Leaving now will discard them."
+  }
+}

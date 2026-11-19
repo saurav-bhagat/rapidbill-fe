@@ -1,0 +1,70 @@
+{
+  "title": {
+    "challan": "STOCK ISSUE CHALLAN",
+    "taxInvoice": "TAX INVOICE",
+    "invoice": "INVOICE"
+  },
+  "cancelled": "Cancelled",
+  "noTax": "No tax charged",
+  "internalTransfer": "Internal stock transfer",
+  "phone": "Ph: {{phone}}",
+  "gstin": "GSTIN",
+  "state": "State",
+  "billedTo": "Billed to",
+  "issuedTo": "Issued to",
+  "voucherNo": "Voucher no.",
+  "date": "Date",
+  "placeOfSupply": "Place of supply",
+  "payment": "Payment",
+  "reference": "Reference",
+  "payments": {
+    "PAID_CASH": "Paid (Cash)",
+    "PAID_UPI": "Paid (UPI)",
+    "PAID_BANK": "Paid (Bank)",
+    "CREDIT": "Credit",
+    "INTERNAL": "Internal transfer"
+  },
+  "cols": {
+    "sno": "#",
+    "description": "Description",
+    "hsn": "HSN",
+    "batchExp": "Batch / Exp",
+    "qty": "Qty",
+    "unit": "Unit",
+    "mrp": "MRP",
+    "rate": "Rate",
+    "disc": "Disc%",
+    "taxable": "Taxable",
+    "amount": "Amount",
+    "gst": "GST%",
+    "total": "Total"
+  },
+  "hsn": {
+    "taxable": "Taxable",
+    "igst": "IGST",
+    "cgst": "CGST",
+    "sgst": "SGST",
+    "rate": "Rate",
+    "amt": "Amt",
+    "totalTax": "Total tax"
+  },
+  "amountInWords": "Amount in words: ",
+  "totals": {
+    "gross": "Gross",
+    "discount": "Discount",
+    "taxableValue": "Taxable value",
+    "netAmount": "Net amount",
+    "igst": "IGST",
+    "cgst": "CGST",
+    "sgst": "SGST",
+    "roundOff": "Round off",
+    "grandTotal": "Grand total"
+  },
+  "bankUpi": "Bank / UPI details",
+  "account": "A/c",
+  "ifsc": "IFSC",
+  "upi": "UPI",
+  "terms": "Goods once issued will not be taken back without prior approval. E & O.E.",
+  "for": "For",
+  "signatory": "Authorised signatory"
+}
