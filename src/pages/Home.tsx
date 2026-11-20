@@ -68,7 +68,8 @@ export function Home() {
   const tc = useTranslation('common').t
   const navigate = useNavigate()
   const [days, setDays] = useState<'7' | '30'>('7')
-  const { data: vouchers } = useAsync(() => services.vouchers.list())
+  // The last month kept on this device: instant, works offline, and covers every figure on this screen.
+  const { data: vouchers } = useAsync(() => (services.vouchers.recent ?? services.vouchers.list)())
   const { data: items } = useAsync(() => services.items.list())
   const { data: settings } = useAsync(() => services.settings.get())
   useHotkey('n', () => navigate('/issue/new'))

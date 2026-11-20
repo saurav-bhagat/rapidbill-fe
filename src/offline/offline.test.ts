@@ -90,7 +90,8 @@ describe('pull', () => {
   it('asks only for the last 30 days of bills', async () => {
     const { mirror, pull } = await fresh()
     await pull(mirror)
-    expect(calls[0]!.voucherFrom).toBe(day(-30))
+    const first = new Date(); first.setDate(1)
+    expect(calls[0]!.voucherFrom).toBe([day(-30), day(0).slice(0, 8) + '01'].sort()[0])
   })
 
   it('keeps what it already has when the connection drops mid-download, and resumes later', async () => {

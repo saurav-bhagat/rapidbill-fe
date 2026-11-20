@@ -148,4 +148,5 @@ export interface Repo<T extends Meta> {
 
 export type ItemService = Repo<Item>
 export type PartyService = Repo<Party>
-export type VoucherService = Repo<Voucher>
+/** `recent` (account mode only) is the last month of bills kept on this device: instant and works offline. */
+export type VoucherService = Repo<Voucher> & { recent?: () => Promise<Voucher[]> }

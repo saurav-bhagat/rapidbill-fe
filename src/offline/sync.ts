@@ -22,7 +22,12 @@ interface Feed {
 }
 
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-export const historyFrom = (now = new Date()) => { const d = new Date(now); d.setDate(d.getDate() - HISTORY_DAYS); return isoDay(d) }
+/** 30 days back, or the first of this month if that is earlier, so "this month" on Home is always complete. */
+export const historyFrom = (now = new Date()) => {
+  const back = new Date(now); back.setDate(back.getDate() - HISTORY_DAYS)
+  const first = new Date(now.getFullYear(), now.getMonth(), 1)
+  return isoDay(first < back ? first : back)
+}
 
 /**
  * Bring the device copy up to date. Safe to repeat: rows are saved by id, and progress is stored after every page,

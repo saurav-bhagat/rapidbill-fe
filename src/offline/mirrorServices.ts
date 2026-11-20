@@ -7,7 +7,7 @@ import { newId } from '@/lib/id'
 import { useAuth } from '@/auth/session'
 import { api } from '@/services/http/client'
 import { createHttpBilling, createHttpInventory, createHttpItems, createHttpParties, createHttpSettings, createHttpVouchers } from '@/services/http/services'
-import { listOutbox, localNextNumber, saveLocally } from './outbox'
+import { cancelWaiting, editWaiting, listOutbox, localNextNumber, saveLocally } from './outbox'
 import { setSync, useSync } from './state'
 import { currentMirror, syncNow } from './sync'
 
@@ -65,6 +65,7 @@ export function createMirrorServices() {
   const vouchers: VoucherService = {
     // Online: the full history, as before. Offline: the last 30 days kept on this device.
     // Bills still waiting to reach the server are shown too, so the register and Home never hide a bill that was just made.
+    recent,
     list: () => networkOr(async () => {
       const server = await httpVouchers.list()
       const have = new Set(server.map((v) => v.id))
@@ -95,8 +96,6 @@ export function createMirrorServices() {
     return { workspaceId: workspace.id, userId: user.id }
   }
   const waitingCount = async () => (await listOutbox(m())).length
-  /** A bill waiting to reach the server cannot be changed yet. */
-  const notWaiting = async (id: string) => { if (await m().get('outbox', id)) throw new AppError('billPendingSync') }
 
   const billing: BillingService = {
     // Online with nothing waiting: the server's next number. Otherwise this device counts on (it knows the bills it has not sent yet).
@@ -128,8 +127,17 @@ export function createMirrorServices() {
       void syncNow() // sends it right away if the connection is actually there
       return v
     },
-    update: async (id, i) => { await notWaiting(id); return written(httpBilling.update(id, i)) },
-    cancel: async (id) => { await notWaiting(id); return written(httpBilling.cancel(id)) },
+    // A bill still waiting to be sent is changed on this device (the server only ever sees the final version). One already on the server is changed there.
+    update: async (id, i) => {
+      const local = await editWaiting(m(), owner(), id, i)
+      if (local) { void syncNow(); return local }
+      return written(httpBilling.update(id, i))
+    },
+    cancel: async (id) => {
+      const local = await cancelWaiting(m(), owner(), id)
+      if (local) { void syncNow(); return local }
+      return written(httpBilling.cancel(id))
+    },
   }
 
   const ledger = { list: async () => { throw new Error('The stock ledger is read per item through the API') }, forItem: inventory.ledgerFor, append: async () => { throw new Error('read-only') } }

@@ -90,8 +90,11 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   }, [settings, sourceId])
 
   // ---- keep the auto voucher number fresh (until the user types their own)
-  const refreshNumber = useCallback(async (d: string) => setNumber(await services.billing.nextNumber(d)), [])
-  useEffect(() => { if (!numberTouched && /^\d{4}-\d{2}-\d{2}$/.test(date)) refreshNumber(date) }, [date, numberTouched, refreshNumber, saved])
+  // The number lookup can finish after the bill being edited has loaded; its answer must never replace that bill's own number.
+  const keepNumber = useRef(false)
+  keepNumber.current = numberTouched || !!editId
+  const refreshNumber = useCallback(async (d: string) => { const n = await services.billing.nextNumber(d); if (!keepNumber.current) setNumber(n) }, [])
+  useEffect(() => { if (!numberTouched && !editId && /^\d{4}-\d{2}-\d{2}$/.test(date)) refreshNumber(date) }, [date, numberTouched, editId, refreshNumber, saved])
 
   // ---- edit / duplicate: fill the form from an existing voucher, once
   useEffect(() => {

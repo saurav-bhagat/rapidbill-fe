@@ -19,6 +19,8 @@ export interface OutboxEntry {
   number: string
   partyName: string
   total: number
+  /** Cancelled before it reached the server: it is sent, then cancelled there, so the number stays on record as a cancelled bill. */
+  cancel?: boolean
   error?: { key: ErrorKey; params: ErrorParams }
   attempts: number
   createdAt: string
@@ -32,11 +34,18 @@ export async function refreshOutboxState(m: Mirror) {
   return all
 }
 
-/** Run `fn` alone, even across several open tabs of the app, so two tabs never take the same bill number. */
+const chains = new Map<string, Promise<unknown>>()
+
+/**
+ * Run `fn` alone: across every open tab where the browser supports Web Locks, and at least within this tab everywhere else.
+ * So two tabs never take the same bill number, and a bill is never changed while it is being sent.
+ */
 export async function exclusive<T>(name: string, fn: () => Promise<T>): Promise<T> {
-  const locks = (navigator as Navigator & { locks?: LockManager }).locks
-  if (!locks) return fn()
-  return locks.request(name, fn)
+  const locks = typeof navigator === 'undefined' ? undefined : (navigator as Navigator & { locks?: LockManager }).locks
+  if (locks) return locks.request(name, fn)
+  const run = (chains.get(name) ?? Promise.resolve()).then(fn, fn)
+  chains.set(name, run.catch(() => undefined))
+  return run
 }
 
 const SERIES_PREFIX = '__series__:'
@@ -113,24 +122,84 @@ export function saveLocally(m: Mirror, owner: BillingOwner, input: VoucherInput 
 /** Errors that mean "try again later", not "the server refused this bill". */
 const TEMPORARY: ErrorKey[] = ['networkError', 'serverError', 'rateLimited', 'sessionExpired', 'authRequired']
 
-/** Send waiting bills, oldest first. Stops at the first sign the server is unreachable. A bill the server refuses is parked for a person. */
-export function flushOutbox(m: Mirror): Promise<{ sent: number; unreachable: boolean }> {
-  return exclusive('rapidbill-outbox-flush', async () => {
-    let sent = 0
-    let unreachable = false
-    for (const e of (await listOutbox(m)).filter((x) => x.status === 'pending')) {
+const FLUSH_LOCK = 'rapidbill-outbox-flush'
+
+/**
+ * Send waiting bills, oldest first. Stops at the first sign the server is unreachable. A bill the server refuses is parked for a person.
+ * The send lock is taken one bill at a time, so changing a waiting bill never has to wait for the whole queue.
+ */
+export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachable: boolean }> {
+  let sent = 0
+  let unreachable = false
+  for (const first of (await listOutbox(m)).filter((x) => x.status === 'pending')) {
+    const stop = await exclusive(FLUSH_LOCK, async () => {
+      const e = await m.get<OutboxEntry>('outbox', first.id) // may have been edited, cancelled or sent since the list was read
+      if (!e || e.status !== 'pending') return false
       try {
         await api<Voucher>('/vouchers', { method: 'POST', body: e.payload, timeoutMs: 20_000 })
+        if (e.cancel) {
+          try { await api<Voucher>(`/vouchers/${e.id}/cancel`, { method: 'POST', timeoutMs: 20_000 }) } catch (err) {
+            if (!(err instanceof AppError && err.key === 'alreadyCancelled')) throw err // already cancelled counts as done
+          }
+        }
         await m.batch([{ store: 'outbox', remove: [e.id] }])
         sent++
+        return false
       } catch (err) {
-        if (!(err instanceof AppError) || TEMPORARY.includes(err.key)) { unreachable = true; break }
+        if (!(err instanceof AppError) || TEMPORARY.includes(err.key)) { unreachable = true; return true }
         await m.batch([{ store: 'outbox', put: [{ ...e, status: 'failed', attempts: e.attempts + 1, error: { key: err.key, params: err.params } }] }])
+        return false
       }
+    })
+    if (stop) break
+  }
+  await refreshOutboxState(m)
+  return { sent, unreachable }
+}
+
+/**
+ * Change a bill that has not reached the server yet. Its stock and credit effects are redone on the device and the queued copy is
+ * replaced, so the server only ever sees the final version. Returns undefined when the bill is not waiting (it is already on the server).
+ */
+export function editWaiting(m: Mirror, owner: BillingOwner, id: string, input: VoucherInput): Promise<Voucher | undefined> {
+  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+    const e = await m.get<OutboxEntry>('outbox', id)
+    if (!e) return undefined
+    if (e.cancel) throw new AppError('cancelledNoEdit')
+    const { adapter, changes } = bufferedAdapter(m, await stubs(m))
+    const voucher = await createBillingService(adapter, owner).update(id, { ...input, id })
+    const entry: OutboxEntry = {
+      ...e, status: 'pending', error: undefined, number: voucher.number, partyName: voucher.partyName, total: voucher.totals.grandTotal,
+      payload: { ...input, id, number: voucher.number, clientCreatedAt: e.payload.clientCreatedAt },
     }
+    await m.batch([
+      { store: 'items', put: changes<Item>('items') },
+      { store: 'parties', put: changes<Party>('parties') },
+      { store: 'vouchers', put: [voucher] },
+      { store: 'outbox', put: [entry] },
+    ])
     await refreshOutboxState(m)
-    return { sent, unreachable }
-  })
+    return voucher
+  }))
+}
+
+/** Cancel a bill that has not reached the server yet: stock and credit come back here, and the bill is sent and then cancelled there. */
+export function cancelWaiting(m: Mirror, owner: BillingOwner, id: string): Promise<Voucher | undefined> {
+  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+    const e = await m.get<OutboxEntry>('outbox', id)
+    if (!e) return undefined
+    if (e.status === 'failed') throw new AppError('billNeedsAttention')
+    const { adapter, changes } = bufferedAdapter(m, [])
+    const voucher = await createBillingService(adapter, owner).cancel(id)
+    await m.batch([
+      { store: 'items', put: changes<Item>('items') },
+      { store: 'parties', put: changes<Party>('parties') },
+      { store: 'vouchers', put: [voucher] },
+      { store: 'outbox', put: [{ ...e, cancel: true }] },
+    ])
+    await refreshOutboxState(m)
+    return voucher
+  }))
 }
 
 export async function retryEntry(m: Mirror, id: string) {

@@ -234,16 +234,6 @@ describe('billing service', () => {
     expect(await t.listOutbox(t.m)).toHaveLength(0)
   })
 
-  it('cannot edit or cancel a bill that has not reached the server yet', async () => {
-    const t = await setup()
-    t.setSync({ online: false })
-    handler = (p) => (p === '/vouchers' ? t.net() : emptyFeed)
-    const svc = await owner()
-    const v = await svc.save(bill([['a', 1]]))
-    await expect(svc.cancel(v.id)).rejects.toMatchObject({ key: 'billPendingSync' })
-    await expect(svc.update(v.id, bill([['a', 1]]))).rejects.toMatchObject({ key: 'billPendingSync' })
-  })
-
   it('the register shows bills that are still waiting, even when the server list does not have them yet', async () => {
     const t = await setup()
     t.setSync({ online: false })
@@ -253,6 +243,154 @@ describe('billing service', () => {
     t.setSync({ online: true })
     handler = (p) => (p === '/vouchers' ? { data: [], total: 0, page: 1, limit: 200 } : emptyFeed)
     expect((await svc.vouchers.list()).map((x) => x.id)).toEqual([v.id])
+  })
+})
+
+describe('changing a bill that has not been sent yet', () => {
+  const svc = async () => (await import('./mirrorServices')).createMirrorServices().billing
+  const offline = (t: Awaited<ReturnType<typeof setup>>) => { t.setSync({ online: false }); handler = (p) => (p === '/vouchers' ? t.net() : emptyFeed) }
+
+  it('editing redoes stock and credit and replaces the queued copy, keeping its number and id', async () => {
+    const t = await setup({ numbering: { 'SI-2026': 11 } })
+    offline(t)
+    const b = await svc()
+    const v = await b.save(bill([['a', 3]], { partyId: 'p1', payment: 'CREDIT' }))
+    expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(7)
+    const edited = await b.update(v.id, bill([['a', 5], ['b', 1]], { partyId: 'p1', payment: 'CREDIT', remarks: 'fixed' }))
+    expect(edited).toMatchObject({ id: v.id, number: 'SI-2026-0012', remarks: 'fixed' })
+    expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(5)
+    expect((await t.m.get<Item>('items', 'b'))!.currentStock).toBe(-1)
+    expect((await t.m.get<Party>('parties', 'p1'))!.balance).toBe(edited.totals.grandTotal)
+    const q = await t.listOutbox(t.m)
+    expect(q).toHaveLength(1)
+    expect(q[0]!.payload).toMatchObject({ id: v.id, number: 'SI-2026-0012', remarks: 'fixed' })
+    expect(q[0]!.payload.lines).toHaveLength(2)
+    expect(q[0]!.payload.clientCreatedAt).toBe(v.clientCreatedAt)
+  })
+
+  it('the server then receives only the final version, once', async () => {
+    const t = await setup()
+    offline(t)
+    const b = await svc()
+    const v = await b.save(bill([['a', 1]]))
+    await b.update(v.id, bill([['a', 2]]))
+    await b.update(v.id, bill([['a', 4]]))
+    await t.syncNow() // let the background send attempts from each save finish
+    sent.length = 0
+    handler = () => ({})
+    await t.flushOutbox(t.m)
+    const posts = sent.filter((s) => s.path === '/vouchers')
+    expect(posts).toHaveLength(1)
+    expect((posts[0]!.body!.lines as { qty: number }[])[0]!.qty).toBe(4)
+  })
+
+  it('cancelling puts stock and credit back, keeps the number, and the server gets the bill and then its cancellation', async () => {
+    const t = await setup({ numbering: { 'SI-2026': 20 } })
+    offline(t)
+    const b = await svc()
+    const v = await b.save(bill([['a', 3]], { partyId: 'p1', payment: 'CREDIT' }))
+    const c = await b.cancel(v.id)
+    expect(c).toMatchObject({ status: 'CANCELLED', number: 'SI-2026-0021' })
+    expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(10)
+    expect((await t.m.get<Party>('parties', 'p1'))!.balance).toBe(0)
+    expect(await b.nextNumber(day)).toBe('SI-2026-0022') // the cancelled number is never reused
+    sent.length = 0
+    handler = () => ({})
+    await t.flushOutbox(t.m)
+    expect(sent.map((s) => s.path)).toEqual(['/vouchers', `/vouchers/${v.id}/cancel`])
+    expect(await t.listOutbox(t.m)).toHaveLength(0)
+  })
+
+  it('a cancellation that cannot be sent yet keeps the bill queued, and an already-cancelled reply counts as done', async () => {
+    const t = await setup()
+    offline(t)
+    const b = await svc()
+    const v = await b.save(bill([['a', 1]]))
+    await b.cancel(v.id)
+    handler = (p) => (p.endsWith('/cancel') ? t.net() : {})
+    await t.flushOutbox(t.m)
+    expect(await t.listOutbox(t.m)).toHaveLength(1)
+    handler = (p) => (p.endsWith('/cancel') ? new t.AppError('alreadyCancelled') : {})
+    await t.flushOutbox(t.m)
+    expect(await t.listOutbox(t.m)).toHaveLength(0)
+  })
+
+  it('cannot edit a bill that was cancelled here; a refused bill is edited to fix it, but cancelled only by discarding', async () => {
+    const t = await setup()
+    offline(t)
+    const b = await svc()
+    const v = await b.save(bill([['a', 1]]))
+    await b.cancel(v.id)
+    await expect(b.update(v.id, bill([['a', 2]]))).rejects.toMatchObject({ key: 'cancelledNoEdit' })
+
+    const w = await b.save(bill([['a', 1]]))
+    await t.syncNow()
+    handler = (p, o) => (p === '/vouchers' && o.body?.id === w.id ? new t.AppError('duplicateNumber', { number: w.number }) : {})
+    await t.flushOutbox(t.m)
+    expect((await t.listOutbox(t.m)).find((e) => e.id === w.id)!.status).toBe('failed')
+    await expect(b.cancel(w.id)).rejects.toMatchObject({ key: 'billNeedsAttention' })
+    await b.update(w.id, bill([['a', 2]]), )
+    const e = (await t.listOutbox(t.m)).find((x) => x.id === w.id)!
+    expect(e.status).toBe('pending')
+    expect(e.error).toBeUndefined()
+  })
+
+  it('a bill that is already on the server is changed on the server, not on this device', async () => {
+    const t = await setup()
+    t.setSync({ online: true })
+    handler = (p, o) => (p === '/vouchers' ? { ...o.body, number: 'SI-2026-0001', totals: { grandTotal: 1 } } : { id: 'on-server', number: 'SI-2026-0001' })
+    const b = await svc()
+    const v = await b.save(bill([['a', 1]])) // went straight to the server: nothing queued
+    sent.length = 0
+    await b.update(v.id, bill([['a', 2]]))
+    await b.cancel(v.id)
+    expect(sent.map((s) => `${s.path}`).filter((p) => p.startsWith('/vouchers'))).toEqual([`/vouchers/${v.id}`, `/vouchers/${v.id}/cancel`])
+  })
+
+  it('an edit that arrives while the bill is being sent waits for the send, then goes to the server', async () => {
+    const t = await setup()
+    offline(t)
+    const b = await svc()
+    const v = await b.save(bill([['a', 1]]))
+    await t.syncNow() // background attempt from the save (fails: offline)
+    let release!: () => void
+    const gate = new Promise<void>((r) => { release = r })
+    const order: string[] = []
+    handler = (p, o) => {
+      order.push(`${o.method ?? 'GET'} ${p}`)
+      if (p === '/vouchers' && o.method === 'POST') return gate.then(() => ({}))
+      if (p.startsWith('/vouchers/')) return {}
+      return emptyFeed
+    }
+    const sending = t.flushOutbox(t.m)
+    await new Promise((r) => setTimeout(r, 30))
+    const editing = b.update(v.id, bill([['a', 9]]))
+    await new Promise((r) => setTimeout(r, 30))
+    expect(order).toEqual(['POST /vouchers']) // the edit has not run ahead of the send
+    release()
+    await sending
+    await editing
+    expect(order[0]).toBe('POST /vouchers')
+    expect(order.slice(1)).toContain(`PUT /vouchers/${v.id}`) // the bill was already on the server, so the edit went there
+    expect(order.filter((x) => x === 'POST /vouchers')).toHaveLength(1)
+  })
+})
+
+describe('Home and the recent window', () => {
+  it('recent() is the device copy only and works with no connection', async () => {
+    const t = await setup()
+    t.setSync({ online: false })
+    handler = () => t.net()
+    await t.m.putMany('vouchers', [{ id: 'v1', number: 'SI-2026-0001', date: day }, { id: 'v2', number: 'SI-2026-0002', date: day }])
+    const s = (await import('./mirrorServices')).createMirrorServices()
+    expect((await s.vouchers.recent!()).map((v) => v.number)).toEqual(['SI-2026-0002', 'SI-2026-0001'])
+    expect(sent).toHaveLength(0)
+  })
+
+  it('the kept window always covers the whole current month', async () => {
+    const t = await setup()
+    expect(t.historyFrom(new Date('2026-12-31T10:00:00'))).toBe('2026-12-01')
+    expect(t.historyFrom(new Date('2026-03-05T10:00:00'))).toBe('2026-02-03')
   })
 })
 
