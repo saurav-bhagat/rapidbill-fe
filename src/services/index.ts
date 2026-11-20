@@ -5,41 +5,64 @@ import { createBillingService, type BillingService } from './voucher'
 import { createSettingsService } from './settings'
 import { writeSeed } from './seed'
 import { createLocalStorageAdapter } from './storage/localStorageAdapter'
+import { apiEnabled } from './http/client'
+import { createHttpBilling, createHttpInventory, createHttpItems, createHttpParties, createHttpSettings, createHttpVouchers, workspaceApi } from './http/services'
+import type { StockLedgerService } from './ledger'
+import type { SettingsService } from './settings'
 import type { Item, ItemService, Party, PartyService, Voucher, VoucherService } from './types'
 
 const adapter = createLocalStorageAdapter()
 
-/** The only thing UI code imports. Swap `adapter` for an HTTP-backed one later. */
-export const services: {
+interface Services {
   items: ItemService
   inventory: InventoryService
   billing: BillingService
   parties: PartyService
   vouchers: VoucherService
-  ledger: ReturnType<typeof createLedgerService>
-  settings: ReturnType<typeof createSettingsService>
-} = {
-  items: createRepo<Item>(adapter, 'items'),
-  inventory: createInventoryService(adapter),
-  billing: createBillingService(adapter),
-  parties: createRepo<Party>(adapter, 'parties'),
-  vouchers: createRepo<Voucher>(adapter, 'vouchers'),
-  ledger: createLedgerService(adapter),
-  settings: createSettingsService(adapter),
+  ledger: StockLedgerService
+  settings: SettingsService
 }
+
+function localServices(): Services {
+  return {
+    items: createRepo<Item>(adapter, 'items'),
+    inventory: createInventoryService(adapter),
+    billing: createBillingService(adapter),
+    parties: createRepo<Party>(adapter, 'parties'),
+    vouchers: createRepo<Voucher>(adapter, 'vouchers'),
+    ledger: createLedgerService(adapter),
+    settings: createSettingsService(adapter),
+  }
+}
+
+function httpServices(): Services {
+  const inventory = createHttpInventory()
+  const off = async (): Promise<never> => { throw new Error('The stock ledger is read per item through the API') }
+  return {
+    items: createHttpItems(), inventory, billing: createHttpBilling(), parties: createHttpParties(), vouchers: createHttpVouchers(),
+    ledger: { list: off, forItem: inventory.ledgerFor, append: off },
+    settings: createHttpSettings(),
+  }
+}
+
+/** The only thing UI code imports. With VITE_API_URL set it talks to the backend; without it, it uses this browser's storage. */
+export const services: Services = apiEnabled ? httpServices() : localServices()
 
 /** First-run: seed demo data when the workspace is empty. */
 export async function bootstrap(): Promise<void> {
+  if (apiEnabled) return // an account starts empty; demo data is opt-in from Settings
   if (await adapter.isEmpty()) await writeSeed(adapter)
 }
 
-export async function resetDemoData(): Promise<void> {
+export async function resetDemoData(password?: string): Promise<void> {
+  if (apiEnabled) { await workspaceApi.resetDemo(password ?? ''); return }
   await adapter.clearWorkspace()
   await writeSeed(adapter)
 }
 
 /** Empties items, parties, vouchers and the stock ledger. Business settings are kept. Collections stay present so a reload does not re-seed demo data. */
-export async function clearAllData(): Promise<void> {
+export async function clearAllData(password?: string): Promise<void> {
+  if (apiEnabled) { await workspaceApi.clear(password ?? ''); return }
   for (const c of ['items', 'parties', 'vouchers', 'ledger']) await adapter.write(c, [])
 }
 

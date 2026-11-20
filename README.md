@@ -1,6 +1,10 @@
 # rapidbill-fe
 
-React 19 + TypeScript + Vite + Tailwind. Frontend-only prototype: all data lives in browser localStorage behind async services (swap the adapter for an HTTP client when `rapidbill-be` exists, see `../docs/API-CONTRACT.md`).
+React 19 + TypeScript + Vite + Tailwind. Two modes, chosen at build time by `VITE_API_URL`:
+- **Not set (default):** frontend-only. All data lives in browser localStorage behind async services, no login. Tests and the live demo use this.
+- **Set to the API origin** (e.g. `http://localhost:4000`): sign in / create account, and every service calls `rapidbill-be` (`src/services/http/`). The access token stays in memory, the refresh token in localStorage (single-flight refresh). On first sign-in the app offers to upload the data saved in this browser (`src/auth/migrate.ts`).
+
+Try it locally with a throwaway database: in `rapidbill-be` run `npm run dev:memory`, then here `VITE_API_URL=http://localhost:4000 npm run dev`. Lists are read in full (all pages) and filtered in the browser; server-side search is a later optimisation.
 
 ```bash
 npm install
