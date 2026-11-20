@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { useSync } from '@/offline/state'
 import { Plus } from 'lucide-react'
 import { formatINR } from '@/lib/format'
 import { stateName } from '@/lib/gst'
@@ -26,6 +27,9 @@ const SORT: Record<string, (a: Party, b: Party) => number> = {
 
 export function Parties() {
   const { t } = useTranslation('parties')
+  const tCommon = useTranslation('common').t
+  const waiting = useSync((x) => x.pendingIds)
+  const refused = useSync((x) => x.failedIds)
   const { data: parties = [], reload } = useAsync(() => services.parties.list())
   const { data: settings } = useAsync(() => services.settings.get())
   const [query, setQuery] = useState('')
@@ -64,7 +68,7 @@ export function Parties() {
   useHotkey('e', () => openEdit(selected))
 
   const columns: VColumn<Party>[] = [
-    { key: 'name', header: t('columns.name'), sortable: true, cell: (p) => <span className="font-medium">{p.name}</span> },
+    { key: 'name', header: t('columns.name'), sortable: true, cell: (p) => <span className="flex items-center gap-2"><span className="font-medium">{p.name}</span>{waiting.includes(p.id) && <Badge tone="warn">{tCommon('sync.notSynced')}</Badge>}{refused.includes(p.id) && <Badge tone="danger">{tCommon('sync.refused')}</Badge>}</span> },
     { key: 'type', header: t('columns.type'), width: '120px', sortable: true, cell: (p) => <Badge tone={p.type === 'CUSTOMER' ? 'neutral' : 'primary'}>{t(`type.${TYPE_KEY[p.type]}`)}</Badge> },
     { key: 'gstin', header: t('columns.gstin'), width: '170px', cell: (p) => <span className="font-mono text-ink-600">{p.gstin || t('unregistered')}</span> },
     { key: 'state', header: t('columns.state'), width: '180px', sortable: true, cell: (p) => <span className="text-ink-600">{p.stateCode} · {stateName(p.stateCode)}</span> },

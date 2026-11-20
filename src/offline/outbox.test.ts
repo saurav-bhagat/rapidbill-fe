@@ -264,8 +264,9 @@ describe('changing a bill that has not been sent yet', () => {
     const q = await t.listOutbox(t.m)
     expect(q).toHaveLength(1)
     expect(q[0]!.payload).toMatchObject({ id: v.id, number: 'SI-2026-0012', remarks: 'fixed' })
-    expect(q[0]!.payload.lines).toHaveLength(2)
-    expect(q[0]!.payload.clientCreatedAt).toBe(v.clientCreatedAt)
+    const pay = q[0]!.payload as { lines: unknown[]; clientCreatedAt: string }
+    expect(pay.lines).toHaveLength(2)
+    expect(pay.clientCreatedAt).toBe(v.clientCreatedAt)
   })
 
   it('the server then receives only the final version, once', async () => {

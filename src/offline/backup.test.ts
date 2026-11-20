@@ -40,10 +40,10 @@ describe('backup of bills not yet sent', () => {
     expect(b).toMatchObject({ app: 'rapidbill', version: 1, workspaceId: 'ws' })
     expect(b.entries).toHaveLength(1)
     expect(b.entries[0]!.entry.id).toBe(v.id)
-    expect(b.entries[0]!.voucher!.number).toBe(v.number)
+    expect((b.entries[0]!.record as { number: string }).number).toBe(v.number)
     const csv = t.backupToCsv(b).split('\n')
-    expect(csv[0]).toBe('Number,Date,Party,Payment,Items,Total (Rs),Status')
-    expect(csv[1]).toContain(v.number)
+    expect(csv[0]).toBe('Type,Number / code,Date,Party / name,Payment,Items,Total (Rs),Status')
+    expect(csv[1]).toContain(`Bill,${v.number}`)
     expect(csv[1]).toContain('"Pen, blue ""fine"" x 3"') // commas and quotes in names do not break the columns
     expect(csv[1]).toContain('Waiting to sync')
   })

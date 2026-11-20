@@ -152,11 +152,12 @@ describe('services on the device copy', () => {
     expect(vi.mocked(api)).not.toHaveBeenCalledWith('/items', expect.anything())
   })
 
-  it('a write that needs the internet fails with a clear error instead of pretending to save', async () => {
-    const { netErr } = await fresh()
+  it('a change that needs the internet (an edit of something already on the server) fails with a clear error instead of pretending to save', async () => {
+    const { netErr, mirror } = await fresh()
+    await mirror.putMany('parties', [{ id: 'p', name: 'Zed' }])
     const { api } = await import('@/services/http/client')
     vi.mocked(api).mockImplementation((async () => { throw netErr() }) as never)
     const { createMirrorServices } = await import('./mirrorServices')
-    await expect(createMirrorServices().parties.create({ name: 'X', type: 'CUSTOMER', gstin: '', stateCode: '29', address: '', phone: '', balance: 0 })).rejects.toMatchObject({ key: 'networkError' })
+    await expect(createMirrorServices().parties.update('p', { phone: '1' })).rejects.toMatchObject({ key: 'networkError' })
   })
 })

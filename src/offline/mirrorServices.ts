@@ -8,6 +8,7 @@ import { useAuth } from '@/auth/session'
 import { api } from '@/services/http/client'
 import { createHttpBilling, createHttpInventory, createHttpItems, createHttpParties, createHttpSettings, createHttpVouchers } from '@/services/http/services'
 import { cancelWaiting, editWaiting, listOutbox, localNextNumber, saveLocally } from './outbox'
+import { createItemLocally, createPartyLocally, editWaitingRecord, removeWaitingParty } from './records'
 import { setSync, useSync } from './state'
 import { currentMirror, syncNow } from './sync'
 
@@ -56,9 +57,22 @@ export function createMirrorServices() {
   const parties: PartyService = {
     list: async () => (await m().all<Party>('parties')).sort(byName),
     get: (id) => m().get<Party>('parties', id),
-    create: (d) => written(httpParties.create(d)),
-    update: (id, p) => written(httpParties.update(id, p)),
-    remove: (id) => written(httpParties.remove(id)),
+    // Online with nothing waiting: straight to the server. Otherwise (no connection, or things already waiting, which must go first) it is made here and sent later.
+    create: async (d) => {
+      const id = newId()
+      if (await goDirect()) {
+        try { const p = await api<Party>('/parties', { method: 'POST', body: { ...d, id }, timeoutMs: 8000 }); await m().putMany('parties', [p]); await syncNow(); return p } catch (e) { offlineOrThrow(e) }
+      }
+      const p = await createPartyLocally(m(), owner(), d, id)
+      void syncNow()
+      return p
+    },
+    update: async (id, p) => {
+      const local = await editWaitingRecord(m(), 'party', id, p)
+      if (local) { void syncNow(); return local }
+      return written(httpParties.update(id, p))
+    },
+    remove: async (id) => { if (await removeWaitingParty(m(), id)) return; await written(httpParties.remove(id)) },
   }
 
   const recent = async () => (await m().all<Voucher>('vouchers')).sort((a, b) => b.date.localeCompare(a.date) || b.number.localeCompare(a.number, undefined, { numeric: true }))
@@ -82,12 +96,34 @@ export function createMirrorServices() {
     save: (p) => written(httpSettings.save(p)),
   }
 
+  /** Online and nothing waiting in the queue: the server can be asked directly. */
+  const goDirect = async () => useSync.getState().online && (await listOutbox(m())).length === 0
+  /** The server could not be reached: carry on locally. Anything else (a refusal) goes back to the person. */
+  const offlineOrThrow = (e: unknown) => { if (!(e instanceof AppError && e.key === 'networkError')) throw e; setSync({ online: false }) }
+  /** Stock changes and imports need the server to know the item, so they wait for items and parties made here to be sent. */
+  const noWaitingRecords = async (itemId?: string) => {
+    const q = await listOutbox(m())
+    if (q.some((e) => (e.kind === 'item' || e.kind === 'party') && (itemId === undefined || e.id === itemId))) throw new AppError('syncFirst')
+  }
+
   const inventory: InventoryService = {
-    createItem: (d) => written(httpInventory.createItem(d)),
-    updateItem: (id, p) => written(httpInventory.updateItem(id, p)),
-    adjustStock: (id, d, n) => written(httpInventory.adjustStock(id, d, n)),
+    createItem: async (d) => {
+      const id = newId()
+      if (await goDirect()) {
+        try { const it = await api<Item>('/items', { method: 'POST', body: { ...d, id }, timeoutMs: 8000 }); await m().putMany('items', [it]); await syncNow(); return it } catch (e) { offlineOrThrow(e) }
+      }
+      const it = await createItemLocally(m(), owner(), d, id)
+      void syncNow()
+      return it
+    },
+    updateItem: async (id, p) => {
+      const local = await editWaitingRecord(m(), 'item', id, p)
+      if (local) { void syncNow(); return local }
+      return written(httpInventory.updateItem(id, p))
+    },
+    adjustStock: async (id, d, n) => { await noWaitingRecords(id); return written(httpInventory.adjustStock(id, d, n)) },
     ledgerFor: httpInventory.ledgerFor, // stock history is read from the server (needs the internet)
-    importItems: (ops, source) => written(httpInventory.importItems(ops, source)),
+    importItems: async (ops, source) => { await noWaitingRecords(); return written(httpInventory.importItems(ops, source)) },
   }
 
   /** Keep a bill the server just confirmed, and its number, on this device straight away. */

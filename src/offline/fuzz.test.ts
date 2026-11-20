@@ -63,6 +63,36 @@ async function oneDay(seed: number) {
     }
     if (/^\/vouchers\/[^/]+\/cancel$/.test(path)) return srv.cancel(path.split('/')[2]!)
     if (/^\/vouchers\/[^/]+$/.test(path) && o.method === 'PUT') return srv.update(path.split('/')[2]!, o.body as unknown as Parameters<typeof srv.update>[1])
+    if (path === '/items' && o.method === 'POST') {
+      const items = await server.read<Item>('items'); const body = o.body as unknown as Item
+      const have = items.find((i) => i.id === body.id)
+      if (have) return have
+      const clash = items.find((i) => i.code.toUpperCase() === body.code.toUpperCase())
+      if (clash) throw new AppError('itemCodeUsedBy', { code: body.code, name: clash.name })
+      const row = { ...body, workspaceId: 'ws', createdBy: 'u1', createdAt: 't', updatedAt: 't' } as Item
+      await server.write('items', [...items, row])
+      return row
+    }
+    if (/^\/items\/[^/]+$/.test(path) && o.method === 'PATCH') {
+      const items = await server.read<Item>('items'); const id = path.split('/')[2]!
+      const { currentStock: _s, ...fields } = o.body as unknown as Item; void _s
+      await server.write('items', items.map((i) => (i.id === id ? { ...i, ...fields } : i)))
+      return items.find((i) => i.id === id)
+    }
+    if (path === '/parties' && o.method === 'POST') {
+      const ps = await server.read<Party>('parties'); const body = o.body as unknown as Party
+      const have = ps.find((p) => p.id === body.id)
+      if (have) return have
+      if (ps.some((p) => p.name.toLowerCase() === body.name.toLowerCase())) throw new AppError('partyNameTaken', { name: body.name })
+      const row = { ...body, workspaceId: 'ws', createdBy: 'u1', createdAt: 't', updatedAt: 't' } as Party
+      await server.write('parties', [...ps, row])
+      return row
+    }
+    if (/^\/parties\/[^/]+$/.test(path) && o.method === 'PATCH') {
+      const ps = await server.read<Party>('parties'); const id = path.split('/')[2]!
+      await server.write('parties', ps.map((p) => (p.id === id ? { ...p, ...(o.body as object) } : p)))
+      return ps.find((p) => p.id === id)
+    }
     if (path === '/vouchers/next-number') return { number: await srv.nextNumber(String(o.query?.date)) }
     if (path === '/vouchers') return await vouchers()
     throw new Error(`fake server: unexpected ${o.method ?? 'GET'} ${path}`)
@@ -82,23 +112,37 @@ async function oneDay(seed: number) {
   const billing = createMirrorServices().billing
   const mirrorVouchers = () => mirror.all<Voucher>('vouchers')
 
+  const known = [...ITEMS] // items the shop has, including ones made during the day
+  const knownParties = ['p1']
+  const opening = new Map(ITEMS.map((id) => [id, 50]))
+  let made = 0
+  const itemData = (code: string, stock: number) => ({ name: `Item ${code}`, code, category: '', hsn: '', unit: 'PCS', batchNo: '', expiry: '', mrp: 0, purchaseRate: 0, issueRate: 10000, gstPercent: 12, currentStock: stock, lowStockThreshold: 0 }) as Omit<Item, 'id' | 'workspaceId' | 'createdBy' | 'createdAt' | 'updatedAt'>
+  const services = createMirrorServices()
+
   const input = () => {
-    const names = [...ITEMS].sort(() => rng() - 0.5).slice(0, 1 + Math.floor(rng() * 3))
+    const names = [...known].sort(() => rng() - 0.5).slice(0, 1 + Math.floor(rng() * 3))
     const credit = rng() < 0.3
     return {
-      date: today, mode: 'TAX_INVOICE' as const, taxApplicable: true, rateBasis: 'SALE' as const, partyId: credit ? 'p1' : null, remarks: '',
+      date: today, mode: 'TAX_INVOICE' as const, taxApplicable: true, rateBasis: 'SALE' as const, partyId: credit ? pick(knownParties) : null, remarks: '',
       lines: names.map((id) => ({ itemId: id, qty: 1 + Math.floor(rng() * 6), rate: 10000, discPct: 0 })),
       billDiscount: null, roundOff: false, payment: credit ? ('CREDIT' as const) : ('PAID_CASH' as const),
     }
   }
 
+  const log = (...a: unknown[]) => { if (process.env.FUZZ_ONLY) console.log(...a) }
+  const origHandler = handler
+  handler = async (path, o) => { try { const r = await origHandler(path, o); log('   api', o.method ?? 'GET', path, 'ok'); return r } catch (e) { log('   api', o.method ?? 'GET', path, 'ERR', (e as { key?: string }).key); throw e } }
   for (let step = 0; step < 30; step++) {
     const r = rng()
+    log('step', step, r.toFixed(2), chaos.down ? 'DOWN' : 'up')
     try {
-      if (r < 0.45) await billing.save(input())
-      else if (r < 0.62) { const vs = await mirrorVouchers(); if (vs.length) await billing.update(pick(vs).id, input()) }
-      else if (r < 0.72) { const vs = await mirrorVouchers(); if (vs.length) await billing.cancel(pick(vs).id) }
-      else if (r < 0.85) { chaos.down = !chaos.down; if (rng() < 0.5) setSync({ online: !chaos.down }) }
+      if (r < 0.36) await billing.save(input())
+      else if (r < 0.50) { const vs = await mirrorVouchers(); if (vs.length) await billing.update(pick(vs).id, input()) }
+      else if (r < 0.58) { const vs = await mirrorVouchers(); if (vs.length) await billing.cancel(pick(vs).id) }
+      else if (r < 0.66) { const stock = 5 + Math.floor(rng() * 30); const it = await services.inventory.createItem(itemData(`N${++made}`, stock)); known.push(it.id); opening.set(it.id, stock) }
+      else if (r < 0.71) { const p = await services.parties.create({ name: `Party ${++made}`, type: 'CUSTOMER', gstin: '', stateCode: '29', address: '', phone: '', balance: 0 }); knownParties.push(p.id) }
+      else if (r < 0.75) { await services.inventory.updateItem(pick(known), { issueRate: 10000 + Math.floor(rng() * 500) }) }
+      else if (r < 0.87) { chaos.down = !chaos.down; if (rng() < 0.5) setSync({ online: !chaos.down }) }
       else await syncNow()
     } catch (e) {
       // Refusals a person would see are fine (cancelled bill cannot be edited, no connection for an edit of a sent bill, ...).
@@ -118,30 +162,39 @@ async function oneDay(seed: number) {
   const where = `seed ${seed}`
 
   const left = await listOutbox(mirror)
-  expect(left.map((e) => ({ n: e.number, st: e.status, err: e.error, cancel: e.cancel })), `${where}: nothing left waiting`).toEqual([])
+  expect(left.map((e) => ({ n: e.number, st: e.status, err: e.error, cancel: (e as { cancel?: boolean }).cancel })), `${where}: nothing left waiting`).toEqual([])
   expect(useSync.getState().failedIds, `${where}: nothing refused`).toEqual([])
 
   // The device and the server hold the same stock, bills and balances.
   const cItems = new Map((await mirror.all<Item>('items')).map((i) => [i.id, i.currentStock]))
+  expect(cItems.size, `${where}: device has the same items`).toBe(sItems.length)
   for (const i of sItems) expect(cItems.get(i.id), `${where}: device stock of ${i.id}`).toBe(i.currentStock)
   const cVouchers = new Map((await mirror.all<Voucher>('vouchers')).map((v) => [v.id, `${v.number}|${v.status}|${v.totals.grandTotal}`]))
   expect(cVouchers.size, `${where}: same number of bills`).toBe(sVouchers.length)
   for (const v of sVouchers) expect(cVouchers.get(v.id), `${where}: bill ${v.number}`).toBe(`${v.number}|${v.status}|${v.totals.grandTotal}`)
-  expect((await mirror.all<Party>('parties')).find((p) => p.id === 'p1')!.balance, `${where}: device balance`).toBe(sParties[0]!.balance)
+  for (const p of await mirror.all<Party>('parties')) expect(p.balance, `${where}: device balance of ${p.id}`).toBe(sParties.find((x) => x.id === p.id)!.balance)
 
   // And the arithmetic is right: stock = what we started with minus every live bill; credit = every live credit bill.
-  for (const id of ITEMS) {
+  for (const id of known) {
     const issued = sVouchers.filter((v) => v.status === 'ACTIVE').reduce((s, v) => s + v.lines.filter((l) => l.itemId === id).reduce((q, l) => q + l.qty, 0), 0)
-    expect(sItems.find((i) => i.id === id)!.currentStock, `${where}: stock of ${id}`).toBe(50 - issued)
+    const row = sItems.find((i) => i.id === id)
+    expect(row, `${where}: item ${id} reached the server`).toBeDefined()
+    expect(row!.currentStock, `${where}: stock of ${id}`).toBe(opening.get(id)! - issued)
   }
-  const owed = sVouchers.filter((v) => v.status === 'ACTIVE' && v.payment === 'CREDIT').reduce((s, v) => s + v.totals.grandTotal, 0)
-  expect(sParties[0]!.balance, `${where}: credit owed`).toBe(owed)
+  for (const id of knownParties) {
+    const owed = sVouchers.filter((v) => v.status === 'ACTIVE' && v.payment === 'CREDIT' && v.partyId === id).reduce((s, v) => s + v.totals.grandTotal, 0)
+    expect(sParties.find((p) => p.id === id)!.balance, `${where}: credit owed by ${id}`).toBe(owed)
+  }
+  expect(sItems.length, `${where}: no extra or missing items`).toBe(known.length)
+  expect(sParties.length, `${where}: no extra or missing parties`).toBe(knownParties.length)
+  expect([...(await mirror.all<Party>('parties')).map((p) => p.id)].sort(), `${where}: device has the same parties`).toEqual(sParties.map((p) => p.id).sort())
   expect(new Set(sVouchers.map((v) => v.number)).size, `${where}: bill numbers are unique`).toBe(sVouchers.length)
 }
 
 describe('a shop with a bad connection', () => {
   it('ends with the device and the server agreeing, and the stock adding up, over many random days', async () => {
     const days = Number(process.env.FUZZ_DAYS ?? 80) // set FUZZ_DAYS=1000 for a long soak
+    if (process.env.FUZZ_ONLY) return void (await oneDay(Number(process.env.FUZZ_ONLY)))
     for (let seed = 1; seed <= days; seed++) await oneDay(seed)
   }, 600_000)
 })

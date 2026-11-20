@@ -52,5 +52,8 @@
   "backupInvalid": "This is not a RapidBill backup file.",
   "backupOtherAccount": "This backup belongs to a different account.",
   "deviceStorageFull": "This device has no room left to save the bill. Free some space and try again.",
-  "storageBlocked": "This browser cannot store data (private browsing?)."
+  "storageBlocked": "This browser cannot store data (private browsing?).",
+  "mergeNotFound": "Could not find the existing one on the server. Try again, or change the code/name instead.",
+  "recordInUse": "{{count}} bill(s) still use this. Use the existing one or change the code/name instead of discarding it.",
+  "syncFirst": "Some items or parties you added have not reached the server yet. Try again once they have."
 }

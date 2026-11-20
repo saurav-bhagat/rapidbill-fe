@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Download, Plus, Upload } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useSync } from '@/offline/state'
 import { errorText } from '@/lib/errors'
 import { formatAmount, formatINR, formatQty } from '@/lib/format'
 import { exportItems } from '@/lib/exportItems'
@@ -14,6 +15,7 @@ import { ImportWizard } from '@/components/inventory/ImportWizard'
 import { ItemFormDrawer } from '@/components/inventory/ItemFormDrawer'
 import { MovementsDrawer } from '@/components/inventory/MovementsDrawer'
 import { StockBadge, stockLevel } from '@/components/inventory/StockBadge'
+import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Field'
 import { SearchInput } from '@/components/ui/SearchInput'
@@ -34,6 +36,9 @@ const SORTERS: Record<string, (a: Item, b: Item) => number> = {
 
 export function Inventory() {
   const { t } = useTranslation('inventory')
+  const tCommon = useTranslation('common').t
+  const waiting = useSync((x) => x.pendingIds)
+  const refused = useSync((x) => x.failedIds)
   const { data: items = [], reload } = useAsync(() => services.items.list())
   const { data: settings } = useAsync(() => services.settings.get())
   const gstOn = settings?.gstEnabled !== false
@@ -79,7 +84,7 @@ export function Inventory() {
 
   const columns: VColumn<Item>[] = [
     { key: 'code', header: t('col.code'), width: '96px', sortable: true, cell: (i) => <span className="font-mono text-ink-600">{i.code}</span> },
-    { key: 'name', header: t('col.item'), sortable: true, cell: (i) => <span className="font-medium">{i.name}</span> },
+    { key: 'name', header: t('col.item'), sortable: true, cell: (i) => <span className="flex items-center gap-2"><span className="font-medium">{i.name}</span>{waiting.includes(i.id) && <Badge tone="warn">{tCommon('sync.notSynced')}</Badge>}{refused.includes(i.id) && <Badge tone="danger">{tCommon('sync.refused')}</Badge>}</span> },
     { key: 'category', header: t('col.category'), width: '140px', sortable: true, cell: (i) => <span className="text-ink-600">{i.category}</span> },
     { key: 'batch', header: t('col.batchExp'), width: '140px', cell: (i) => <span className="font-mono text-ink-600">{i.batchNo ? `${i.batchNo} · ${i.expiry}` : '-'}</span> },
     { key: 'mrp', header: t('col.mrp'), width: '96px', align: 'right', sortable: true, cell: (i) => formatAmount(i.mrp) },
