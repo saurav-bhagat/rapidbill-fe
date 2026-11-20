@@ -7,6 +7,7 @@ import { formatAmount, formatDate, todayISO } from '@/lib/format'
 import { useHotkey } from '@/lib/hotkeys'
 import { matchesQuery } from '@/lib/search'
 import { useAsync } from '@/lib/useAsync'
+import { useSync } from '@/offline/state'
 import { services, type Voucher } from '@/services'
 import { errorText } from '@/lib/errors'
 import { toast } from '@/store/toast'
@@ -41,6 +42,8 @@ function range(preset: Preset, from: string, to: string): [string, string] {
 
 export function Issues() {
   const { t } = useTranslation('register')
+  const pendingIds = useSync((x) => x.pendingIds)
+  const failedIds = useSync((x) => x.failedIds)
   const navigate = useNavigate()
   const { data: vouchers = [], reload } = useAsync(() => services.vouchers.list())
   const { data: parties = [] } = useAsync(() => services.parties.list())
@@ -115,7 +118,13 @@ export function Issues() {
     { key: 'items', header: t('columns.items'), width: '70px', align: 'right', cell: (v) => v.totals.itemCount },
     { key: 'payment', header: t('columns.payment'), width: '170px', cell: (v) => <span className="text-ink-600">{paymentLabel(v.payment, t)}</span> },
     { key: 'total', header: t('columns.total'), width: '130px', align: 'right', sortable: true, cell: (v) => <span className={v.status === 'CANCELLED' ? 'text-ink-400 line-through' : 'font-medium'}>{formatAmount(v.totals.grandTotal)}</span> },
-    { key: 'status', header: t('columns.status'), width: '100px', cell: (v) => <Badge tone={v.status === 'ACTIVE' ? 'ok' : 'danger'}>{v.status === 'ACTIVE' ? t('status.active') : t('status.cancelled')}</Badge> },
+    { key: 'status', header: t('columns.status'), width: '190px', cell: (v) => (
+      <span className="flex flex-wrap items-center gap-1">
+        <Badge tone={v.status === 'ACTIVE' ? 'ok' : 'danger'}>{v.status === 'ACTIVE' ? t('status.active') : t('status.cancelled')}</Badge>
+        {pendingIds.includes(v.id) && <Badge tone="warn">{t('sync.notSynced', { ns: 'common' })}</Badge>}
+        {failedIds.includes(v.id) && <Badge tone="danger">{t('sync.refused', { ns: 'common' })}</Badge>}
+      </span>
+    ) },
   ]
 
   const has = !!selected

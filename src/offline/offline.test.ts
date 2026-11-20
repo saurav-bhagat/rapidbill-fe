@@ -8,6 +8,7 @@ interface Feed { epoch: number; cursor: string; hasMore: boolean; items: Partial
 
 let respond: (q: Q) => Feed | Error
 const calls: Q[] = []
+vi.mock('@/auth/session', () => ({ useAuth: { getState: () => ({ user: { id: 'u1' }, workspace: { id: 'ws' } }) } }))
 vi.mock('@/services/http/client', () => {
   const api = vi.fn(async (_path: string, o: { query?: Q }) => {
     calls.push(o.query ?? {})

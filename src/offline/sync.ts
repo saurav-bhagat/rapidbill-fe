@@ -2,6 +2,7 @@ import type { Item, Party, Settings, Voucher } from '@/services/types'
 import { api } from '@/services/http/client'
 import { AppError } from '@/services/errors'
 import type { Mirror } from './db'
+import { listOutbox, flushOutbox, refreshOutboxState } from './outbox'
 import { bumpVersion, setSync } from './state'
 
 /** Bills kept on the device (older ones are read from the server when online). */
@@ -16,6 +17,8 @@ interface Feed {
   settings: Settings | null
   vouchers: Voucher[]
   deleted: { parties: string[] }
+  /** Highest bill number used in each series, e.g. { "SI-2026": 123 }. */
+  numbering?: Record<string, number>
 }
 
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -33,7 +36,7 @@ export async function pull(mirror: Mirror, now = new Date()): Promise<{ changed:
   let first = true
 
   for (;;) {
-    const feed = await api<Feed>('/sync/changes', { query: { cursor, fresh: first && cursor ? '1' : '0', limit: 500, voucherFrom: historyFrom(now) } })
+    const feed = await api<Feed>('/sync/changes', { timeoutMs: 20_000, query: { cursor, fresh: first && cursor ? '1' : '0', limit: 500, voucherFrom: historyFrom(now) } })
 
     if (epoch !== undefined && feed.epoch !== epoch) {
       if (++restarts > 2) throw new AppError('serverError')
@@ -52,6 +55,7 @@ export async function pull(mirror: Mirror, now = new Date()): Promise<{ changed:
 
     epoch = feed.epoch
     cursor = feed.cursor
+    if (feed.numbering) await mirror.setMeta('numbering', feed.numbering)
     await mirror.setMeta('epoch', epoch)
     await mirror.setMeta('cursor', cursor)
     if (!feed.hasMore) break
@@ -59,7 +63,8 @@ export async function pull(mirror: Mirror, now = new Date()): Promise<{ changed:
 
   // Drop bills that have aged out of the window.
   const from = historyFrom(now)
-  const old = (await mirror.all<Voucher>('vouchers')).filter((v) => v.date < from).map((v) => v.id)
+  const waiting = new Set((await listOutbox(mirror)).map((e) => e.id)) // never drop a bill that has not reached the server
+  const old = (await mirror.all<Voucher>('vouchers')).filter((v) => v.date < from && !waiting.has(v.id)).map((v) => v.id)
   if (old.length) { await mirror.deleteMany('vouchers', old); changed = true }
 
   await mirror.setMeta('lastSyncAt', now.toISOString())
@@ -71,7 +76,11 @@ let running: Promise<void> | null = null
 let again = false
 
 /** Use `m` for all device-copy reads and writes. The previous one, if any, is closed. */
-export const attachMirror = (m: Mirror | null) => { if (mirrorRef && mirrorRef !== m) mirrorRef.close(); mirrorRef = m }
+export const attachMirror = (m: Mirror | null) => {
+  if (mirrorRef && mirrorRef !== m) mirrorRef.close()
+  mirrorRef = m
+  if (m) void refreshOutboxState(m)
+}
 export const currentMirror = (): Mirror => {
   if (!mirrorRef) throw new AppError('serverError')
   return mirrorRef
@@ -91,10 +100,16 @@ export function syncNow(): Promise<void> {
     try {
       do {
         again = false
+        // Bills made here go up first. While any are still waiting, do not download: that would put back the stock they already took.
+        const { sent, unreachable } = await flushOutbox(m)
+        if (sent) bumpVersion()
+        if (unreachable) { setSync({ online: false }); break }
+        const stillWaiting = (await listOutbox(m)).some((e) => e.status === 'pending')
+        if (stillWaiting) break
         const { changed } = await pull(m)
-        if (changed) bumpVersion()
+        if (changed || sent) bumpVersion()
+        setSync({ online: true, lastSyncAt: new Date().toISOString() })
       } while (again)
-      setSync({ online: true, lastSyncAt: new Date().toISOString() })
     } catch (e) {
       if (e instanceof AppError && e.key === 'networkError') setSync({ online: false })
     } finally {

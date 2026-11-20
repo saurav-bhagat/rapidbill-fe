@@ -12,6 +12,10 @@ import { LOCAL_USER, WORKSPACE_ID, type Item, type Party, type PaymentStatus, ty
 export interface VoucherLineInput { itemId: string; qty: number; rate: Paise; discPct: number }
 
 export interface VoucherInput {
+  /** Chosen by the device, so a bill sent twice is saved once. */
+  id?: string
+  /** When the bill was really made (it can reach the server later). */
+  clientCreatedAt?: string
   /** Leave empty to auto-assign the next number in the series. */
   number?: string
   /** ISO yyyy-MM-dd */
@@ -68,7 +72,10 @@ function reverseEffect(v: Voucher, w: Pick<World, 'items' | 'parties'>, type: 'C
   return { items, parties, entries }
 }
 
-export function createBillingService(adapter: StorageAdapter): BillingService {
+/** Who the records belong to. Browser-only mode has one fixed owner; with an account it is the signed-in user's workspace. */
+export interface BillingOwner { workspaceId: string; userId: string }
+
+export function createBillingService(adapter: StorageAdapter, owner: BillingOwner = { workspaceId: WORKSPACE_ID, userId: LOCAL_USER }): BillingService {
   const settingsSvc = createSettingsService(adapter)
 
   const load = async (): Promise<World> => {
@@ -138,7 +145,7 @@ export function createBillingService(adapter: StorageAdapter): BillingService {
       }
     })
     const voucher: Voucher = {
-      id, workspaceId: WORKSPACE_ID, createdBy: LOCAL_USER, createdAt: keep?.createdAt ?? now, updatedAt: now,
+      id, workspaceId: owner.workspaceId, createdBy: owner.userId, createdAt: keep?.createdAt ?? now, updatedAt: now,
       number, date: input.date, mode: input.mode, taxApplicable, rateBasis: input.rateBasis,
       partyId: party?.id ?? null, partyName: party?.name ?? 'Cash / Counter Issue', partyGstin: party?.gstin ?? '',
       partyStateCode: party?.stateCode ?? null, partyAddress: party?.address ?? '', remarks: input.remarks.trim(),
@@ -149,6 +156,7 @@ export function createBillingService(adapter: StorageAdapter): BillingService {
         roundOff: calc.roundOff, grandTotal: calc.grandTotal,
       },
       payment: input.payment, status: 'ACTIVE',
+      ...(input.clientCreatedAt && !keep && { clientCreatedAt: input.clientCreatedAt }),
     }
 
     // Line by line, so repeated items get a correct running balance.
@@ -176,7 +184,7 @@ export function createBillingService(adapter: StorageAdapter): BillingService {
     async save(input) {
       const w = await load()
       const now = new Date().toISOString()
-      const r = issue(input, w, w.vouchers, newId(), now)
+      const r = issue(input, w, w.vouchers, input.id ?? newId(), now)
       await commit(w, { items: r.items, ledger: [...w.ledger, ...r.entries], parties: r.parties, vouchers: [...w.vouchers, r.voucher] })
       return r.voucher
     },

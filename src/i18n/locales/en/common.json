@@ -90,6 +90,23 @@
     "syncing": "Syncing…",
     "lastSynced": "Last synced {{time}}",
     "updateReady": "Update available",
-    "updateHint": "A new version is ready. Reload to use it."
+    "updateHint": "A new version is ready. Reload to use it.",
+    "waiting_one": "{{count}} bill waiting to sync",
+    "waiting_other": "{{count}} bills waiting to sync",
+    "attention_one": "{{count}} bill needs attention",
+    "attention_other": "{{count}} bills need attention",
+    "notSynced": "Not synced",
+    "refused": "Needs attention",
+    "dlg": {
+      "title": "Bills that need attention",
+      "intro": "The server did not accept these bills. Nothing is lost: each is still on this device. Fix the problem and send it again, or discard it.",
+      "reason": "Reason",
+      "retry": "Send again",
+      "renumber": "Give a new number and send",
+      "discard": "Discard",
+      "renumberHint": "The paper copy already given out shows the old number. Reprint it after this.",
+      "discardConfirm": "Discard this bill? Its stock and credit are given back. This cannot be undone.",
+      "empty": "Nothing needs attention."
+    }
   }
 }

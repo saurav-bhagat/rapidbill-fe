@@ -100,6 +100,8 @@ export interface Voucher extends Meta {
   payment: PaymentStatus
   status: VoucherStatus
   cancelledAt?: string
+  /** When the device made the bill, if it was made offline. */
+  clientCreatedAt?: string
 }
 
 export type LedgerType = 'OPENING' | 'IMPORT' | 'ISSUE' | 'CANCEL' | 'EDIT_REVERSE' | 'ADJUST'

@@ -72,7 +72,7 @@ function refresh(): Promise<boolean> {
   return refreshing
 }
 
-interface Opts { method?: string; body?: unknown; query?: Record<string, string | number | undefined>; auth?: boolean }
+interface Opts { method?: string; body?: unknown; query?: Record<string, string | number | undefined>; auth?: boolean; /** Give up (as if offline) after this long. */ timeoutMs?: number }
 
 async function send(path: string, o: Opts): Promise<Response> {
   const url = new URL(`${API_URL}${path}`, window.location.origin) // VITE_API_URL may be absolute (https://api.example.com) or same-origin (/api)
@@ -81,7 +81,7 @@ async function send(path: string, o: Opts): Promise<Response> {
   if (o.body !== undefined) headers['Content-Type'] = 'application/json'
   if (o.auth !== false && accessToken) headers.Authorization = `Bearer ${accessToken}`
   try {
-    return await fetch(url, { method: o.method ?? 'GET', headers, body: o.body === undefined ? undefined : JSON.stringify(o.body) })
+    return await fetch(url, { method: o.method ?? 'GET', headers, body: o.body === undefined ? undefined : JSON.stringify(o.body), signal: o.timeoutMs ? AbortSignal.timeout(o.timeoutMs) : undefined })
   } catch {
     throw new AppError('networkError')
   }

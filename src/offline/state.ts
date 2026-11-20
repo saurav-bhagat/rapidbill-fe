@@ -9,6 +9,10 @@ interface SyncState {
   version: number
   /** A new version of the app is downloaded and waiting. */
   updateReady: boolean
+  /** Bills made on this device that the server has not confirmed yet. */
+  pendingIds: string[]
+  /** Bills the server refused; they need a person to look at them. */
+  failedIds: string[]
 }
 
 export const useSync = create<SyncState>(() => ({
@@ -17,6 +21,8 @@ export const useSync = create<SyncState>(() => ({
   lastSyncAt: null,
   version: 0,
   updateReady: false,
+  pendingIds: [],
+  failedIds: [],
 }))
 
 export const setSync = (patch: Partial<SyncState>) => useSync.setState(patch)

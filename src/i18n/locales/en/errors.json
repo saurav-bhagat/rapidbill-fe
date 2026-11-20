@@ -47,5 +47,6 @@
   "wrongPassword": "That password is not correct",
   "networkError": "Cannot reach the server. Check your internet connection and try again.",
   "serverError": "Something went wrong on the server. Please try again.",
-  "serverMessage": "{{message}}"
+  "serverMessage": "{{message}}",
+  "billPendingSync": "This bill has not reached the server yet. Wait a moment and try again."
 }
