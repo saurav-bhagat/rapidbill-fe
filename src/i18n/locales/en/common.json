@@ -107,6 +107,24 @@
       "renumberHint": "The paper copy already given out shows the old number. Reprint it after this.",
       "discardConfirm": "Discard this bill? Its stock and credit are given back. This cannot be undone.",
       "empty": "Nothing needs attention."
-    }
+    },
+    "stale": "{{count}} bill(s) have been waiting to sync since {{time}}. Download a backup so they cannot be lost.",
+    "staleBtn": "Download backup",
+    "clock": "This device's clock is {{minutes}} minutes {{dir}} the server. Bill dates come from this clock; please correct it.",
+    "clockAhead": "ahead of",
+    "clockBehind": "behind"
+  },
+  "device": {
+    "title": "Bills not yet sent",
+    "body": "Bills made while offline are kept on this device until the server has them. A backup file keeps them safe even if this browser's data is cleared.",
+    "waiting_one": "{{count}} bill is waiting to be sent.",
+    "waiting_other": "{{count}} bills are waiting to be sent.",
+    "none": "No bills are waiting.",
+    "download": "Download backup",
+    "restore": "Restore from a backup file",
+    "restored": "Restored {{restored}} bill(s); {{skipped}} already here.",
+    "protect": "Storage protection",
+    "protectOn": "On: the browser will not clear this data when space is low.",
+    "protectOff": "Off: the browser may clear this data when space is low. Installing the app usually fixes this."
   }
 }

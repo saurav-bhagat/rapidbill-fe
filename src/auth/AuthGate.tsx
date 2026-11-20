@@ -10,7 +10,7 @@ import { services } from '@/services'
 import { AuthScreen } from './AuthScreen'
 import { useAuth } from './session'
 
-type Phase = 'opening' | 'downloading' | 'needsInternet' | 'ready'
+type Phase = 'opening' | 'downloading' | 'needsInternet' | 'storageBlocked' | 'ready'
 
 /** Without a backend the app is single-user and local, so there is nothing to sign in to. */
 export function AuthGate({ children }: { children: ReactNode }) {
@@ -30,7 +30,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
     let live = true
     let stop: (() => void) | undefined
     ;(async () => {
-      const mirror = await openMirror(workspaceId)
+      let mirror
+      try { mirror = await openMirror(workspaceId) } catch { if (live) setPhase('storageBlocked'); return } // private browsing, or storage switched off
       attachMirror(mirror)
       if (!(await hasSyncedBefore(mirror))) {
         setPhase('downloading')
@@ -54,6 +55,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (status === 'out') return <AuthScreen />
   if (status === 'loading' || phase === 'opening') return <div className="p-6 text-ink-400">{t('loading')}</div>
   if (phase === 'downloading') return <div className="p-6 text-ink-600">{t('downloading')}</div>
+  if (phase === 'storageBlocked') {
+    return (
+      <div className="mx-auto mt-24 max-w-md space-y-3 p-6">
+        <h1 className="text-lg font-semibold">{t('storageBlocked.title')}</h1>
+        <p className="text-ink-600">{t('storageBlocked.body')}</p>
+      </div>
+    )
+  }
   if (phase === 'needsInternet') {
     return (
       <div className="mx-auto mt-24 max-w-md space-y-3 p-6">

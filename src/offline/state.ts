@@ -13,6 +13,10 @@ interface SyncState {
   pendingIds: string[]
   /** Bills the server refused; they need a person to look at them. */
   failedIds: string[]
+  /** When the oldest still-waiting bill was made. */
+  oldestWaiting: string | null
+  /** Server time minus this device's time, in milliseconds (null until the first download). */
+  clockSkewMs: number | null
 }
 
 export const useSync = create<SyncState>(() => ({
@@ -23,7 +27,21 @@ export const useSync = create<SyncState>(() => ({
   updateReady: false,
   pendingIds: [],
   failedIds: [],
+  oldestWaiting: null,
+  clockSkewMs: null,
 }))
 
 export const setSync = (patch: Partial<SyncState>) => useSync.setState(patch)
-export const bumpVersion = () => useSync.setState((s) => ({ version: s.version + 1 }))
+
+/** Other open tabs of the app: told when data or the queue changed, so every tab shows the same thing. */
+type Message = 'data' | 'outbox'
+const channel = typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('rapidbill-sync')
+;(channel as unknown as { unref?: () => void } | null)?.unref?.()
+export const notifyOthers = (what: Message) => channel?.postMessage(what)
+export const onOthers = (fn: (what: Message) => void) => {
+  const h = (e: MessageEvent) => fn(e.data as Message)
+  channel?.addEventListener('message', h)
+  return () => channel?.removeEventListener('message', h)
+}
+
+export const bumpVersion = () => { useSync.setState((s) => ({ version: s.version + 1 })); notifyOthers('data') }

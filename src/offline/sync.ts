@@ -3,7 +3,7 @@ import { api } from '@/services/http/client'
 import { AppError } from '@/services/errors'
 import type { Mirror } from './db'
 import { listOutbox, flushOutbox, refreshOutboxState } from './outbox'
-import { bumpVersion, setSync } from './state'
+import { bumpVersion, onOthers, setSync, useSync } from './state'
 
 /** Bills kept on the device (older ones are read from the server when online). */
 export const HISTORY_DAYS = 30
@@ -17,6 +17,7 @@ interface Feed {
   settings: Settings | null
   vouchers: Voucher[]
   deleted: { parties: string[] }
+  serverTime?: string
   /** Highest bill number used in each series, e.g. { "SI-2026": 123 }. */
   numbering?: Record<string, number>
 }
@@ -58,6 +59,7 @@ export async function pull(mirror: Mirror, now = new Date()): Promise<{ changed:
     if (feed.deleted.parties.length) await mirror.deleteMany('parties', feed.deleted.parties)
     if (feed.items.length || feed.parties.length || feed.vouchers.length || feed.settings || feed.deleted.parties.length) changed = true
 
+    if (feed.serverTime) setSync({ clockSkewMs: Date.parse(feed.serverTime) - Date.now() })
     epoch = feed.epoch
     cursor = feed.cursor
     if (feed.numbering) await mirror.setMeta('numbering', feed.numbering)
@@ -136,7 +138,13 @@ export function startBackgroundSync(): () => void {
   window.addEventListener('offline', goOffline)
   document.addEventListener('visibilitychange', tick)
   const id = window.setInterval(tick, 60_000)
+  // Another tab changed the data or the queue: show it here too.
+  const stopOthers = onOthers((what) => {
+    if (what === 'data') useSync.setState((s) => ({ version: s.version + 1 }))
+    if (mirrorRef) void refreshOutboxState(mirrorRef, false)
+  })
   return () => {
+    stopOthers()
     window.removeEventListener('online', tick)
     window.removeEventListener('offline', goOffline)
     document.removeEventListener('visibilitychange', tick)

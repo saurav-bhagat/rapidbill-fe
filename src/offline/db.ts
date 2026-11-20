@@ -1,4 +1,8 @@
 import { deleteDB, openDB, type IDBPDatabase } from 'idb'
+import { AppError } from '@/services/errors'
+
+/** A full disk shows up as a QuotaExceededError; say so in plain words instead of a technical message. */
+const friendly = (e: unknown): unknown => (e instanceof DOMException && e.name === 'QuotaExceededError' ? new AppError('deviceStorageFull') : e)
 
 /** The collections kept whole on the device. Settings are one record; meta holds the sync bookkeeping. */
 export type StoreName = 'items' | 'parties' | 'vouchers' | 'settings' | 'outbox'
@@ -37,18 +41,7 @@ export async function openMirror(workspaceId: string): Promise<Mirror> {
       if (oldVersion < 2) d.createObjectStore('outbox', { keyPath: 'id' }) // bills made on this device that the server has not confirmed yet
     },
   })
-  return {
-    all: (store) => db.getAll(store) as Promise<never>,
-    get: (store, id) => db.get(store, id) as Promise<never>,
-    async putMany(store, rows) {
-      const tx = db.transaction(store, 'readwrite')
-      await Promise.all([...rows.map((r) => tx.store.put(r)), tx.done])
-    },
-    async deleteMany(store, ids) {
-      const tx = db.transaction(store, 'readwrite')
-      await Promise.all([...ids.map((id) => tx.store.delete(id)), tx.done])
-    },
-    async batch(ops) {
+  const batchRaw = async (ops: BatchOp[]) => {
       const names = [...new Set(ops.map((o) => o.store))]
       const tx = db.transaction(names, 'readwrite')
       const work: Promise<unknown>[] = [tx.done]
@@ -58,7 +51,21 @@ export async function openMirror(workspaceId: string): Promise<Mirror> {
         for (const id of o.remove ?? []) work.push(st.delete(id))
       }
       await Promise.all(work)
+  }
+  return {
+    all: (store) => db.getAll(store) as Promise<never>,
+    get: (store, id) => db.get(store, id) as Promise<never>,
+    async putMany(store, rows) {
+      try {
+        const tx = db.transaction(store, 'readwrite')
+        await Promise.all([...rows.map((r) => tx.store.put(r)), tx.done])
+      } catch (e) { throw friendly(e) }
     },
+    async deleteMany(store, ids) {
+      const tx = db.transaction(store, 'readwrite')
+      await Promise.all([...ids.map((id) => tx.store.delete(id)), tx.done])
+    },
+    async batch(ops) { try { await batchRaw(ops) } catch (e) { throw friendly(e) } },
     async getMeta(key) { return (await db.get('meta', key))?.value },
     async setMeta(key, value) { await db.put('meta', { key, value }) },
     async clear() {

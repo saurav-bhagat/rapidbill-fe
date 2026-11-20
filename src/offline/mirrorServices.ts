@@ -90,6 +90,17 @@ export function createMirrorServices() {
     importItems: (ops, source) => written(httpInventory.importItems(ops, source)),
   }
 
+  /** Keep a bill the server just confirmed, and its number, on this device straight away. */
+  const remember = async (v: Voucher) => {
+    await m().putMany('vouchers', [v])
+    const parts = /^(.+-\d{4})-(\d+)$/.exec(v.number)
+    if (parts) {
+      const top = (await m().getMeta<Record<string, number>>('numbering')) ?? {}
+      top[parts[1]!] = Math.max(top[parts[1]!] ?? 0, Number(parts[2]))
+      await m().setMeta('numbering', top)
+    }
+  }
+
   const owner = () => {
     const { user, workspace } = useAuth.getState()
     if (!user || !workspace) throw new AppError('authRequired')
@@ -116,6 +127,7 @@ export function createMirrorServices() {
       if (useSync.getState().online && (await waitingCount()) === 0) {
         try {
           const v = await api<Voucher>('/vouchers', { method: 'POST', body: payload, timeoutMs: 8000 })
+          await remember(v) // so the next bill's number is right even if the download below fails
           await syncNow()
           return v
         } catch (e) {

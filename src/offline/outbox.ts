@@ -6,7 +6,7 @@ import type { StorageAdapter } from '@/services/storage/localStorageAdapter'
 import type { Item, Party, Voucher } from '@/services/types'
 import { formatVoucherNo } from '@/lib/voucherNo'
 import type { Mirror } from './db'
-import { setSync } from './state'
+import { notifyOthers, setSync } from './state'
 
 /** A bill made on this device, waiting to be confirmed by the server. */
 export interface OutboxEntry {
@@ -28,9 +28,14 @@ export interface OutboxEntry {
 
 export const listOutbox = async (m: Mirror) => (await m.all<OutboxEntry>('outbox')).sort((a, b) => a.seq - b.seq)
 
-export async function refreshOutboxState(m: Mirror) {
+export async function refreshOutboxState(m: Mirror, tellOtherTabs = true) {
   const all = await listOutbox(m)
-  setSync({ pendingIds: all.filter((e) => e.status === 'pending').map((e) => e.id), failedIds: all.filter((e) => e.status === 'failed').map((e) => e.id) })
+  const waiting = all.filter((e) => e.status === 'pending')
+  setSync({
+    pendingIds: waiting.map((e) => e.id), failedIds: all.filter((e) => e.status === 'failed').map((e) => e.id),
+    oldestWaiting: waiting.reduce<string | null>((o, e) => (o === null || e.createdAt < o ? e.createdAt : o), null),
+  })
+  if (tellOtherTabs) notifyOthers('outbox')
   return all
 }
 
@@ -124,6 +129,15 @@ const TEMPORARY: ErrorKey[] = ['networkError', 'serverError', 'rateLimited', 'se
 
 const FLUSH_LOCK = 'rapidbill-outbox-flush'
 
+/** Is what the server holds for this bill different from what this device wants it to be? */
+function differs(saved: Voucher | undefined, want: OutboxEntry['payload']): boolean {
+  if (!saved || !Array.isArray(saved.lines)) return false // a reply we cannot read: assume it is the same
+  const lines = (ls: { itemId: string; qty: number; rate: number; discPct: number }[]) => JSON.stringify(ls.map((l) => [l.itemId, l.qty, l.rate, l.discPct]))
+  return lines(saved.lines) !== lines(want.lines)
+    || saved.partyId !== want.partyId || saved.payment !== want.payment || saved.date !== want.date
+    || (saved.remarks ?? '') !== (want.remarks ?? '') || JSON.stringify(saved.billDiscount ?? null) !== JSON.stringify(want.billDiscount ?? null)
+}
+
 /**
  * Send waiting bills, oldest first. Stops at the first sign the server is unreachable. A bill the server refuses is parked for a person.
  * The send lock is taken one bill at a time, so changing a waiting bill never has to wait for the whole queue.
@@ -136,7 +150,10 @@ export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachabl
       const e = await m.get<OutboxEntry>('outbox', first.id) // may have been edited, cancelled or sent since the list was read
       if (!e || e.status !== 'pending') return false
       try {
-        await api<Voucher>('/vouchers', { method: 'POST', body: e.payload, timeoutMs: 20_000 })
+        const saved = await api<Voucher>('/vouchers', { method: 'POST', body: e.payload, timeoutMs: 20_000 })
+        // The server may already have an older version of this bill (an earlier send whose reply was lost, before it was edited here).
+        // Sending a bill twice saves it once, so in that case the newer version is sent as an edit.
+        if (differs(saved, e.payload)) await api<Voucher>(`/vouchers/${e.id}`, { method: 'PUT', body: e.payload, timeoutMs: 20_000 })
         if (e.cancel) {
           try { await api<Voucher>(`/vouchers/${e.id}/cancel`, { method: 'POST', timeoutMs: 20_000 }) } catch (err) {
             if (!(err instanceof AppError && err.key === 'alreadyCancelled')) throw err // already cancelled counts as done

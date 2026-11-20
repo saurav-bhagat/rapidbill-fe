@@ -4,6 +4,7 @@ import { LocalDataUpload } from '@/auth/LocalDataUpload'
 import { apiEnabled } from '@/services/http/client'
 import { useHotkey } from '@/lib/hotkeys'
 import { useUI } from '@/store/ui'
+import { DeviceWarnings } from './DeviceWarnings'
 import { Toasts } from '../ui/Toasts'
 import { ShortcutsOverlay } from './ShortcutsOverlay'
 import { Sidebar } from './Sidebar'
@@ -34,6 +35,7 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
         <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-auto p-5 outline-none">
+          <DeviceWarnings />
           {apiEnabled && <LocalDataUpload variant="banner" />}
           <Outlet />
         </main>

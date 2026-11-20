@@ -5,6 +5,8 @@ import { Keyboard, LogOut, Plus } from 'lucide-react'
 import { NAV } from '@/lib/nav'
 import { useAuth } from '@/auth/session'
 import { useSync } from '@/offline/state'
+import { downloadBackup } from '@/offline/backup'
+import { currentMirror } from '@/offline/sync'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { apiEnabled } from '@/services/http/client'
 import { useUI } from '@/store/ui'
@@ -19,7 +21,8 @@ export function TopBar() {
   const { pathname } = useLocation()
   const current = NAV.find((n) => (n.path === '/' ? pathname === '/' : pathname.startsWith(n.path)))
   const setShortcutsOpen = useUI((s) => s.setShortcutsOpen)
-  const { user, logout } = useAuth()
+  const { user, workspace, logout } = useAuth()
+  const ws = workspace?.id
   const unsent = useSync((x) => x.pendingIds.length + x.failedIds.length)
   const [askLogout, setAskLogout] = useState(false)
   return (
@@ -46,7 +49,8 @@ export function TopBar() {
         )}
       </div>
       <ConfirmDialog open={askLogout} danger title={t('logoutWarn.title', { ns: 'auth' })} confirmLabel={t('logoutWarn.confirm', { ns: 'auth' })} onCancel={() => setAskLogout(false)} onConfirm={() => { setAskLogout(false); void logout() }}>
-        {t('logoutWarn.body', { ns: 'auth', count: unsent })}
+        <p>{t('logoutWarn.body', { ns: 'auth', count: unsent })}</p>
+        {ws && <Button className="mt-3" onClick={() => void downloadBackup(currentMirror(), ws)}>{t('device.download', { ns: 'common' })}</Button>}
       </ConfirmDialog>
     </header>
   )

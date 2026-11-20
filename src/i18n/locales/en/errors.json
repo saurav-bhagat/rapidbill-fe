@@ -48,5 +48,9 @@
   "networkError": "Cannot reach the server. Check your internet connection and try again.",
   "serverError": "Something went wrong on the server. Please try again.",
   "serverMessage": "{{message}}",
-  "billNeedsAttention": "The server did not accept this bill. Open \"bills need attention\" at the top to send it again or discard it."
+  "billNeedsAttention": "The server did not accept this bill. Open \"bills need attention\" at the top to send it again or discard it.",
+  "backupInvalid": "This is not a RapidBill backup file.",
+  "backupOtherAccount": "This backup belongs to a different account.",
+  "deviceStorageFull": "This device has no room left to save the bill. Free some space and try again.",
+  "storageBlocked": "This browser cannot store data (private browsing?)."
 }

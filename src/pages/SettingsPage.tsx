@@ -8,6 +8,7 @@ import { useHotkey } from '@/lib/hotkeys'
 import { useAsync } from '@/lib/useAsync'
 import { clearAllData, resetDemoData, services, type Settings } from '@/services'
 import { LocalDataUpload } from '@/auth/LocalDataUpload'
+import { DeviceData } from '@/components/settings/DeviceData'
 import { apiEnabled } from '@/services/http/client'
 import { toast } from '@/store/toast'
 import { Button } from '@/components/ui/Button'
@@ -135,6 +136,12 @@ export function SettingsPage() {
         {txt('bankIfsc', t('bank.ifsc'), { mono: true })}
         {txt('upiId', t('bank.upi'), { hint: t('bank.upiHint') })}
       </Section>
+
+      {apiEnabled && (
+        <Section title={t('device.title', { ns: 'common' })}>
+          <DeviceData />
+        </Section>
+      )}
 
       {apiEnabled && (
         <Section title={tAuth('migrate.settingsTitle')}>
