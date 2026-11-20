@@ -51,6 +51,8 @@ export const services: Services = apiEnabled ? httpServices() : localServices()
 /** First-run: seed demo data when the workspace is empty. */
 export async function bootstrap(): Promise<void> {
   if (apiEnabled) return // an account starts empty; demo data is opt-in from Settings
+  // Billing never blocks on recorded stock any more (goods can be on the shelf before the count is updated). Undo an older saved 'block' choice.
+  if ((await services.settings.get()).overIssue === 'BLOCK') await services.settings.save({ overIssue: 'ALLOW_WARN' })
   if (await adapter.isEmpty()) await writeSeed(adapter)
 }
 

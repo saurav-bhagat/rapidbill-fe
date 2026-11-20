@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { errorText } from '@/lib/errors'
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
+import { TextSizeControl } from '@/components/layout/TextSizeControl'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/Segmented'
@@ -45,7 +46,7 @@ export function AuthScreen() {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center bg-paper p-6">
-      <div className="absolute right-5 top-4"><LanguageSwitcher /></div>
+      <div className="absolute right-5 top-4 flex gap-2"><TextSizeControl /><LanguageSwitcher /></div>
       <div className="w-full max-w-sm rounded-lg border border-line bg-surface p-6 shadow-sm">
         <h1 className="text-2xl font-semibold">RapidBill</h1>
         <p className="mb-4 mt-1 text-sm text-ink-600">{t('tagline')}</p>

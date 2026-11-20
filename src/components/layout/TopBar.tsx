@@ -8,6 +8,7 @@ import { useUI } from '@/store/ui'
 import { Button } from '../ui/Button'
 import { Keycap } from '../ui/Keycap'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { TextSizeControl } from './TextSizeControl'
 
 export function TopBar() {
   const { t } = useTranslation()
@@ -19,6 +20,7 @@ export function TopBar() {
     <header className="no-print flex h-12 shrink-0 items-center justify-between border-b border-line bg-surface px-5">
       <h1 className="text-lg font-semibold">{current ? t(current.titleKey) : 'RapidBill'}</h1>
       <div className="flex items-center gap-2">
+        <TextSizeControl />
         <LanguageSwitcher />
         <button onClick={() => setShortcutsOpen(true)} className="flex h-8 items-center gap-2 rounded px-2 text-ink-600 hover:bg-sunken" aria-label={t('layout.keyboardShortcuts')}>
           <Keyboard size={16} />

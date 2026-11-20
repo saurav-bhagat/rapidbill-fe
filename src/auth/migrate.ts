@@ -74,7 +74,7 @@ export async function uploadLocalData(): Promise<LocalCounts> {
     // Always put settings back: the user's own if they had saved some, otherwise what the account had.
     const { id: _a, workspaceId: _b, createdBy: _c, createdAt: _d, updatedAt: _e, ...restore } = (userSettings ?? original) as Settings
     void [_a, _b, _c, _d, _e]
-    await api('/settings', { method: 'PUT', body: restore }).catch(() => api('/settings', { method: 'PUT', body: { overIssue: original.overIssue } }))
+    await api('/settings', { method: 'PUT', body: { ...restore, overIssue: 'ALLOW_WARN' } }).catch(() => api('/settings', { method: 'PUT', body: { overIssue: original.overIssue } }))
   }
   return { items: items.length, parties: parties.length, vouchers: vouchers.length }
 }

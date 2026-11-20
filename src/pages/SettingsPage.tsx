@@ -116,10 +116,6 @@ export function SettingsPage() {
           <span className="mb-1 block text-sm font-medium text-ink-600">{t('billing.defaultType')}</span>
           <Segmented label={t('billing.defaultType')} value={d.defaultTaxMode} onChange={(v) => set('defaultTaxMode', v)} options={[{ value: 'TAX_INVOICE', label: d.gstEnabled ? t('billing.taxInvoice') : t('billing.invoice') }, { value: 'CHALLAN', label: t('billing.challan') }]} />
         </div>
-        <div className="col-span-2">
-          <span className="mb-1 block text-sm font-medium text-ink-600">{t('billing.overIssue')}</span>
-          <Segmented label={t('billing.overIssueLabel')} value={d.overIssue} onChange={(v) => set('overIssue', v)} options={[{ value: 'BLOCK', label: t('billing.block') }, { value: 'ALLOW_WARN', label: t('billing.warn') }]} />
-        </div>
         <label className="col-span-2 flex cursor-pointer items-center gap-2">
           <input type="checkbox" checked={d.roundOffDefault} onChange={(e) => set('roundOffDefault', e.target.checked)} className="h-4 w-4 accent-[rgb(var(--primary))]" />
           {t('billing.roundOff')}

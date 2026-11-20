@@ -344,7 +344,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         setRows={setRows}
         items={items}
         basis={basis}
-        blockOverIssue={settings.overIssue === 'BLOCK'}
+        blockOverIssue={false}
         taxApplicable={effTax}
         showGst={gstOn}
         lineCalc={lineCalc}

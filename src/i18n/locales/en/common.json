@@ -1,6 +1,12 @@
 {
-  "language": { "label": "Language" },
-  "voucherType": { "challan": "Challan", "taxInvoice": "Tax Invoice", "invoice": "Invoice" },
+  "language": {
+    "label": "Language"
+  },
+  "voucherType": {
+    "challan": "Challan",
+    "taxInvoice": "Tax Invoice",
+    "invoice": "Invoice"
+  },
   "payment": {
     "PAID_CASH": "Paid · Cash",
     "PAID_UPI": "Paid · UPI",
@@ -31,12 +37,30 @@
     "nothingHere": "Nothing here yet."
   },
   "nav": {
-    "home": { "label": "Home", "title": "Home" },
-    "newIssue": { "label": "New Stock Issue", "title": "New Stock Issue" },
-    "register": { "label": "Issue Register", "title": "Stock Issue Register" },
-    "inventory": { "label": "Inventory", "title": "Inventory Master" },
-    "parties": { "label": "Parties", "title": "Parties & Departments" },
-    "settings": { "label": "Settings", "title": "Business & Print Settings" }
+    "home": {
+      "label": "Home",
+      "title": "Home"
+    },
+    "newIssue": {
+      "label": "New Stock Issue",
+      "title": "New Stock Issue"
+    },
+    "register": {
+      "label": "Issue Register",
+      "title": "Stock Issue Register"
+    },
+    "inventory": {
+      "label": "Inventory",
+      "title": "Inventory Master"
+    },
+    "parties": {
+      "label": "Parties",
+      "title": "Parties & Departments"
+    },
+    "settings": {
+      "label": "Settings",
+      "title": "Business & Print Settings"
+    }
   },
   "layout": {
     "skipToContent": "Skip to content",
@@ -53,5 +77,11 @@
     "title": "Something went wrong",
     "body": "The screen hit an unexpected error. Your saved data is safe. Reloading usually fixes it.",
     "reload": "Reload RapidBill"
+  },
+  "textSize": {
+    "label": "Text size",
+    "smaller": "Smaller text",
+    "larger": "Larger text",
+    "reset": "Reset text size"
   }
 }

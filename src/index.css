@@ -51,6 +51,8 @@
 }
 
 @media print {
+  /* printouts keep their own sizes whatever text size is chosen on screen */
+  html { font-size: 100% !important; }
   .no-print { display: none !important; }
   /* Print only the invoice: hide the whole app, reveal the portal copy. */
   #root { display: none !important; }
