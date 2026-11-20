@@ -117,10 +117,10 @@
     "creditParty": "Choose a party for a credit sale",
     "skipped_one": "{{count}} item no longer in inventory were skipped",
     "skipped_other": "{{count}} items no longer in inventory were skipped",
-    "exceedCurrent_one": "{{count}} line exceed current stock",
-    "exceedCurrent_other": "{{count}} lines exceed current stock",
-    "exceedAvailable_one": "{{count}} line exceed available stock",
-    "exceedAvailable_other": "{{count}} lines exceed available stock"
+    "exceedCurrent_one": "{{count}} line is above the recorded stock. You can still save.",
+    "exceedCurrent_other": "{{count}} lines are above the recorded stock. You can still save.",
+    "exceedAvailable_one": "{{count}} line is above the recorded stock. You can still save.",
+    "exceedAvailable_other": "{{count}} lines are above the recorded stock. You can still save."
   },
   "toast": {
     "updated": "Updated {{number}} · ₹{{amount}}",

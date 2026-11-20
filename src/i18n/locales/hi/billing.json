@@ -117,10 +117,10 @@
     "creditParty": "उधार बिक्री के लिए पार्टी चुनें",
     "skipped_one": "{{count}} आइटम अब इन्वेंटरी में नहीं है, छोड़ दिया गया",
     "skipped_other": "{{count}} आइटम अब इन्वेंटरी में नहीं हैं, छोड़ दिए गए",
-    "exceedCurrent_one": "{{count}} लाइन मौजूदा स्टॉक से ज़्यादा है",
-    "exceedCurrent_other": "{{count}} लाइनें मौजूदा स्टॉक से ज़्यादा हैं",
-    "exceedAvailable_one": "{{count}} लाइन उपलब्ध स्टॉक से ज़्यादा है",
-    "exceedAvailable_other": "{{count}} लाइनें उपलब्ध स्टॉक से ज़्यादा हैं"
+    "exceedCurrent_one": "{{count}} लाइन दर्ज स्टॉक से ज़्यादा है। आप फिर भी सहेज सकते हैं।",
+    "exceedCurrent_other": "{{count}} लाइनें दर्ज स्टॉक से ज़्यादा हैं। आप फिर भी सहेज सकते हैं।",
+    "exceedAvailable_one": "{{count}} लाइन दर्ज स्टॉक से ज़्यादा है। आप फिर भी सहेज सकते हैं।",
+    "exceedAvailable_other": "{{count}} लाइनें दर्ज स्टॉक से ज़्यादा हैं। आप फिर भी सहेज सकते हैं।"
   },
   "toast": {
     "updated": "{{number}} अपडेट हुआ · ₹{{amount}}",

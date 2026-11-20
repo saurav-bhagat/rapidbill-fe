@@ -110,19 +110,7 @@ export function createBillingService(adapter: StorageAdapter): BillingService {
       if (!(l.discPct >= 0 && l.discPct <= 100)) fail('lineDisc', { n: n + 1 })
     })
 
-    // Stock check is per item, across every line that uses it.
-    const requested = new Map<string, number>()
-    input.lines.forEach((l) => requested.set(l.itemId, roundQty((requested.get(l.itemId) ?? 0) + l.qty)))
-    const shortages: Shortage[] = []
-    requested.forEach((qty, itemId) => {
-      const it = byId.get(itemId)!
-      if (qty > it.currentStock) shortages.push({ itemId, name: it.name, available: it.currentStock, requested: qty })
-    })
-    if (shortages.length && w.settings.overIssue === 'BLOCK') {
-      const s = shortages[0]
-      const p = { name: s.name, available: s.available, requested: s.requested }
-      throw shortages.length > 1 ? new BillingError('stockShortMore', 'STOCK', { ...p, more: shortages.length - 1 }, shortages) : new BillingError('stockShort', 'STOCK', p, shortages)
-    }
+    // Stock never blocks a bill: goods can be on the shelf before the count is updated. Stock simply goes negative until someone fixes the count.
 
     const typed = input.number?.trim()
     if (typed && others.some((v) => v.number.toLowerCase() === typed.toLowerCase())) {

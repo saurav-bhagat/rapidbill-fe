@@ -9,7 +9,7 @@ import type { StorageAdapter } from './storage/localStorageAdapter'
 async function setup() {
   const a = createMemoryAdapter()
   await writeSeed(a)
-  await createSettingsService(a).save({ overIssue: 'BLOCK' }) // app default is warn-but-allow; most tests exercise the strict policy
+  await createSettingsService(a).save({ overIssue: 'BLOCK' }) // an old saved choice: must no longer stop billing
   const svc = createBillingService(a)
   const items = await a.read<Item>('items')
   const parties = await a.read<Party>('parties')
@@ -43,13 +43,12 @@ describe('billing.save', () => {
     expect(mine[1].balanceAfter).toBe(para.currentStock - 12)
   })
 
-  it('blocks over-issue (aggregated across lines) and changes nothing', async () => {
+  it('never blocks over-issue, even with an old BLOCK setting: stock goes negative and the ledger balances', async () => {
     const { a, svc, para } = await setup()
     const half = para.currentStock / 2 + 1
-    const snap = JSON.stringify(await a.read('items'))
-    await expect(svc.save(base({ lines: [{ itemId: para.id, qty: half, rate: 100, discPct: 0 }, { itemId: para.id, qty: half, rate: 100, discPct: 0 }] }))).rejects.toMatchObject({ code: 'STOCK' })
-    expect(JSON.stringify(await a.read('items'))).toBe(snap)
-    expect(await a.read<Voucher>('vouchers')).toHaveLength(3)
+    await svc.save(base({ lines: [{ itemId: para.id, qty: half, rate: 100, discPct: 0 }, { itemId: para.id, qty: half, rate: 100, discPct: 0 }] }))
+    expect((await a.read<Item>('items')).find((i) => i.id === para.id)!.currentStock).toBe(para.currentStock - 2 * half)
+    expect(await a.read<Voucher>('vouchers')).toHaveLength(4)
   })
 
   it('allows negative stock when policy says warn', async () => {
@@ -140,12 +139,12 @@ describe('billing.cancel / update', () => {
     await stockLedgerHolds(a)
   })
 
-  it('edit may use stock freed by the old version, but not more', async () => {
+  it('an edit that needs more than is in stock still saves', async () => {
     const { a, svc, para } = await setup()
     const v = await svc.save(base({ lines: [{ itemId: para.id, qty: para.currentStock, rate: 100, discPct: 0 }] })) // takes everything
     await svc.update(v.id, base({ number: v.number, lines: [{ itemId: para.id, qty: para.currentStock, rate: 100, discPct: 0 }] })) // same qty is fine
-    await expect(svc.update(v.id, base({ number: v.number, lines: [{ itemId: para.id, qty: para.currentStock + 1, rate: 100, discPct: 0 }] }))).rejects.toMatchObject({ code: 'STOCK' })
-    expect((await a.read<Item>('items')).find((i) => i.id === para.id)!.currentStock).toBe(0)
+    await svc.update(v.id, base({ number: v.number, lines: [{ itemId: para.id, qty: para.currentStock + 1, rate: 100, discPct: 0 }] }))
+    expect((await a.read<Item>('items')).find((i) => i.id === para.id)!.currentStock).toBe(-1)
     await stockLedgerHolds(a)
   })
 
