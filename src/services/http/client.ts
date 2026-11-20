@@ -75,7 +75,7 @@ function refresh(): Promise<boolean> {
 interface Opts { method?: string; body?: unknown; query?: Record<string, string | number | undefined>; auth?: boolean }
 
 async function send(path: string, o: Opts): Promise<Response> {
-  const url = new URL(`${API_URL}${path}`) // VITE_API_URL must be an absolute URL
+  const url = new URL(`${API_URL}${path}`, window.location.origin) // VITE_API_URL may be absolute (https://api.example.com) or same-origin (/api)
   for (const [k, v] of Object.entries(o.query ?? {})) if (v !== undefined && v !== '') url.searchParams.set(k, String(v))
   const headers: Record<string, string> = {}
   if (o.body !== undefined) headers['Content-Type'] = 'application/json'

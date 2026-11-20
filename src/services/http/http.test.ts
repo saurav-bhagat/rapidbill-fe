@@ -33,7 +33,7 @@ describe('api()', () => {
   let calls: { url: string; auth: string | null }[]
 
   beforeEach(() => {
-    vi.resetModules(); vi.stubEnv('VITE_API_URL', 'http://api.test'); calls = []
+    vi.resetModules(); vi.stubEnv('VITE_API_URL', 'http://api.test'); vi.stubGlobal('window', { location: { origin: 'http://localhost' } }); calls = []
     const mem = new Map<string, string>()
     vi.stubGlobal('localStorage', { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v), removeItem: (k: string) => void mem.delete(k) })
   })
