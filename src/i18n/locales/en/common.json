@@ -83,5 +83,13 @@
     "smaller": "Smaller text",
     "larger": "Larger text",
     "reset": "Reset text size"
+  },
+  "sync": {
+    "offline": "Offline",
+    "offlineHint": "No connection. You can browse and print; saving needs the internet for now.",
+    "syncing": "Syncing…",
+    "lastSynced": "Last synced {{time}}",
+    "updateReady": "Update available",
+    "updateHint": "A new version is ready. Reload to use it."
   }
 }

@@ -1,0 +1,125 @@
+import type { Item, Party, Settings, Voucher } from '@/services/types'
+import { api } from '@/services/http/client'
+import { AppError } from '@/services/errors'
+import type { Mirror } from './db'
+import { bumpVersion, setSync } from './state'
+
+/** Bills kept on the device (older ones are read from the server when online). */
+export const HISTORY_DAYS = 30
+
+interface Feed {
+  epoch: number
+  cursor: string
+  hasMore: boolean
+  items: Item[]
+  parties: Party[]
+  settings: Settings | null
+  vouchers: Voucher[]
+  deleted: { parties: string[] }
+}
+
+const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+export const historyFrom = (now = new Date()) => { const d = new Date(now); d.setDate(d.getDate() - HISTORY_DAYS); return isoDay(d) }
+
+/**
+ * Bring the device copy up to date. Safe to repeat: rows are saved by id, and progress is stored after every page,
+ * so an interrupted download carries on where it stopped. If the server says its data was reset (epoch changed), start over.
+ */
+export async function pull(mirror: Mirror, now = new Date()): Promise<{ changed: boolean }> {
+  let changed = false
+  let restarts = 0
+  let epoch = await mirror.getMeta<number>('epoch')
+  let cursor = await mirror.getMeta<string>('cursor')
+  let first = true
+
+  for (;;) {
+    const feed = await api<Feed>('/sync/changes', { query: { cursor, fresh: first && cursor ? '1' : '0', limit: 500, voucherFrom: historyFrom(now) } })
+
+    if (epoch !== undefined && feed.epoch !== epoch) {
+      if (++restarts > 2) throw new AppError('serverError')
+      await mirror.clear()
+      epoch = undefined; cursor = undefined; first = true; changed = true
+      continue
+    }
+    first = false
+
+    if (feed.items.length) await mirror.putMany('items', feed.items)
+    if (feed.parties.length) await mirror.putMany('parties', feed.parties)
+    if (feed.vouchers.length) await mirror.putMany('vouchers', feed.vouchers)
+    if (feed.settings) await mirror.putMany('settings', [feed.settings])
+    if (feed.deleted.parties.length) await mirror.deleteMany('parties', feed.deleted.parties)
+    if (feed.items.length || feed.parties.length || feed.vouchers.length || feed.settings || feed.deleted.parties.length) changed = true
+
+    epoch = feed.epoch
+    cursor = feed.cursor
+    await mirror.setMeta('epoch', epoch)
+    await mirror.setMeta('cursor', cursor)
+    if (!feed.hasMore) break
+  }
+
+  // Drop bills that have aged out of the window.
+  const from = historyFrom(now)
+  const old = (await mirror.all<Voucher>('vouchers')).filter((v) => v.date < from).map((v) => v.id)
+  if (old.length) { await mirror.deleteMany('vouchers', old); changed = true }
+
+  await mirror.setMeta('lastSyncAt', now.toISOString())
+  return { changed }
+}
+
+let mirrorRef: Mirror | null = null
+let running: Promise<void> | null = null
+let again = false
+
+/** Use `m` for all device-copy reads and writes. The previous one, if any, is closed. */
+export const attachMirror = (m: Mirror | null) => { if (mirrorRef && mirrorRef !== m) mirrorRef.close(); mirrorRef = m }
+export const currentMirror = (): Mirror => {
+  if (!mirrorRef) throw new AppError('serverError')
+  return mirrorRef
+}
+export const hasMirror = () => mirrorRef !== null
+
+/**
+ * Pull now, or after the pull in progress if one is already running (a write that finished while a pull was in flight
+ * is then still picked up). Never throws: a failure just marks the server unreachable.
+ */
+export function syncNow(): Promise<void> {
+  if (!mirrorRef) return Promise.resolve()
+  if (running) { again = true; return running }
+  const m = mirrorRef
+  running = (async () => {
+    setSync({ syncing: true })
+    try {
+      do {
+        again = false
+        const { changed } = await pull(m)
+        if (changed) bumpVersion()
+      } while (again)
+      setSync({ online: true, lastSyncAt: new Date().toISOString() })
+    } catch (e) {
+      if (e instanceof AppError && e.key === 'networkError') setSync({ online: false })
+    } finally {
+      setSync({ syncing: false })
+      running = null
+    }
+  })()
+  return running
+}
+
+/** True once the device copy has been downloaded at least once. */
+export const hasSyncedBefore = async (m: Mirror) => (await m.getMeta<string>('lastSyncAt')) !== undefined
+
+/** Keep the copy fresh: when the connection comes back, when the tab is shown again, and every minute while open. */
+export function startBackgroundSync(): () => void {
+  const tick = () => { if (document.visibilityState === 'visible') void syncNow() }
+  const goOffline = () => setSync({ online: false })
+  window.addEventListener('online', tick)
+  window.addEventListener('offline', goOffline)
+  document.addEventListener('visibilitychange', tick)
+  const id = window.setInterval(tick, 60_000)
+  return () => {
+    window.removeEventListener('online', tick)
+    window.removeEventListener('offline', goOffline)
+    document.removeEventListener('visibilitychange', tick)
+    window.clearInterval(id)
+  }
+}

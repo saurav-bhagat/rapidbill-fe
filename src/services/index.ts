@@ -6,7 +6,8 @@ import { createSettingsService } from './settings'
 import { writeSeed } from './seed'
 import { createLocalStorageAdapter } from './storage/localStorageAdapter'
 import { apiEnabled } from './http/client'
-import { createHttpBilling, createHttpInventory, createHttpItems, createHttpParties, createHttpSettings, createHttpVouchers, workspaceApi } from './http/services'
+import { createMirrorServices } from '../offline/mirrorServices'
+import { workspaceApi } from './http/services'
 import type { StockLedgerService } from './ledger'
 import type { SettingsService } from './settings'
 import type { Item, ItemService, Party, PartyService, Voucher, VoucherService } from './types'
@@ -35,14 +36,9 @@ function localServices(): Services {
   }
 }
 
+/** With an account: reads come from the copy on this device, writes go to the server (see offline/mirrorServices). */
 function httpServices(): Services {
-  const inventory = createHttpInventory()
-  const off = async (): Promise<never> => { throw new Error('The stock ledger is read per item through the API') }
-  return {
-    items: createHttpItems(), inventory, billing: createHttpBilling(), parties: createHttpParties(), vouchers: createHttpVouchers(),
-    ledger: { list: off, forItem: inventory.ledgerFor, append: off },
-    settings: createHttpSettings(),
-  }
+  return createMirrorServices()
 }
 
 /** The only thing UI code imports. With VITE_API_URL set it talks to the backend; without it, it uses this browser's storage. */
