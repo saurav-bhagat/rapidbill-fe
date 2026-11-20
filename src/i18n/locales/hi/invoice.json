@@ -5,7 +5,6 @@
     "invoice": "इनवॉइस"
   },
   "cancelled": "रद्द",
-  "noTax": "कोई टैक्स नहीं लगाया गया",
   "internalTransfer": "आंतरिक स्टॉक ट्रांसफ़र",
   "phone": "फ़ोन: {{phone}}",
   "gstin": "GSTIN",

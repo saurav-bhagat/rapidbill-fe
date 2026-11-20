@@ -48,7 +48,6 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
         </div>
         <div className="text-right">
           <div className="font-bold tracking-wide" style={{ fontSize: a4 ? 18 : 13 }}>{t(docTitleKey(v))}</div>
-          {!taxed && <div className="text-neutral-600">{t('noTax')}</div>}
           {v.mode === 'CHALLAN' && v.payment === 'INTERNAL' && <div className="text-neutral-600">{t('internalTransfer')}</div>}
         </div>
       </header>

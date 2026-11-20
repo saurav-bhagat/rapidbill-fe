@@ -5,7 +5,6 @@
     "invoice": "INVOICE"
   },
   "cancelled": "Cancelled",
-  "noTax": "No tax charged",
   "internalTransfer": "Internal stock transfer",
   "phone": "Ph: {{phone}}",
   "gstin": "GSTIN",
