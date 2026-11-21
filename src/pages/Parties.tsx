@@ -4,6 +4,7 @@ import { useSync } from '@/offline/state'
 import { Plus } from 'lucide-react'
 import { formatINR } from '@/lib/format'
 import { stateName } from '@/lib/gst'
+import { errorText } from '@/lib/errors'
 import { useHotkey } from '@/lib/hotkeys'
 import { matchesQuery } from '@/lib/search'
 import { useAsync } from '@/lib/useAsync'
@@ -11,6 +12,7 @@ import { services, type Party, type PartyType } from '@/services'
 import { toast } from '@/store/toast'
 import { PartyFormDrawer } from '@/components/parties/PartyFormDrawer'
 import { Badge } from '@/components/ui/Badge'
+import { LoadFailed } from '@/components/ui/LoadFailed'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Select } from '@/components/ui/Field'
@@ -30,7 +32,8 @@ export function Parties() {
   const tCommon = useTranslation('common').t
   const waiting = useSync((x) => x.pendingIds)
   const refused = useSync((x) => x.failedIds)
-  const { data: parties = [], reload } = useAsync(() => services.parties.list())
+  const { data: loaded, error: loadError, reload } = useAsync(() => services.parties.list())
+  const parties = loaded ?? []
   const { data: settings } = useAsync(() => services.settings.get())
   const [query, setQuery] = useState('')
   const [type, setType] = useState<PartyType | ''>('')
@@ -55,12 +58,16 @@ export function Parties() {
     const p = toDelete
     if (!p) return
     setToDelete(undefined)
-    const used = (await services.vouchers.list()).filter((v) => v.partyId === p.id).length
-    if (used > 0) return toast.error(t('toast.inUse', { name: p.name, count: used }))
-    await services.parties.remove(p.id)
-    toast.success(t('toast.deleted', { name: p.name }))
-    setSelectedId(undefined)
-    reload()
+    try {
+      const used = (await services.vouchers.list()).filter((v) => v.partyId === p.id).length
+      if (used > 0) return toast.error(t('toast.inUse', { name: p.name, count: used }))
+      await services.parties.remove(p.id)
+      toast.success(t('toast.deleted', { name: p.name }))
+      setSelectedId(undefined)
+      reload()
+    } catch (e) {
+      toast.error(errorText(t, e, t('toast.deleteFailed', { name: p.name })))
+    }
   }
 
   useHotkey('/', () => searchRef.current?.focus())
@@ -75,6 +82,8 @@ export function Parties() {
     { key: 'phone', header: t('columns.phone'), width: '130px', cell: (p) => <span className="text-ink-600">{p.phone || '-'}</span> },
     { key: 'balance', header: t('columns.balance'), width: '130px', align: 'right', sortable: true, cell: (p) => (p.balance === 0 ? <span className="text-ink-400">-</span> : <span className={p.balance > 0 ? 'text-ink-900' : 'text-ok'}>{formatINR(Math.abs(p.balance))} {p.balance > 0 ? t('dr') : t('cr')}</span>) },
   ]
+
+  if (loadError && !loaded) return <LoadFailed error={loadError} onRetry={reload} />
 
   return (
     <div className="flex h-full flex-col gap-3">

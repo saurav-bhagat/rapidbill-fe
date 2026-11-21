@@ -76,7 +76,9 @@
     "warn": {
       "aboveMrp": "Issue rate is higher than MRP.",
       "loss": "Issue rate is below purchase rate (selling at a loss)."
-    }
+    },
+    "addedOffline": "Added {{name}} on this device. It will be sent when you are back online.",
+    "updatedOffline": "Updated {{name}} on this device. It will be sent when you are back online."
   },
   "adjust": {
     "title": "Adjust stock",
@@ -114,6 +116,8 @@
       "CANCEL": "Issue cancelled",
       "EDIT_REVERSE": "Issue edited",
       "ADJUST": "Adjustment"
-    }
+    },
+    "failed": "Could not load the stock history.",
+    "retry": "Try again"
   }
 }

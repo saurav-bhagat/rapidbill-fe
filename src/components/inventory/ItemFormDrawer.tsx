@@ -6,6 +6,7 @@ import { enterAsTab, focusFirstError } from '@/lib/formNav'
 import { draftFromItem, emptyDraft, formatExpiryInput, msgText, nextItemCode, validateItemDraft, type ItemDraft, type ItemErrors } from '@/lib/itemForm'
 import { parseRupees } from '@/lib/money'
 import { services, GST_SLABS, UNITS, type Item } from '@/services'
+import { isWaiting } from '@/lib/saved'
 import { useAsync } from '@/lib/useAsync'
 import { toast } from '@/store/toast'
 import { Button } from '../ui/Button'
@@ -67,7 +68,7 @@ export function ItemFormDrawer({ open, item, initialName, existingItems, onClose
       const saved = item
         ? await services.inventory.updateItem(item.id, (({ currentStock: _s, ...rest }) => (void _s, rest))(res.value))
         : await services.inventory.createItem(res.value)
-      toast.success(t(item ? 'form.updated' : 'form.added', { name: saved.name }))
+      toast.success(t(isWaiting(saved.id) ? (item ? 'form.updatedOffline' : 'form.addedOffline') : (item ? 'form.updated' : 'form.added'), { name: saved.name }))
       onSaved(saved)
     } catch (e2) {
       toast.error(errorText(t, e2, t('form.saveFailed')))

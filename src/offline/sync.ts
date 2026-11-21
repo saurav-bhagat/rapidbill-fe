@@ -3,6 +3,7 @@ import { api } from '@/services/http/client'
 import { AppError } from '@/services/errors'
 import type { Mirror } from './db'
 import { listOutbox, flushOutbox, refreshOutboxState } from './outbox'
+import { noticeSent, noticeServerTrouble } from './notices'
 import { bumpVersion, onOthers, setSync, useSync } from './state'
 
 /** Bills kept on the device (older ones are read from the server when online). */
@@ -80,6 +81,7 @@ export async function pull(mirror: Mirror, now = new Date()): Promise<{ changed:
 
 let mirrorRef: Mirror | null = null
 let running: Promise<void> | null = null
+let troubleTold = false
 let again = false
 
 /** Use `m` for all device-copy reads and writes. The previous one, if any, is closed. */
@@ -108,9 +110,15 @@ export function syncNow(): Promise<void> {
       do {
         again = false
         // Bills made here go up first. While any are still waiting, do not download: that would put back the stock they already took.
-        const { sent, unreachable } = await flushOutbox(m)
-        if (sent) bumpVersion()
-        if (unreachable) { setSync({ online: false }); break }
+        const { sent, unreachable, why } = await flushOutbox(m)
+        if (sent) { bumpVersion(); noticeSent(sent) }
+        troubleTold = false
+        if (unreachable) {
+          // Only a missing connection means "offline". A server fault or an expired login is something else and is told differently.
+          if (why === 'networkError') setSync({ online: false })
+          else if ((why === 'serverError' || why === 'rateLimited') && !troubleTold) { troubleTold = true; noticeServerTrouble() }
+          break
+        }
         const stillWaiting = (await listOutbox(m)).some((e) => e.status === 'pending')
         if (stillWaiting) break
         const { changed } = await pull(m)
@@ -119,6 +127,7 @@ export function syncNow(): Promise<void> {
       } while (again)
     } catch (e) {
       if (e instanceof AppError && e.key === 'networkError') setSync({ online: false })
+      else if (!troubleTold) { troubleTold = true; noticeServerTrouble() } // once per spell of trouble, not every minute
     } finally {
       setSync({ syncing: false })
       running = null

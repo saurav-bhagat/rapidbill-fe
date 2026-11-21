@@ -29,7 +29,9 @@ export function LocalDataUpload({ variant }: { variant: 'banner' | 'settings' })
       toast.success(`${t('migrate.done', { ...r })} ${t('migrate.keepNote')}`)
       setTimeout(() => window.location.reload(), 1200)
     } catch (e) {
-      setError(t('migrate.failed', { reason: errorText(t, e) }))
+      const msg = t('migrate.failed', { reason: errorText(t, e) })
+      setError(msg)
+      toast.error(msg)
       setBusy(false)
     }
   }

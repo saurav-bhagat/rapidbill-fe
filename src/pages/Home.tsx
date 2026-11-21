@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LoadFailed } from '@/components/ui/LoadFailed'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowDownRight, ArrowUpRight, Plus } from 'lucide-react'
 import { formatAmount, formatDate, formatINR, formatQty, todayISO } from '@/lib/format'
@@ -69,12 +70,17 @@ export function Home() {
   const navigate = useNavigate()
   const [days, setDays] = useState<'7' | '30'>('7')
   // The last month kept on this device: instant, works offline, and covers every figure on this screen.
-  const { data: vouchers } = useAsync(() => (services.vouchers.recent ?? services.vouchers.list)())
-  const { data: items } = useAsync(() => services.items.list())
-  const { data: settings } = useAsync(() => services.settings.get())
+  const q1 = useAsync(() => (services.vouchers.recent ?? services.vouchers.list)())
+  const q2 = useAsync(() => services.items.list())
+  const q3 = useAsync(() => services.settings.get())
+  const { data: vouchers } = q1
+  const { data: items } = q2
+  const { data: settings } = q3
   useHotkey('n', () => navigate('/issue/new'))
 
   const d = useMemo(() => (vouchers && items ? buildDashboard(vouchers, items, todayISO(), Number(days)) : null), [vouchers, items, days])
+  const failed = q1.error ?? q2.error ?? q3.error
+  if (failed && (!d || !settings)) return <LoadFailed error={failed} onRetry={() => { q1.reload(); q2.reload(); q3.reload() }} />
   if (!d || !settings) return <div className="text-ink-400">{tc('status.loading')}</div>
 
   const gstOn = settings.gstEnabled !== false

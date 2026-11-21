@@ -1,4 +1,5 @@
 import 'fake-indexeddb/auto'
+;(globalThis as { document?: unknown }).document ??= { documentElement: {} }
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Item, Party, Settings, Voucher } from '@/services/types'
 
@@ -36,6 +37,7 @@ async function setup(opts: { numbering?: Record<string, number> } = {}) {
   const state = await import('./state')
   const outbox = await import('./outbox')
   const { AppError } = await import('@/services/errors')
+  await (await import('@/i18n')).initI18n()
   const m = await openMirror(`b-${++n}`)
   sync.attachMirror(m)
   await m.putMany('settings', [settings])
@@ -110,7 +112,7 @@ describe('sending waiting bills', () => {
     await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
     await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
     handler = () => t.net()
-    expect(await t.flushOutbox(t.m)).toEqual({ sent: 0, unreachable: true })
+    expect(await t.flushOutbox(t.m)).toMatchObject({ sent: 0, unreachable: true, why: 'networkError' })
     expect((await t.listOutbox(t.m)).map((e) => e.status)).toEqual(['pending', 'pending'])
   })
 
@@ -157,6 +159,54 @@ describe('sending waiting bills', () => {
     expect(await t.m.get('vouchers', v.id)).toBeUndefined()
     expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(10)
     expect((await t.m.get<Party>('parties', 'p1'))!.balance).toBe(0)
+  })
+})
+
+describe('telling the person what happened', () => {
+  const messages = async () => (await import('@/store/toast')).useToasts.getState().toasts.map((x) => `${x.kind}:${x.message}`)
+  const clear = async () => (await import('@/store/toast')).useToasts.getState().clear()
+
+  it('says so when waiting bills were sent, once', async () => {
+    const t = await setup()
+    t.setSync({ online: false })
+    await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
+    await clear()
+    handler = (p) => (p === '/vouchers' ? {} : emptyFeed)
+    await t.syncNow()
+    expect((await messages()).filter((m) => m === 'success:1 item sent to the server.')).toHaveLength(1)
+  })
+
+  it('says so when the server turns something down', async () => {
+    const t = await setup()
+    await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
+    await clear()
+    handler = (p) => (p === '/vouchers' ? new t.AppError('duplicateNumber', { number: 'x' }) : emptyFeed)
+    await t.syncNow()
+    expect((await messages()).some((m) => m.startsWith('error:The server did not accept 1 item'))).toBe(true)
+  })
+
+  it('a server fault is reported as trouble, not as being offline, and only once while it lasts', async () => {
+    const t = await setup()
+    t.setSync({ online: true })
+    await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
+    await clear()
+    handler = (p) => (p === '/vouchers' ? new t.AppError('serverError') : emptyFeed)
+    await t.syncNow(); await t.syncNow(); await t.syncNow()
+    const m = await messages()
+    expect(m.filter((x) => x.includes('The server is having trouble'))).toHaveLength(1)
+    expect(m.some((x) => x.includes('You are offline'))).toBe(false)
+    expect(t.useSync.getState().online).toBe(true)
+  })
+
+  it('says when the connection is lost and when it is back', async () => {
+    const t = await setup()
+    t.setSync({ online: true })
+    const stop = (await import('./notices')).startNotices()
+    await clear()
+    t.setSync({ online: false })
+    t.setSync({ online: true })
+    stop()
+    expect(await messages()).toEqual([expect.stringMatching(/^warning:You are offline/), 'success:Back online.'])
   })
 })
 

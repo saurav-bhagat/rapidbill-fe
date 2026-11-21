@@ -3,6 +3,7 @@ import { useBlocker } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LANGS, loadLocale, setLang, type Lang } from '@/i18n'
 import { errorText } from '@/lib/errors'
+import { setFlash } from '@/lib/flash'
 import { checkGstin, STATES } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
 import { useAsync } from '@/lib/useAsync'
@@ -12,6 +13,7 @@ import { DeviceData } from '@/components/settings/DeviceData'
 import { apiEnabled } from '@/services/http/client'
 import { toast } from '@/store/toast'
 import { Button } from '@/components/ui/Button'
+import { LoadFailed } from '@/components/ui/LoadFailed'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/Segmented'
@@ -31,7 +33,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 export function SettingsPage() {
   const { t, i18n } = useTranslation('settings')
   const { t: tAuth } = useTranslation('auth')
-  const { data: saved, reload } = useAsync(() => services.settings.get())
+  const { data: saved, error: loadError, reload } = useAsync(() => services.settings.get())
   const [d, setD] = useState<Settings>()
   const [errors, setErrors] = useState<Errors>({})
   const [saving, setSaving] = useState(false)
@@ -67,7 +69,7 @@ export function SettingsPage() {
   }
   useHotkey('mod+s', save, { scope: 'list' })
 
-  if (!d) return <div className="p-6 text-ink-400">{t('loading')}</div>
+  if (!d) return loadError ? <LoadFailed error={loadError} onRetry={reload} /> : <div className="p-6 text-ink-400">{t('loading')}</div>
   const txt = (k: 'companyName' | 'phone' | 'invoicePrefix' | 'bankName' | 'bankAccount' | 'bankIfsc' | 'upiId', label: string, extra?: { hint?: string; mono?: boolean }) => (
     <Field label={label} error={errors[k]} hint={extra?.hint}>
       <Input name={k} value={d[k]} onChange={(e) => set(k, e.target.value)} className={extra?.mono ? 'font-mono' : ''} aria-invalid={!!errors[k]} />
@@ -163,10 +165,10 @@ export function SettingsPage() {
         <Button variant="primary" hotkey="mod+s" onClick={save} disabled={!dirty || saving}>{t('footer.save')}</Button>
       </div>
 
-      <TypedConfirm open={danger === 'reset'} word="RESET" title={t('data.resetTitle')} confirmLabel={t('data.resetConfirm')} onCancel={() => setDanger(undefined)} askPassword={apiEnabled} onConfirm={async (pw) => { try { await resetDemoData(pw) } catch (e) { throw new Error(errorText(t, e)) } window.location.reload() }}>
+      <TypedConfirm open={danger === 'reset'} word="RESET" title={t('data.resetTitle')} confirmLabel={t('data.resetConfirm')} onCancel={() => setDanger(undefined)} askPassword={apiEnabled} onConfirm={async (pw) => { try { await resetDemoData(pw) } catch (e) { throw new Error(errorText(t, e)) } setFlash('resetDone'); window.location.reload() }}>
         {t('data.resetBody')}
       </TypedConfirm>
-      <TypedConfirm open={danger === 'clear'} word="DELETE" title={t('data.clearTitle')} confirmLabel={t('data.clearConfirm')} onCancel={() => setDanger(undefined)} askPassword={apiEnabled} onConfirm={async (pw) => { try { await clearAllData(pw) } catch (e) { throw new Error(errorText(t, e)) } window.location.reload() }}>
+      <TypedConfirm open={danger === 'clear'} word="DELETE" title={t('data.clearTitle')} confirmLabel={t('data.clearConfirm')} onCancel={() => setDanger(undefined)} askPassword={apiEnabled} onConfirm={async (pw) => { try { await clearAllData(pw) } catch (e) { throw new Error(errorText(t, e)) } setFlash('clearDone'); window.location.reload() }}>
         {t('data.clearBody')}
       </TypedConfirm>
       <ConfirmDialog open={blocker.state === 'blocked'} title={t('leave.title')} confirmLabel={t('leave.confirm')} danger onConfirm={() => blocker.state === 'blocked' && blocker.proceed()} onCancel={() => blocker.state === 'blocked' && blocker.reset()}>

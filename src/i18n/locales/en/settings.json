@@ -70,7 +70,9 @@
     "resetBody": "All items, parties, vouchers, stock history and settings are replaced with the demo set. This cannot be undone.",
     "clearTitle": "Clear all data?",
     "clearConfirm": "Delete all data",
-    "clearBody": "Every item, party, voucher and stock movement is permanently deleted. Your company settings are kept. This cannot be undone."
+    "clearBody": "Every item, party, voucher and stock movement is permanently deleted. Your company settings are kept. This cannot be undone.",
+    "resetDone": "Sample data restored. Your business details were replaced too.",
+    "clearDone": "All items, parties and bills were deleted. Your settings were kept."
   },
   "errors": {
     "companyName": "Company name is needed on every invoice",

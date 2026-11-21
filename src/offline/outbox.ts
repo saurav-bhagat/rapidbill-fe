@@ -6,7 +6,8 @@ import type { StorageAdapter } from '@/services/storage/localStorageAdapter'
 import type { Item, Meta, Party, Voucher } from '@/services/types'
 import { formatVoucherNo } from '@/lib/voucherNo'
 import type { Mirror } from './db'
-import { notifyOthers, setSync } from './state'
+import { noticeRefused } from './notices'
+import { notifyOthers, setSync, useSync } from './state'
 
 type VoucherPayload = VoucherInput & { id: string; clientCreatedAt: string }
 /** What the server is sent when an item or party made here is created there. The id is chosen on this device. */
@@ -44,6 +45,9 @@ export const listOutbox = async (m: Mirror) => (await m.all<OutboxEntry>('outbox
 export async function refreshOutboxState(m: Mirror, tellOtherTabs = true) {
   const all = await listOutbox(m)
   const waiting = all.filter((e) => e.status === 'pending')
+  const failedNow = all.filter((e) => e.status === 'failed')
+  const grew = failedNow.filter((e) => !useSync.getState().failedIds.includes(e.id)).length
+  if (tellOtherTabs) noticeRefused(grew) // something the server turned down: tell the person once
   setSync({
     pendingIds: waiting.map((e) => e.id), failedIds: all.filter((e) => e.status === 'failed').map((e) => e.id),
     oldestWaiting: waiting.reduce<string | null>((o, e) => (o === null || e.createdAt < o ? e.createdAt : o), null),
@@ -185,9 +189,10 @@ async function send(e: OutboxEntry): Promise<void> {
  * Send waiting entries, oldest first. Stops at the first sign the server is unreachable. One the server refuses is parked for a person.
  * The send lock is taken one entry at a time, so changing a waiting bill never has to wait for the whole queue.
  */
-export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachable: boolean }> {
+export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachable: boolean; why?: ErrorKey }> {
   let sent = 0
   let unreachable = false
+  let why: ErrorKey | undefined
   for (;;) {
     // Always the oldest waiting entry as it stands now: an edit may have moved one to the back of the queue since we last looked.
     const next = (await listOutbox(m)).find((x) => x.status === 'pending')
@@ -202,7 +207,7 @@ export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachabl
         sent++
         return 'done'
       } catch (err) {
-        if (!(err instanceof AppError) || TEMPORARY.includes(err.key)) { unreachable = true; return 'stop' }
+        if (!(err instanceof AppError) || TEMPORARY.includes(err.key)) { unreachable = true; why = err instanceof AppError ? err.key : 'networkError'; return 'stop' }
         await m.batch([{ store: 'outbox', put: [{ ...e, status: 'failed', attempts: e.attempts + 1, error: { key: err.key, params: err.params } }] }])
         return 'done'
       }
@@ -210,7 +215,7 @@ export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachabl
     if (outcome === 'stop') break
   }
   await refreshOutboxState(m)
-  return { sent, unreachable }
+  return { sent, unreachable, why }
 }
 
 /**

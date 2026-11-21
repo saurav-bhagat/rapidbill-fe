@@ -6,6 +6,7 @@ import { calcVoucher, type CalcLine } from '@/lib/calc'
 import { formatAmount, formatINR, todayISO } from '@/lib/format'
 import { stateName } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
+import { isWaiting } from '@/lib/saved'
 import { useAsync } from '@/lib/useAsync'
 import { BillingError, services, type Item, type PaymentStatus, type Party, type Voucher, type VoucherMode } from '@/services'
 import { toast } from '@/store/toast'
@@ -18,6 +19,7 @@ import { ItemFormDrawer } from '@/components/inventory/ItemFormDrawer'
 import { PartyFormDrawer } from '@/components/parties/PartyFormDrawer'
 import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
 import { Badge } from '@/components/ui/Badge'
+import { LoadFailed } from '@/components/ui/LoadFailed'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Segmented } from '@/components/ui/Segmented'
 
@@ -31,7 +33,8 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const fromId = editId ? undefined : sp.get('from') ?? undefined
   const sourceId = editId ?? fromId
   const { data: source, loading: sourceLoading } = useAsync(() => (sourceId ? services.vouchers.get(sourceId) : Promise.resolve(undefined)), [sourceId])
-  const { data: rawItems = [], reload: reloadItems } = useAsync(() => services.items.list())
+  const itemsQ = useAsync(() => services.items.list())
+  const { data: rawItems = [], reload: reloadItems } = itemsQ
   const items = useMemo<Item[]>(() => {
     // while editing, the old version's quantities are about to be put back, so they count as available
     if (!editId || !source) return rawItems
@@ -40,7 +43,8 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     return rawItems.map((i) => (back.has(i.id) ? { ...i, currentStock: i.currentStock + back.get(i.id)! } : i))
   }, [rawItems, source, editId])
   const { data: parties = [], reload: reloadParties } = useAsync(() => services.parties.list())
-  const { data: settings } = useAsync(() => services.settings.get())
+  const settingsQ = useAsync(() => services.settings.get())
+  const { data: settings } = settingsQ
 
   const [rows, setRows] = useState<Row[]>(() => [blankRow()])
   const [date, setDate] = useState(todayISO())
@@ -93,7 +97,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   // The number lookup can finish after the bill being edited has loaded; its answer must never replace that bill's own number.
   const keepNumber = useRef(false)
   keepNumber.current = numberTouched || !!editId
-  const refreshNumber = useCallback(async (d: string) => { const n = await services.billing.nextNumber(d); if (!keepNumber.current) setNumber(n) }, [])
+  const refreshNumber = useCallback(async (d: string) => { try { const n = await services.billing.nextNumber(d); if (!keepNumber.current) setNumber(n) } catch { toast.warning(t('toast.numberFailed')) } }, [t])
   useEffect(() => { if (!numberTouched && !editId && /^\d{4}-\d{2}-\d{2}$/.test(date)) refreshNumber(date) }, [date, numberTouched, editId, refreshNumber, saved])
 
   // ---- edit / duplicate: fill the form from an existing voucher, once
@@ -210,12 +214,12 @@ export function StockIssueNew({ editId }: { editId?: string }) {
       if (editId) {
         leaving.current = true
         if (kind === 'print') setSaved(v)
-        else { toast.success(t('toast.updated', { number: v.number, amount: formatAmount(v.totals.grandTotal) })); navigate('/issues') }
+        else { toast.success(t(isWaiting(v.id) ? 'toast.updatedOffline' : 'toast.updated', { number: v.number, amount: formatAmount(v.totals.grandTotal) })); navigate('/issues') }
         return
       }
       resetForm(kind === 'new')
       if (fromId) setSp({}, { replace: true }) // leave duplicate mode
-      if (kind === 'new') toast.success(t('toast.saved', { number: v.number, amount: formatAmount(v.totals.grandTotal) }))
+      if (kind === 'new') toast.success(t(isWaiting(v.id) ? 'toast.savedOffline' : 'toast.saved', { number: v.number, amount: formatAmount(v.totals.grandTotal) }))
       else setSaved(v)
     } catch (err) {
       if (err instanceof BillingError && err.code === 'STOCK') {
@@ -250,6 +254,8 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const usage = usageByItem(rows)
   const overCount = rows.filter((r) => rowStatus(r, usage).shortBy).length
 
+  const loadError = itemsQ.error ?? settingsQ.error
+  if (loadError && !ready) return <LoadFailed error={loadError} onRetry={() => { itemsQ.reload(); settingsQ.reload() }} />
   if (!ready || (sourceId && sourceLoading)) return <div className="p-6 text-ink-400">{t('loading')}</div>
   if (sourceId && !source) return <div className="p-6 text-ink-600">{t('notFound')}</div>
 

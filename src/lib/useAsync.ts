@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSync } from '@/offline/state'
+import { reportLoadError } from './notify'
 
 /** Minimal async loader for service calls. */
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
@@ -10,7 +11,8 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const run = useCallback(fn, deps)
   const reload = useCallback(() => {
     setLoading(true)
-    run().then(setData).catch(setError).finally(() => setLoading(false))
+    setError(undefined)
+    run().then(setData).catch((e: Error) => { setError(e); reportLoadError(e) }).finally(() => setLoading(false))
   }, [run])
   useEffect(reload, [reload])
   // When a background sync brought in new data, refresh quietly, and only replace what is shown if it really changed

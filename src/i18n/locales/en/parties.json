@@ -1,7 +1,22 @@
 {
-  "type": { "customer": "Customer", "department": "Department", "branch": "Branch" },
-  "typePlural": { "customer": "Customers", "department": "Departments", "branch": "Branches" },
-  "columns": { "name": "Name", "type": "Type", "gstin": "GSTIN", "state": "State", "phone": "Phone", "balance": "Balance" },
+  "type": {
+    "customer": "Customer",
+    "department": "Department",
+    "branch": "Branch"
+  },
+  "typePlural": {
+    "customer": "Customers",
+    "department": "Departments",
+    "branch": "Branches"
+  },
+  "columns": {
+    "name": "Name",
+    "type": "Type",
+    "gstin": "GSTIN",
+    "state": "State",
+    "phone": "Phone",
+    "balance": "Balance"
+  },
   "unregistered": "Unregistered",
   "dr": "Dr",
   "cr": "Cr",
@@ -13,7 +28,10 @@
   "count_other": "{{count}} parties",
   "countOf": "{{shown}} of {{total}} parties",
   "tableLabel": "Parties",
-  "empty": { "none": "No parties yet. Press N to add one.", "filtered": "No parties match." },
+  "empty": {
+    "none": "No parties yet. Press N to add one.",
+    "filtered": "No parties match."
+  },
   "hint": "↑ ↓ to move · Enter or E to edit · Delete to remove · / search · N new party",
   "delete": {
     "title": "Delete party?",
@@ -26,7 +44,10 @@
     "deleted": "Deleted {{name}}",
     "updated": "Updated {{name}}",
     "added": "Added {{name}}",
-    "saveFailed": "Could not save party"
+    "saveFailed": "Could not save party",
+    "addedOffline": "Added {{name}} on this device. It will be sent when you are back online.",
+    "updatedOffline": "Updated {{name}} on this device. It will be sent when you are back online.",
+    "deleteFailed": "Could not delete {{name}}"
   },
   "form": {
     "editTitle": "Edit party",

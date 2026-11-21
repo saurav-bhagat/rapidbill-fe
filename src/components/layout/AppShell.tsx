@@ -5,7 +5,6 @@ import { apiEnabled } from '@/services/http/client'
 import { useHotkey } from '@/lib/hotkeys'
 import { useUI } from '@/store/ui'
 import { DeviceWarnings } from './DeviceWarnings'
-import { Toasts } from '../ui/Toasts'
 import { ShortcutsOverlay } from './ShortcutsOverlay'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
@@ -41,7 +40,6 @@ export function AppShell() {
         </main>
       </div>
       <ShortcutsOverlay />
-      <Toasts />
     </div>
   )
 }

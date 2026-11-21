@@ -126,7 +126,10 @@
     "updated": "Updated {{number}} · ₹{{amount}}",
     "saved": "Saved {{number}} · ₹{{amount}}",
     "itemAdded": "{{name}} added to inventory",
-    "saveFailed": "Could not save voucher"
+    "saveFailed": "Could not save voucher",
+    "savedOffline": "Saved {{number}} · ₹{{amount}} on this device. It will be sent when you are back online.",
+    "updatedOffline": "Updated {{number}} · ₹{{amount}} on this device. It will be sent when you are back online.",
+    "numberFailed": "Could not get the next voucher number. You can type one."
   },
   "print": {
     "titleChallan": "Stock issue challan {{number}}",

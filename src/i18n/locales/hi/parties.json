@@ -1,7 +1,22 @@
 {
-  "type": { "customer": "ग्राहक", "department": "विभाग", "branch": "ब्रांच" },
-  "typePlural": { "customer": "ग्राहक", "department": "विभाग", "branch": "ब्रांच" },
-  "columns": { "name": "नाम", "type": "प्रकार", "gstin": "GSTIN", "state": "राज्य", "phone": "फ़ोन", "balance": "बैलेंस" },
+  "type": {
+    "customer": "ग्राहक",
+    "department": "विभाग",
+    "branch": "ब्रांच"
+  },
+  "typePlural": {
+    "customer": "ग्राहक",
+    "department": "विभाग",
+    "branch": "ब्रांच"
+  },
+  "columns": {
+    "name": "नाम",
+    "type": "प्रकार",
+    "gstin": "GSTIN",
+    "state": "राज्य",
+    "phone": "फ़ोन",
+    "balance": "बैलेंस"
+  },
   "unregistered": "रजिस्टर्ड नहीं",
   "dr": "Dr",
   "cr": "Cr",
@@ -13,7 +28,10 @@
   "count_other": "{{count}} पार्टी",
   "countOf": "{{total}} में से {{shown}} पार्टी",
   "tableLabel": "पार्टी",
-  "empty": { "none": "अभी कोई पार्टी नहीं है। जोड़ने के लिए N दबाएँ।", "filtered": "कोई पार्टी नहीं मिली।" },
+  "empty": {
+    "none": "अभी कोई पार्टी नहीं है। जोड़ने के लिए N दबाएँ।",
+    "filtered": "कोई पार्टी नहीं मिली।"
+  },
   "hint": "↑ ↓ चलने के लिए · Enter या E बदलें · Delete हटाएँ · / खोजें · N नई पार्टी",
   "delete": {
     "title": "पार्टी हटाएँ?",
@@ -26,7 +44,10 @@
     "deleted": "{{name}} हटाई गई",
     "updated": "{{name}} बदली गई",
     "added": "{{name}} जोड़ी गई",
-    "saveFailed": "पार्टी सेव नहीं हो सकी"
+    "saveFailed": "पार्टी सेव नहीं हो सकी",
+    "addedOffline": "{{name}} इस डिवाइस पर जोड़ी गई। ऑनलाइन होने पर भेज दी जाएगी।",
+    "updatedOffline": "{{name}} इस डिवाइस पर बदली गई। ऑनलाइन होने पर भेज दी जाएगी।",
+    "deleteFailed": "{{name}} हटाई नहीं जा सकी"
   },
   "form": {
     "editTitle": "पार्टी बदलें",

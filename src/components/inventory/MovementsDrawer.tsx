@@ -1,6 +1,7 @@
 import { format, parseISO } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import { Pencil, SlidersHorizontal } from 'lucide-react'
+import { errorText } from '@/lib/errors'
 import { formatINR, formatQty } from '@/lib/format'
 import { useHotkey } from '@/lib/hotkeys'
 import { useAsync } from '@/lib/useAsync'
@@ -14,7 +15,7 @@ interface Props { item?: Item; open: boolean; version: number; onClose: () => vo
 
 export function MovementsDrawer({ item, open, version, onClose, onEdit, onAdjust }: Props) {
   const { t } = useTranslation('inventory')
-  const { data, loading } = useAsync(() => (item ? services.inventory.ledgerFor(item.id) : Promise.resolve([])), [item?.id, open, version])
+  const { data, loading, error, reload } = useAsync(() => (item ? services.inventory.ledgerFor(item.id) : Promise.resolve([])), [item?.id, open, version])
   useHotkey('e', onEdit, { scope: 'modal', enabled: open })
   useHotkey('a', onAdjust, { scope: 'modal', enabled: open })
   const rows = [...(data ?? [])].reverse() // newest first
@@ -52,7 +53,8 @@ export function MovementsDrawer({ item, open, version, onClose, onEdit, onAdjust
               </tr>
             </thead>
             <tbody>
-              {!loading && rows.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-ink-400">{t('movements.none')}</td></tr>}
+              {error && !data && <tr><td colSpan={4} className="py-6 text-center"><p role="alert" className="text-danger">{errorText(t, error, t('movements.failed'))}</p><Button className="mt-2" onClick={reload}>{t('movements.retry')}</Button></td></tr>}
+              {!loading && !error && rows.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-ink-400">{t('movements.none')}</td></tr>}
               {rows.map((e) => (
                 <tr key={e.id} className="h-9 border-b border-line align-middle">
                   <td className="whitespace-nowrap text-ink-600">{format(parseISO(e.createdAt), 'dd-MM-yy HH:mm')}</td>

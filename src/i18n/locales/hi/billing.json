@@ -126,7 +126,10 @@
     "updated": "{{number}} अपडेट हुआ · ₹{{amount}}",
     "saved": "{{number}} सेव हुआ · ₹{{amount}}",
     "itemAdded": "{{name}} इन्वेंटरी में जुड़ गया",
-    "saveFailed": "वाउचर सेव नहीं हो सका"
+    "saveFailed": "वाउचर सेव नहीं हो सका",
+    "savedOffline": "{{number}} · ₹{{amount}} इस डिवाइस पर सेव हुआ। ऑनलाइन होने पर भेज दिया जाएगा।",
+    "updatedOffline": "{{number}} · ₹{{amount}} इस डिवाइस पर अपडेट हुआ। ऑनलाइन होने पर भेज दिया जाएगा।",
+    "numberFailed": "अगला वाउचर नंबर नहीं मिल सका। आप खुद नंबर लिख सकते हैं।"
   },
   "print": {
     "titleChallan": "स्टॉक इश्यू चालान {{number}}",

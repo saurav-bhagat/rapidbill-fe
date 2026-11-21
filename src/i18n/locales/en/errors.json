@@ -55,5 +55,9 @@
   "storageBlocked": "This browser cannot store data (private browsing?).",
   "mergeNotFound": "Could not find the existing one on the server. Try again, or change the code/name instead.",
   "recordInUse": "{{count}} bill(s) still use this. Use the existing one or change the code/name instead of discarding it.",
-  "syncFirst": "Some items or parties you added have not reached the server yet. Try again once they have."
+  "syncFirst": "Some items or parties you added have not reached the server yet. Try again once they have.",
+  "loadFailed": "Could not load this screen. Check your connection and try again.",
+  "loadFailedTitle": "Could not load",
+  "retry": "Try again",
+  "syncCursor": "The data download got out of step. Reload the page and try again."
 }

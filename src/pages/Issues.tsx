@@ -6,6 +6,7 @@ import { Ban, Copy, Pencil, Plus, Printer } from 'lucide-react'
 import { formatAmount, formatDate, todayISO } from '@/lib/format'
 import { useHotkey } from '@/lib/hotkeys'
 import { matchesQuery } from '@/lib/search'
+import { isWaiting } from '@/lib/saved'
 import { useAsync } from '@/lib/useAsync'
 import { useSync } from '@/offline/state'
 import { services, type Voucher } from '@/services'
@@ -14,6 +15,7 @@ import { toast } from '@/store/toast'
 import { paymentLabel, voucherTypeLabel } from '@/lib/invoice'
 import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
 import { Badge } from '@/components/ui/Badge'
+import { LoadFailed } from '@/components/ui/LoadFailed'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Select } from '@/components/ui/Field'
@@ -45,7 +47,8 @@ export function Issues() {
   const pendingIds = useSync((x) => x.pendingIds)
   const failedIds = useSync((x) => x.failedIds)
   const navigate = useNavigate()
-  const { data: vouchers = [], reload } = useAsync(() => services.vouchers.list())
+  const { data: loaded, error: loadError, reload } = useAsync(() => services.vouchers.list())
+  const vouchers = loaded ?? []
   const { data: parties = [] } = useAsync(() => services.parties.list())
   const { data: settings } = useAsync(() => services.settings.get())
   const [preset, setPreset] = useState<Preset>('month')
@@ -96,7 +99,7 @@ export function Issues() {
     if (!v) return
     try {
       await services.billing.cancel(v.id)
-      toast.success(t('toast.cancelled', { number: v.number }))
+      toast.success(t(isWaiting(v.id) ? 'toast.cancelledOffline' : 'toast.cancelled', { number: v.number }))
       reload()
     } catch (e) {
       toast.error(errorText(t, e, t('toast.cancelFailed')))
@@ -128,6 +131,8 @@ export function Issues() {
   ]
 
   const has = !!selected
+  if (loadError && !loaded) return <LoadFailed error={loadError} onRetry={reload} />
+
   return (
     <div className="flex h-full flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">

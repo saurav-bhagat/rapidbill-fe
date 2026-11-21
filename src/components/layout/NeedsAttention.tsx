@@ -8,6 +8,7 @@ import { discardRecord, renameRecord, useExisting } from '@/offline/records'
 import { useSync } from '@/offline/state'
 import { currentMirror, syncNow } from '@/offline/sync'
 import { AppError } from '@/services/errors'
+import { toast } from '@/store/toast'
 import { Button } from '../ui/Button'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
 import { Input } from '../ui/Field'
@@ -29,9 +30,9 @@ export function NeedsAttention({ open, onClose }: { open: boolean; onClose: () =
   useEffect(() => { if (open && failedIds.length === 0) onClose() }, [open, failedIds, onClose])
 
   const owner = () => { const { user, workspace } = useAuth.getState(); return { workspaceId: workspace!.id, userId: user!.id } }
-  const run = async (fn: () => Promise<void>) => {
+  const run = async (fn: () => Promise<void>, done: string) => {
     setBusy(true); setProblem('')
-    try { await fn(); await syncNow() } catch (e) { setProblem(errorText(t, e)) } finally { setBusy(false) }
+    try { await fn(); toast.success(t(done)); await syncNow() } catch (e) { const m = errorText(t, e); setProblem(m); toast.error(m) } finally { setBusy(false) }
   }
   const label = (e: OutboxEntry) => (e.kind === 'item' ? t('sync.dlg.itemLabel') : e.kind === 'party' ? t('sync.dlg.partyLabel') : t('sync.dlg.billLabel'))
 
@@ -50,18 +51,18 @@ export function NeedsAttention({ open, onClose }: { open: boolean; onClose: () =
               </div>
               {e.error && <p className="mt-1 text-sm text-danger">{t('sync.dlg.reason')}: {errorText(t, new AppError(e.error.key, e.error.params))}</p>}
               <div className="mt-2 flex flex-wrap gap-2">
-                <Button disabled={busy} onClick={() => run(() => retryEntry(currentMirror(), e.id))}>{t('sync.dlg.retry')}</Button>
-                {isVoucherEntry(e) && e.error?.key === 'duplicateNumber' && <Button disabled={busy} onClick={() => run(() => renumberEntry(currentMirror(), owner(), e.id))}>{t('sync.dlg.renumber')}</Button>}
+                <Button disabled={busy} onClick={() => run(() => retryEntry(currentMirror(), e.id), 'sync.done.retry')}>{t('sync.dlg.retry')}</Button>
+                {isVoucherEntry(e) && e.error?.key === 'duplicateNumber' && <Button disabled={busy} onClick={() => run(() => renumberEntry(currentMirror(), owner(), e.id), 'sync.done.renumber')}>{t('sync.dlg.renumber')}</Button>}
                 {!isVoucherEntry(e) && e.error && CLASH.includes(e.error.key) && (
                   <>
-                    <Button disabled={busy} onClick={() => run(() => useExisting(currentMirror(), e.id))}>{t('sync.dlg.useExisting')}</Button>
+                    <Button disabled={busy} onClick={() => run(() => useExisting(currentMirror(), e.id), 'sync.done.useExisting')}>{t('sync.dlg.useExisting')}</Button>
                     <Button disabled={busy} onClick={() => setRenaming({ id: e.id, value: e.number })}>{t('sync.dlg.rename')}</Button>
                   </>
                 )}
                 <Button variant="danger" disabled={busy} onClick={() => setDiscarding(e)}>{t('sync.dlg.discard')}</Button>
               </div>
               {renaming?.id === e.id && (
-                <form className="mt-2 flex gap-2" onSubmit={(ev) => { ev.preventDefault(); const r = renaming; setRenaming(undefined); void run(() => renameRecord(currentMirror(), r.id, r.value)) }}>
+                <form className="mt-2 flex gap-2" onSubmit={(ev) => { ev.preventDefault(); const r = renaming; setRenaming(undefined); void run(() => renameRecord(currentMirror(), r.id, r.value), 'sync.done.rename') }}>
                   <Input autoFocus aria-label={t('sync.dlg.newValue')} value={renaming.value} onChange={(ev) => setRenaming({ id: e.id, value: ev.target.value })} />
                   <Button type="submit" variant="primary" disabled={busy || !renaming.value.trim()}>{t('sync.dlg.renameSend')}</Button>
                 </form>
@@ -75,7 +76,7 @@ export function NeedsAttention({ open, onClose }: { open: boolean; onClose: () =
       <ConfirmDialog open={!!discarding} danger title={t('sync.dlg.discard')} confirmLabel={t('sync.dlg.discard')} onCancel={() => setDiscarding(undefined)}
         onConfirm={() => {
           const e = discarding; setDiscarding(undefined)
-          if (e) void run(() => (isVoucherEntry(e) ? discardEntry(currentMirror(), owner(), e.id) : discardRecord(currentMirror(), e.id)))
+          if (e) void run(() => (isVoucherEntry(e) ? discardEntry(currentMirror(), owner(), e.id) : discardRecord(currentMirror(), e.id)), 'sync.done.discard')
         }}>
         {discarding && isVoucherEntry(discarding) ? t('sync.dlg.discardConfirm') : t('sync.dlg.discardRecordConfirm')}
       </ConfirmDialog>

@@ -6,6 +6,8 @@ import { TextSizeControl } from '@/components/layout/TextSizeControl'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/Segmented'
+import { useSync } from '@/offline/state'
+import { toast } from '@/store/toast'
 import { useAuth } from './session'
 
 type Mode = 'login' | 'signup'
@@ -13,7 +15,8 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 export function AuthScreen() {
   const { t } = useTranslation('auth')
-  const { login, signup } = useAuth()
+  const { login, signup, notice } = useAuth()
+  const unsent = useSync((s) => s.pendingIds.length + s.failedIds.length)
   const [mode, setMode] = useState<Mode>('login')
   const [v, setV] = useState({ email: '', password: '', name: '', businessName: '' })
   const [errs, setErrs] = useState<Partial<Record<keyof typeof v, string>>>({})
@@ -36,8 +39,8 @@ export function AuthScreen() {
     if (first) { document.querySelector<HTMLElement>(`[name="${first}"]`)?.focus(); return }
     setBusy(true)
     try {
-      if (mode === 'login') await login(v.email.trim(), v.password)
-      else await signup({ email: v.email.trim(), password: v.password, name: v.name.trim(), businessName: v.businessName.trim() })
+      if (mode === 'login') { await login(v.email.trim(), v.password); toast.success(t('welcomeBack', { name: useAuth.getState().user?.name ?? '' })) }
+      else { await signup({ email: v.email.trim(), password: v.password, name: v.name.trim(), businessName: v.businessName.trim() }); toast.success(t('accountCreated')) }
     } catch (err) {
       setFormError(errorText(t, err))
       setBusy(false)
@@ -50,6 +53,11 @@ export function AuthScreen() {
       <div className="w-full max-w-sm rounded-lg border border-line bg-surface p-6 shadow-sm">
         <h1 className="text-2xl font-semibold">RapidBill</h1>
         <p className="mb-4 mt-1 text-sm text-ink-600">{t('tagline')}</p>
+        {notice === 'expired' && (
+          <p role="alert" className="mb-3 rounded border border-line bg-warn-soft px-3 py-2 text-sm text-warn">
+            {t('sessionExpired')}{unsent > 0 && ` ${t('sessionExpiredUnsent', { count: unsent })}`}
+          </p>
+        )}
         <Segmented label={t('tabs.login')} value={mode} onChange={(m) => { setMode(m); setErrs({}); setFormError('') }} options={[{ value: 'login', label: t('tabs.login') }, { value: 'signup', label: t('tabs.signup') }]} />
         <form onSubmit={submit} className="mt-4 space-y-3" noValidate>
           {mode === 'signup' && (

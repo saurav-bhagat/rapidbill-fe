@@ -1,4 +1,6 @@
+import i18n from '@/i18n'
 import { download } from '@/lib/download'
+import { toast } from '@/store/toast'
 import { AppError } from '@/services/errors'
 import type { Item, Party, Voucher } from '@/services/types'
 import type { Mirror } from './db'
@@ -94,5 +96,7 @@ export async function downloadBackup(m: Mirror, workspaceId: string): Promise<nu
   const stamp = b.madeAt.slice(0, 16).replace(/[:T]/g, '-')
   download(new Blob([JSON.stringify(b, null, 2)], { type: 'application/json' }), `rapidbill-unsent-bills-${stamp}.json`)
   download(new Blob(['﻿' + backupToCsv(b)], { type: 'text/csv;charset=utf-8' }), `rapidbill-unsent-bills-${stamp}.csv`)
+  if (b.entries.length) toast.success(i18n.t('device.downloaded', { ns: 'common', count: b.entries.length }))
+  else toast.info(i18n.t('device.nothingToBackUp', { ns: 'common' }))
   return b.entries.length
 }

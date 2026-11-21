@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { loadLocale } from '@/i18n'
 import { openMirror } from '@/offline/db'
 import { useSync } from '@/offline/state'
+import { startNotices } from '@/offline/notices'
 import { attachMirror, hasSyncedBefore, startBackgroundSync, syncNow } from '@/offline/sync'
 import { Button } from '@/components/ui/Button'
 import { apiEnabled } from '@/services/http/client'
@@ -44,7 +45,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
       const s = await services.settings.get().catch(() => undefined)
       if (s) await loadLocale(s.printLanguage).catch(() => undefined)
       if (!live) return
-      stop = startBackgroundSync()
+      const stopNotices = startNotices()
+      const stopSync = startBackgroundSync()
+      stop = () => { stopSync(); stopNotices() }
       setPhase('ready')
     })()
     return () => { live = false; stop?.() }

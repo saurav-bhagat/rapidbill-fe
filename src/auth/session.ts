@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { AppError } from '@/services/errors'
 import { api, tokens, type Session, type SessionUser, type SessionWorkspace } from '@/services/http/client'
+import i18n from '@/i18n'
+import { toast } from '@/store/toast'
 import { deleteMirror } from '@/offline/db'
 import { attachMirror } from '@/offline/sync'
 
@@ -15,6 +17,8 @@ type Status = 'loading' | 'out' | 'in'
 
 interface AuthState {
   status: Status
+  /** Why the person is looking at the sign-in screen when they did not ask to sign out. */
+  notice?: 'expired'
   user?: SessionUser
   workspace?: SessionWorkspace
   /** Resume a saved login on page load. */
@@ -25,8 +29,8 @@ interface AuthState {
 }
 
 export const useAuth = create<AuthState>((set) => {
-  const accept = (s: Session) => { tokens.set(s); saveInfo(s.user, s.workspace); set({ status: 'in', user: s.user, workspace: s.workspace }) }
-  tokens.onLost(() => set({ status: 'out', user: undefined, workspace: undefined }))
+  const accept = (s: Session) => { tokens.set(s); saveInfo(s.user, s.workspace); set({ status: 'in', user: s.user, workspace: s.workspace, notice: undefined }) }
+  tokens.onLost(() => set({ status: 'out', user: undefined, workspace: undefined, notice: 'expired' }))
   return {
     status: 'loading',
     async init() {
@@ -51,7 +55,8 @@ export const useAuth = create<AuthState>((set) => {
       dropInfo()
       attachMirror(null)
       if (ws) await deleteMirror(ws) // the copy of the business data does not stay behind on a shared computer
-      set({ status: 'out', user: undefined, workspace: undefined })
+      set({ status: 'out', user: undefined, workspace: undefined, notice: undefined })
+      toast.info(i18n.t('signedOut', { ns: 'auth' }))
       if (rt) await api<void>('/auth/logout', { method: 'POST', body: { refreshToken: rt }, auth: false }).catch(() => undefined)
     },
   }

@@ -68,6 +68,7 @@
     "cancelledNoEdit": "Cancelled vouchers cannot be edited. Duplicate it instead.",
     "alreadyCancelled": "{{number}} is already cancelled.",
     "cancelled": "Cancelled {{number}}. Stock restored.",
-    "cancelFailed": "Could not cancel"
+    "cancelFailed": "Could not cancel",
+    "cancelledOffline": "Cancelled {{number}} on this device. Stock restored. It will be sent when you are back online."
   }
 }

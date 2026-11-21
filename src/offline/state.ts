@@ -31,7 +31,15 @@ export const useSync = create<SyncState>(() => ({
   clockSkewMs: null,
 }))
 
-export const setSync = (patch: Partial<SyncState>) => useSync.setState(patch)
+const connectivity = new Set<(online: boolean) => void>()
+/** Called when the app first notices it has lost, or got back, the server. */
+export const onConnectivity = (fn: (online: boolean) => void) => { connectivity.add(fn); return () => { connectivity.delete(fn) } }
+
+export const setSync = (patch: Partial<SyncState>) => {
+  const was = useSync.getState().online
+  useSync.setState(patch)
+  if (patch.online !== undefined && patch.online !== was) connectivity.forEach((f) => f(patch.online!))
+}
 
 /** Other open tabs of the app: told when data or the queue changed, so every tab shows the same thing. */
 type Message = 'data' | 'outbox'

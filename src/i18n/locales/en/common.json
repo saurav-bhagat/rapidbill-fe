@@ -76,7 +76,8 @@
   "errorBoundary": {
     "title": "Something went wrong",
     "body": "The screen hit an unexpected error. Your saved data is safe. Reloading usually fixes it.",
-    "reload": "Reload RapidBill"
+    "reload": "Reload RapidBill",
+    "safe": "Bills, items and parties not yet sent are safe on this device."
   },
   "textSize": {
     "label": "Text size",
@@ -121,7 +122,23 @@
     "staleBtn": "Download backup",
     "clock": "This device's clock is {{minutes}} minutes {{dir}} the server. Bill dates come from this clock; please correct it.",
     "clockAhead": "ahead of",
-    "clockBehind": "behind"
+    "clockBehind": "behind",
+    "toast": {
+      "offline": "You are offline. Keep billing: everything is saved on this device and sent when the connection returns.",
+      "online": "Back online.",
+      "sent_one": "{{count}} item sent to the server.",
+      "sent_other": "{{count}} items sent to the server.",
+      "refused_one": "The server did not accept {{count}} item. Open \"needs attention\" at the top.",
+      "refused_other": "The server did not accept {{count}} items. Open \"needs attention\" at the top.",
+      "serverTrouble": "The server is having trouble. Your work is safe on this device and will be sent again shortly."
+    },
+    "done": {
+      "retry": "Will be sent again now.",
+      "renumber": "Given a new number and sending now. Reprint the paper copy.",
+      "useExisting": "Now using the one already on the server.",
+      "rename": "Saved with the new code or name. Sending now.",
+      "discard": "Discarded."
+    }
   },
   "device": {
     "title": "Not yet sent",
@@ -134,6 +151,9 @@
     "restored": "Restored {{restored}} bill(s); {{skipped}} already here.",
     "protect": "Storage protection",
     "protectOn": "On: the browser will not clear this data when space is low.",
-    "protectOff": "Off: the browser may clear this data when space is low. Installing the app usually fixes this."
+    "protectOff": "Off: the browser may clear this data when space is low. Installing the app usually fixes this.",
+    "downloaded_one": "Backup saved: {{count}} entry (a .json file to restore from and a .csv spreadsheet).",
+    "downloaded_other": "Backup saved: {{count}} entries (a .json file to restore from and a .csv spreadsheet).",
+    "nothingToBackUp": "Nothing is waiting, so there is nothing to back up."
   }
 }

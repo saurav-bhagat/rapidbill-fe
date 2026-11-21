@@ -16,6 +16,8 @@ import { ItemFormDrawer } from '@/components/inventory/ItemFormDrawer'
 import { MovementsDrawer } from '@/components/inventory/MovementsDrawer'
 import { StockBadge, stockLevel } from '@/components/inventory/StockBadge'
 import { Badge } from '@/components/ui/Badge'
+import { LoadFailed } from '@/components/ui/LoadFailed'
+
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Field'
 import { SearchInput } from '@/components/ui/SearchInput'
@@ -39,7 +41,8 @@ export function Inventory() {
   const tCommon = useTranslation('common').t
   const waiting = useSync((x) => x.pendingIds)
   const refused = useSync((x) => x.failedIds)
-  const { data: items = [], reload } = useAsync(() => services.items.list())
+  const { data: loaded, error: loadError, reload } = useAsync(() => services.items.list())
+  const items = loaded ?? []
   const { data: settings } = useAsync(() => services.settings.get())
   const gstOn = settings?.gstEnabled !== false
   const [query, setQuery] = useState('')
@@ -105,6 +108,8 @@ export function Inventory() {
     try { await exportItems(rows, kind); toast.success(t('page.exported', { n: rows.length })) }
     catch (e) { toast.error(errorText(t, e, t('page.exportFailed'))) }
   }
+
+  if (loadError && !loaded) return <LoadFailed error={loadError} onRetry={reload} />
 
   return (
     <div className="flex h-full flex-col gap-3">

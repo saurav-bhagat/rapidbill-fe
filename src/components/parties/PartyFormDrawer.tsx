@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { errorText } from '@/lib/errors'
+import { isWaiting } from '@/lib/saved'
 import { checkGstin, STATES } from '@/lib/gst'
 import { enterAsTab, focusFirstError } from '@/lib/formNav'
 import { useHotkey } from '@/lib/hotkeys'
@@ -71,7 +72,7 @@ export function PartyFormDrawer({ open, party, existing, defaultState = '29', on
     try {
       const data = { name, type: d.type, gstin: d.gstin, stateCode: d.stateCode, phone: d.phone.trim(), address: d.address.trim(), balance }
       const saved = party ? await services.parties.update(party.id, data) : await services.parties.create(data)
-      toast.success(t(party ? 'toast.updated' : 'toast.added', { name: saved.name }))
+      toast.success(t(isWaiting(saved.id) ? (party ? 'toast.updatedOffline' : 'toast.addedOffline') : (party ? 'toast.updated' : 'toast.added'), { name: saved.name }))
       onSaved(saved)
     } catch (err) {
       toast.error(errorText(t, err, t('toast.saveFailed')))
