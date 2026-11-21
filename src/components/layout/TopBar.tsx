@@ -8,6 +8,7 @@ import { Keycap } from '../ui/Keycap'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { SyncStatus } from './SyncStatus'
 import { TextSizeControl } from './TextSizeControl'
+import { UserMenu } from './UserMenu'
 
 export function TopBar() {
   const { t } = useTranslation()
@@ -15,16 +16,17 @@ export function TopBar() {
   const current = NAV.find((n) => (n.path === '/' ? pathname === '/' : pathname.startsWith(n.path)))
   const setShortcutsOpen = useUI((s) => s.setShortcutsOpen)
   return (
-    <header className="no-print flex h-12 shrink-0 items-center justify-between border-b border-line bg-surface px-5">
+    <header className="no-print flex h-14 shrink-0 items-center justify-between border-b border-line bg-surface px-5">
       <h1 className="text-lg font-semibold">{current ? t(current.titleKey) : pathname.startsWith('/license') ? t('title', { ns: 'license' }) : 'RapidBill'}</h1>
       <div className="flex items-center gap-2">
         <SyncStatus />
         <TextSizeControl />
         <LanguageSwitcher />
-        <button onClick={() => setShortcutsOpen(true)} className="flex h-8 items-center gap-2 rounded px-2 text-ink-600 hover:bg-sunken" aria-label={t('layout.keyboardShortcuts')}>
+        <button onClick={() => setShortcutsOpen(true)} className="flex h-9 items-center gap-2 rounded px-2 text-ink-600 hover:bg-sunken" aria-label={t('layout.keyboardShortcuts')}>
           <Keyboard size={16} />
           <Keycap combo="shift+/" />
         </button>
+        <UserMenu />
         {current?.path !== '/issue/new' && current?.path !== '/' && (
           <Link to="/issue/new">
             <Button variant="primary" icon={<Plus size={16} />} hotkey="alt+k" tabIndex={-1}>{t('nav.newIssue.label')}</Button>

@@ -161,10 +161,10 @@ export function ImportWizard({ open, items, onClose, onDone }: Props) {
             <p className="pb-1 text-sm text-ink-600">{t('rowsBelow', { n: Math.max(0, rows.length - headerRow - 1) })}</p>
           </div>
           <table className="w-full text-base">
-            <thead><tr className="h-8 border-b border-line text-left text-sm text-ink-600"><th className="w-56 font-medium">{t('colField')}</th><th className="w-72 font-medium">{t('colFile')}</th><th className="font-medium">{t('colSamples')}</th></tr></thead>
+            <thead><tr className="h-9 border-b border-line text-left text-sm text-ink-600"><th className="w-56 font-medium">{t('colField')}</th><th className="w-72 font-medium">{t('colFile')}</th><th className="font-medium">{t('colSamples')}</th></tr></thead>
             <tbody>
               {FIELDS.map((f) => (
-                <tr key={f.key} className="h-10 border-b border-line">
+                <tr key={f.key} className="h-9 border-b border-line">
                   <td className="font-medium">{t(`field.${f.key}`)}{f.required && <span className="text-danger"> *</span>}</td>
                   <td className="pr-4">
                     <Select value={map[f.key]} aria-label={t('columnFor', { field: t(`field.${f.key}`) })} onChange={(e) => setMap((m) => ({ ...m, [f.key as FieldKey]: Number(e.target.value) }))} aria-invalid={f.required && map[f.key] < 0}>
@@ -194,7 +194,7 @@ export function ImportWizard({ open, items, onClose, onDone }: Props) {
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             {([['all', t('filterAll', { n: preview.length })], ['create', t('filterCreate', { n: counts.create })], ['update', t('filterUpdate', { n: counts.update })], ['skip', t('filterSkip', { n: counts.skip })], ['error', t('filterError', { n: counts.error })], ['warn', t('filterWarn', { n: counts.warn })]] as [Filter, string][]).map(([k, label]) => (
-              <button key={k} onClick={() => setFilter(k)} aria-pressed={filter === k} className={`h-7 rounded border px-2.5 ${filter === k ? 'border-primary bg-primary-soft font-medium text-primary' : 'border-line bg-surface text-ink-600 hover:bg-sunken'}`}>{label}</button>
+              <button key={k} onClick={() => setFilter(k)} aria-pressed={filter === k} className={`h-9 rounded border px-2.5 ${filter === k ? 'border-primary bg-primary-soft font-medium text-primary' : 'border-line bg-surface text-ink-600 hover:bg-sunken'}`}>{label}</button>
             ))}
             <span className="ml-auto text-ink-600">{t('notImported')}</span>
           </div>

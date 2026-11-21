@@ -31,7 +31,7 @@ interface Props {
 
 const Stat = ({ label, value, strong, tone }: { label: string; value: string; strong?: boolean; tone?: string }) => (
   <div className="min-w-[84px]">
-    <div className="text-xs text-ink-400">{label}</div>
+    <div className="text-sm text-ink-600">{label}</div>
     <div className={`num !text-left ${strong ? 'font-medium' : ''} ${tone ?? ''}`}>{value}</div>
   </div>
 )
@@ -54,14 +54,14 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
         {!p.taxApplicable && p.gstEnabled !== false && <Stat label={t('totals.tax')} value={t('totals.notApplied')} tone="text-ink-400" />}
         <Stat label={t('totals.roundOffStat')} value={`${c.roundOff > 0 ? '+' : c.roundOff < 0 ? '-' : ''}${formatAmount(Math.abs(c.roundOff))}`} tone="text-ink-600" />
         <div className="ml-auto text-right">
-          <div className="text-xs text-ink-400">{t('totals.grandTotal')}</div>
-          <div className="num text-3xl font-medium leading-9" aria-live="polite">{formatAmount(c.grandTotal)}</div>
+          <div className="text-sm text-ink-600">{t('totals.grandTotal')}</div>
+          <div className="num text-3xl font-bold leading-9" aria-live="polite">{formatAmount(c.grandTotal)}</div>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
         <label className="flex items-center gap-2 text-sm text-ink-600">
           {t('totals.payment')}
-          <select value={p.payment} onChange={(e) => p.onPayment(e.target.value as PaymentStatus)} className="h-8 rounded border border-line bg-surface px-2 text-base text-ink-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+          <select value={p.payment} onChange={(e) => p.onPayment(e.target.value as PaymentStatus)} className="h-9 rounded border border-line bg-surface px-2 text-base text-ink-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
             {PAYMENT_CODES.map((k) => <option key={k} value={k}>{paymentLabel(k, t)}</option>)}
           </select>
         </label>
@@ -74,7 +74,7 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); p.onBillDiscEnter() } }}
             placeholder={t('totals.billDiscountPlaceholder')}
             aria-invalid={p.billDiscInvalid}
-            className={`num h-8 w-28 rounded border bg-surface px-2 text-base text-ink-900 focus:outline-none focus:ring-1 focus:ring-primary ${p.billDiscInvalid ? 'border-danger' : 'border-line focus:border-primary'}`}
+            className={`num h-9 w-28 rounded border bg-surface px-2 text-base text-ink-900 focus:outline-none focus:ring-1 focus:ring-primary ${p.billDiscInvalid ? 'border-danger' : 'border-line focus:border-primary'}`}
           />
         </label>
         <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-600">

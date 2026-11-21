@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/Button'
 import { SupportLine } from '@/components/SupportLine'
 import { apiEnabled } from '@/services/http/client'
 import { services } from '@/services'
+import { Landing } from '@/landing/Landing'
+import { usePath } from '@/landing/nav'
 import { AuthScreen } from './AuthScreen'
 import { useAuth } from './session'
 
@@ -58,8 +60,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, [status, workspaceId, attempt])
 
   const online = useSync((s) => s.online)
+  const path = usePath()
   if (!apiEnabled) return <>{children}</>
-  if (status === 'out') return <AuthScreen />
+  if (status === 'out') return path === '/' ? <Landing /> : <AuthScreen initialMode={path === '/signup' ? 'signup' : 'login'} />
   if (status === 'loading' || phase === 'opening') return <div className="p-6 text-ink-400">{t('loading')}</div>
   if (phase === 'downloading') return <div className="p-6 text-ink-600">{t('downloading')}</div>
   if (phase === 'storageBlocked') {

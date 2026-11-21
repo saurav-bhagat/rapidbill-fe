@@ -19,7 +19,7 @@ export function Button({ variant = 'secondary', hotkey, icon, children, classNam
   return (
     <button
       {...rest}
-      className={`inline-flex h-8 items-center gap-2 rounded border px-3 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]} ${className}`}
+      className={`inline-flex h-9 items-center gap-2 rounded border px-3 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]} ${className}`}
     >
       {icon}
       {children}

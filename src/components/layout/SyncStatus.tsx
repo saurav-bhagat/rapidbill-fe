@@ -17,23 +17,23 @@ export function SyncStatus() {
   return (
     <div className="flex items-center gap-2">
       {updateReady && (
-        <button onClick={applyUpdate} title={t('sync.updateHint')} className="flex h-8 items-center gap-1 rounded bg-primary px-2 text-sm font-medium text-white hover:bg-primary-hover">
+        <button onClick={applyUpdate} title={t('sync.updateHint')} className="flex h-9 items-center gap-1 rounded bg-primary px-2 text-sm font-medium text-white hover:bg-primary-hover">
           <RefreshCw size={14} />{t('sync.updateReady')}
         </button>
       )}
       {failedIds.length > 0 && (
-        <button onClick={() => setOpen(true)} className="flex h-8 items-center gap-1 rounded border border-line bg-danger-soft px-2 text-sm font-medium text-danger hover:opacity-90">
+        <button onClick={() => setOpen(true)} className="flex h-9 items-center gap-1 rounded border border-line bg-danger-soft px-2 text-sm font-medium text-danger hover:opacity-90">
           <TriangleAlert size={14} />{t('sync.attention', { count: failedIds.length })}
         </button>
       )}
       {!online ? (
-        <span role="status" title={t('sync.offlineHint')} className="flex h-8 items-center gap-1 rounded border border-line bg-warn-soft px-2 text-sm font-medium text-warn">
+        <span role="status" title={t('sync.offlineHint')} className="flex h-9 items-center gap-1 rounded border border-line bg-warn-soft px-2 text-sm font-medium text-warn">
           <CloudOff size={14} />{t('sync.offline')}
           {waiting > 0 && <span className="font-normal"> · {t('sync.waiting', { count: waiting })}</span>}
           {waiting === 0 && time && <span className="hidden font-normal xl:inline"> · {t('sync.lastSynced', { time })}</span>}
         </span>
       ) : syncing || waiting > 0 ? (
-        <span role="status" className="flex h-8 items-center gap-1 text-sm text-ink-400"><RefreshCw size={14} className="animate-spin" />{waiting > 0 ? t('sync.waiting', { count: waiting }) : t('sync.syncing')}</span>
+        <span role="status" className="flex h-9 items-center gap-1 text-sm text-ink-400"><RefreshCw size={14} className="animate-spin" />{waiting > 0 ? t('sync.waiting', { count: waiting }) : t('sync.syncing')}</span>
       ) : null}
       <NeedsAttention open={open} onClose={() => setOpen(false)} />
     </div>

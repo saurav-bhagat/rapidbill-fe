@@ -20,14 +20,14 @@ export function AccountBox({ collapsed }: { collapsed: boolean }) {
   const unsent = useSync((x) => x.pendingIds.length + x.failedIds.length)
   const [ask, setAsk] = useState(false)
   const signedIn = apiEnabled && !!user
-  const link = 'flex h-8 items-center gap-2 rounded px-2.5 text-ink-600 hover:bg-sunken hover:text-ink-900'
+  const link = 'flex h-9 items-center gap-2 rounded-md px-2.5 text-white/80 hover:bg-nav-hover hover:text-white'
 
   return (
-    <div className="shrink-0 space-y-1 border-t border-line p-2">
+    <div className="shrink-0 space-y-1 border-t border-white/10 p-2">
       {signedIn && !collapsed && (
         <div className="px-2.5 pb-1">
-          <div className="truncate text-sm font-medium" title={user.email}>{user.name}</div>
-          <div className="truncate text-xs text-ink-400">{workspace?.name}</div>
+          <div className="truncate text-sm font-semibold text-white" title={user.email}>{user.name}</div>
+          <div className="truncate text-xs text-white/60">{workspace?.name}</div>
         </div>
       )}
 
@@ -38,8 +38,8 @@ export function AccountBox({ collapsed }: { collapsed: boolean }) {
         </button>
       )}
 
-      <div className={collapsed ? 'space-y-1' : 'rounded border border-line bg-paper p-1.5'}>
-        {!collapsed && <div className="px-1 pb-0.5 text-xs font-medium uppercase tracking-wide text-ink-400">{t('account.support')}</div>}
+      <div className={collapsed ? 'space-y-1' : 'rounded-md border border-white/10 bg-white/5 p-1.5'}>
+        {!collapsed && <div className="px-1 pb-0.5 text-xs font-medium uppercase tracking-wide text-white/50">{t('account.support')}</div>}
         <a href={supportTel} className={link} title={`${t('account.callSupport')} ${SUPPORT_PHONE_DISPLAY}`} aria-label={`${t('account.callSupport')} ${SUPPORT_PHONE_DISPLAY}`}>
           <Headset size={16} className="shrink-0" />
           {!collapsed && <span className="truncate font-mono text-sm">{SUPPORT_PHONE_DISPLAY}</span>}

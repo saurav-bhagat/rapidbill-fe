@@ -8,7 +8,7 @@ interface Props<T extends string> {
 /** Compact either/or toggle. Arrow keys move between options like a radio group. */
 export function Segmented<T extends string>({ value, onChange, options, label }: Props<T>) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex h-8 overflow-hidden rounded border border-line bg-surface">
+    <div role="radiogroup" aria-label={label} className="inline-flex h-9 overflow-hidden rounded border border-line bg-surface">
       {options.map((o, i) => {
         const on = o.value === value
         return (

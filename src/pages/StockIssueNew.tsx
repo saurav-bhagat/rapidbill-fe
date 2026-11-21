@@ -24,7 +24,7 @@ import { LoadFailed } from '@/components/ui/LoadFailed'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Segmented } from '@/components/ui/Segmented'
 
-const input = 'h-8 rounded border border-line bg-surface px-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
+const input = 'h-9 rounded border border-line bg-surface px-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
 
 /** New voucher, or (editId) edit an existing one, or (?from=id) duplicate one. */
 export function StockIssueNew({ editId }: { editId?: string }) {
@@ -326,7 +326,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
               inputRef={partyInput}
             />
           </div>
-          <div className="flex h-8 items-center gap-2 text-sm text-ink-600">
+          <div className="flex h-9 items-center gap-2 text-sm text-ink-600">
             {party ? (
               <>
                 {gstOn && <><span className="font-mono">{party.gstin || t('header.unregistered')}</span><span>·</span><span>{stateName(party.stateCode)}</span></>}

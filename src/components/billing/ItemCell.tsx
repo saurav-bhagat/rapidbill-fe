@@ -98,7 +98,7 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
           className="z-30 flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-float"
           onMouseDown={(e) => e.preventDefault()}
         >
-          <div className={`grid shrink-0 ${cols} gap-x-2 border-b border-line bg-sunken px-3 py-1 text-xs font-medium text-ink-600`}>
+          <div className={`grid shrink-0 ${cols} gap-x-2 border-b border-line bg-sunken px-3 py-1.5 text-sm font-medium text-ink-600`}>
             <span>{t('picker.item')}</span><span>{t('picker.code')}</span><span>{t('picker.batch')}</span><span className="text-right">{t('picker.stock')}</span><span className="text-right">{t('picker.mrp')}</span><span className="text-right">{t('picker.rate')}</span>{showGst && <span className="text-right">{t('picker.gst')}</span>}
           </div>
           <ul ref={list} role="listbox" className="min-h-0 flex-1 overflow-auto">
@@ -120,7 +120,7 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
                 data-hl={n === hl}
                 onMouseMove={() => n !== hl && setHl(n)}
                 onClick={() => pick(i)}
-                className={`grid h-8 cursor-default ${cols} items-center gap-x-2 px-3 ${n === hl ? 'bg-primary-soft' : ''}`}
+                className={`grid h-9 cursor-default ${cols} items-center gap-x-2 px-3 ${n === hl ? 'bg-primary-soft' : ''}`}
               >
                 <span className="truncate font-medium">{i.name}</span>
                 <span className="font-mono text-sm text-ink-600">{i.code}</span>
@@ -132,7 +132,7 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
               </li>
             ))}
           </ul>
-          <div className="shrink-0 border-t border-line bg-sunken px-3 py-1 text-xs text-ink-600">{t('picker.hint')}</div>
+          <div className="shrink-0 border-t border-line bg-sunken px-3 py-1 text-sm text-ink-600">{t('picker.hint')}</div>
         </div>
       )}
     </>

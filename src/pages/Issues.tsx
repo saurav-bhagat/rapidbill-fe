@@ -142,9 +142,9 @@ export function Issues() {
         </Select>
         {preset === 'custom' && (
           <>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={t('filters.fromDate')} className="h-8 rounded border border-line bg-surface px-2 font-mono text-base" />
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={t('filters.fromDate')} className="h-9 rounded border border-line bg-surface px-2 font-mono text-base" />
             <span className="text-ink-400">{t('filters.to')}</span>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={t('filters.toDate')} className="h-8 rounded border border-line bg-surface px-2 font-mono text-base" />
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={t('filters.toDate')} className="h-9 rounded border border-line bg-surface px-2 font-mono text-base" />
           </>
         )}
         <Select value={partyF} onChange={(e) => setPartyF(e.target.value)} className="!w-48" aria-label={t('filters.party')}>

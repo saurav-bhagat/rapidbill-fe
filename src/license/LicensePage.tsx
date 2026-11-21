@@ -140,7 +140,7 @@ function LicenseContent() {
               <thead><tr className="h-9 border-b border-line text-left text-sm text-ink-600"><th className="px-3 font-medium">{t('history.date')}</th><th className="px-3 font-medium">{t('history.plan')}</th><th className="px-3 text-right font-medium">{t('history.amount')}</th><th className="px-3 font-medium">{t('history.validity')}</th><th className="px-3 font-medium">{t('history.reference')}</th></tr></thead>
               <tbody>
                 {history.data.map((h) => (
-                  <tr key={h.id} className="h-10 border-b border-line last:border-b-0">
+                  <tr key={h.id} className="h-9 border-b border-line last:border-b-0">
                     <td className="px-3">{longDate(h.paidAt)}</td><td className="px-3">{t(`plan.name.${h.planId}`, { defaultValue: h.planId })}</td>
                     <td className="px-3 text-right font-medium">{rupees(h.amount)}</td><td className="px-3 text-ink-600">{longDate(h.licenseFrom)} → {longDate(h.licenseTo)}</td>
                     <td className="px-3 font-mono text-sm text-ink-600">{h.reference}</td>
@@ -177,7 +177,7 @@ function CurrentLicense({ plans }: { plans: PlansView }) {
   return (
     <section className={`rounded-xl border p-5 ${tone}`} aria-label={t('current.title')}>
       <div className="flex flex-wrap items-start gap-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface"><Icon size={22} className={ended ? 'text-danger' : lic.status === 'ACTIVE' ? 'text-ok' : 'text-primary'} /></div>
+        <div className="grid h-10 w-11 shrink-0 place-items-center rounded-full bg-surface"><Icon size={22} className={ended ? 'text-danger' : lic.status === 'ACTIVE' ? 'text-ok' : 'text-primary'} /></div>
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold">
             {lic.status === 'ACTIVE' ? t(`planName.${lic.planId}`, { defaultValue: t('card.active') }) : ended ? t('current.expiredTitle') : t('current.trialTitle')}
@@ -224,7 +224,7 @@ function PlanCard({ plan, plans, active, busy, disabled, onBuy }: { plan: PlanVi
         {PLAN_BULLETS.map((k) => <li key={k} className="flex items-start gap-2"><Check size={16} className="mt-1 shrink-0 text-ok" />{t(`compare.rows.${k}`)}</li>)}
       </ul>
 
-      <Button variant={best ? 'primary' : 'secondary'} className="mt-6 h-10 w-full justify-center text-base" disabled={disabled} onClick={onBuy}>
+      <Button variant={best ? 'primary' : 'secondary'} className="mt-6 h-9 w-full justify-center text-base" disabled={disabled} onClick={onBuy}>
         {busy ? t('pay.opening') : active ? t('plan.extend', { plan: name }) : t('plan.buy', { plan: name })}
       </Button>
       {!busy && !disabled && <p className="mt-2 text-center text-xs text-ink-400">{t('plan.pay', { amount: rupees(plan.price) })}</p>}
@@ -248,7 +248,7 @@ function Compare({ plans }: { plans: PlansView }) {
       <div className="overflow-x-auto rounded-lg border border-line bg-surface">
         <table className="w-full text-base">
           <thead>
-            <tr className="h-11 border-b border-line text-center text-sm">
+            <tr className="h-10 border-b border-line text-center text-sm">
               <th className="px-4 text-left font-medium text-ink-600">{t('compare.feature')}</th>
               <th className="px-3 font-semibold">{t('compare.trial')}</th>
               {head.map((h) => <th key={h.id} className={`px-3 font-semibold ${h.best ? 'bg-primary-soft text-primary' : ''}`}>{h.label}</th>)}
@@ -256,7 +256,7 @@ function Compare({ plans }: { plans: PlansView }) {
           </thead>
           <tbody>
             {plans.features.map((f) => (
-              <tr key={f.key} className="h-10 border-b border-line text-center last:border-b-0">
+              <tr key={f.key} className="h-9 border-b border-line text-center last:border-b-0">
                 <th scope="row" className="px-4 text-left font-normal">{t(`compare.rows.${f.key}`, { defaultValue: f.key })}</th>
                 <td className="px-3">{cell(f.trial, f.key, 'trial')}</td>
                 {head.map((h) => <td key={h.id} className={`px-3 ${h.best ? 'bg-primary-soft/50' : ''}`}>{cell(f.plans[h.id] ?? false, f.key, h.id)}</td>)}

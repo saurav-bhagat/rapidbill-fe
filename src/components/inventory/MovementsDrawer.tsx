@@ -47,7 +47,7 @@ export function MovementsDrawer({ item, open, version, onClose, onEdit, onAdjust
           </div>
           <table className="w-full text-base">
             <thead>
-              <tr className="h-8 border-b border-line text-left text-sm text-ink-600">
+              <tr className="h-9 border-b border-line text-left text-sm text-ink-600">
                 <th className="font-medium">{t('movements.when')}</th><th className="font-medium">{t('movements.movement')}</th>
                 <th className="text-right font-medium">{t('movements.qty')}</th><th className="text-right font-medium">{t('movements.balance')}</th>
               </tr>
@@ -56,7 +56,7 @@ export function MovementsDrawer({ item, open, version, onClose, onEdit, onAdjust
               {error && !data && <tr><td colSpan={4} className="py-6 text-center"><p role="alert" className="text-danger">{errorText(t, error, t('movements.failed'))}</p><Button className="mt-2" onClick={reload}>{t('movements.retry')}</Button></td></tr>}
               {!loading && !error && rows.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-ink-400">{t('movements.none')}</td></tr>}
               {rows.map((e) => (
-                <tr key={e.id} className="h-9 border-b border-line align-middle">
+                <tr key={e.id} className="h-10 border-b border-line align-middle">
                   <td className="whitespace-nowrap text-ink-600">{format(parseISO(e.createdAt), 'dd-MM-yy HH:mm')}</td>
                   <td>
                     <div>{t(`movements.type.${e.type}`)}{e.voucherNo && <span className="ml-1 font-mono text-sm text-ink-600">{e.voucherNo}</span>}</div>

@@ -109,7 +109,7 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
     <div ref={box} className="min-h-0 flex-1 overflow-auto rounded-md border border-line bg-surface">
       <table className="w-full border-collapse text-base" style={{ tableLayout: 'fixed', minWidth: 1020 }}>
         <thead>
-          <tr className="h-8">
+          <tr className="h-9">
             {[['#', 36, 'center'], ['item', 0, 'left'], ['batch', 104, 'left'], ['exp', 58, 'left'], ['qty', 84, 'right'], ['unit', 56, 'left'], ['mrp', 84, 'right'], ['rate', 96, 'right'], ['disc', 68, 'right'], ['gst', 60, 'right'], ['amount', 116, 'right'], ['', 32, 'left']].filter(([h]) => showGst || h !== 'gst').map(([h, w, a]) => (
               <th key={h as string} style={{ width: w ? (w as number) : undefined }} className={`sticky top-0 z-10 border-b border-line bg-sunken px-2 text-sm font-medium text-ink-600 text-${a}`}>{h === '#' || h === '' ? h : t(`grid.col.${h}`)}</th>
             ))}
@@ -122,7 +122,7 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
             return (
               <Fragment key={r.key}>
                 <tr
-                  className="h-9 border-b border-line focus-within:bg-primary-soft/40 [&_input:focus]:shadow-[inset_0_0_0_2px_rgb(var(--primary))]"
+                  className="h-10 border-b border-line focus-within:bg-primary-soft/40 [&_input:focus]:shadow-[inset_0_0_0_2px_rgb(var(--primary))]"
                   onFocusCapture={() => onActive(i)}
                 >
                   <td className="text-center text-sm text-ink-400">{i + 1}</td>

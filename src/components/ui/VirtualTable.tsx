@@ -31,8 +31,8 @@ interface Props<T> {
   rowClass?: (r: T) => string
 }
 
-const ROW_H = 32
-const HEAD_H = 32
+const ROW_H = 40
+const HEAD_H = 36
 const OVERSCAN = 8
 
 /** Fixed-row-height windowed table with roving keyboard selection. Handles thousands of rows. */

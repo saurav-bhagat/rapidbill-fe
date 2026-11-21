@@ -68,7 +68,7 @@ export function PartyCombobox({ parties, value, onChange, onNew, onDone, inputRe
         onChange={(e) => { setText(e.target.value); setEditing(true); setOpen(true); setHl(0) }}
         onKeyDown={onKeyDown}
         onBlur={() => setTimeout(() => { setOpen(false); setEditing(false) }, 120)}
-        className="h-8 w-full rounded border border-line bg-surface px-2 text-base font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        className="h-9 w-full rounded border border-line bg-surface px-2 text-base font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       />
       {open && (
         <ul role="listbox" onMouseDown={(e) => e.preventDefault()} className="absolute left-0 top-full z-30 mt-1 max-h-72 w-[420px] overflow-auto rounded-lg border border-line bg-surface py-1 shadow-float">
@@ -79,7 +79,7 @@ export function PartyCombobox({ parties, value, onChange, onNew, onDone, inputRe
               aria-selected={n === hl}
               onMouseMove={() => n !== hl && setHl(n)}
               onClick={() => choose(o.id)}
-              className={`flex h-8 cursor-default items-center justify-between gap-3 px-3 ${n === hl ? 'bg-primary-soft' : ''} ${o.id === NEW ? 'border-t border-line text-primary' : ''}`}
+              className={`flex h-9 cursor-default items-center justify-between gap-3 px-3 ${n === hl ? 'bg-primary-soft' : ''} ${o.id === NEW ? 'border-t border-line text-primary' : ''}`}
             >
               <span className="truncate">{o.label}</span>
               <span className="font-mono text-xs text-ink-400">{o.meta}</span>

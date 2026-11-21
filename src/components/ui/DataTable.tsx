@@ -17,7 +17,7 @@ export function DataTable<T>({ columns, rows, rowKey, empty }: { columns: Column
         <thead className="sticky top-0 bg-sunken">
           <tr>
             {columns.map((c) => (
-              <th key={c.header} style={{ width: c.width }} className={`h-8 border-b border-line px-3 text-sm font-medium text-ink-600 ${c.align === 'right' ? 'text-right' : 'text-left'}`}>
+              <th key={c.header} style={{ width: c.width }} className={`h-9 border-b border-line px-3 text-sm font-medium text-ink-600 ${c.align === 'right' ? 'text-right' : 'text-left'}`}>
                 {c.header}
               </th>
             ))}
@@ -28,7 +28,7 @@ export function DataTable<T>({ columns, rows, rowKey, empty }: { columns: Column
             <tr><td colSpan={columns.length} className="px-3 py-6 text-center text-ink-400">{empty ?? t('status.nothingHere')}</td></tr>
           )}
           {rows.map((r) => (
-            <tr key={rowKey(r)} className="h-8 border-b border-line last:border-b-0 hover:bg-primary-soft/50">
+            <tr key={rowKey(r)} className="h-9 border-b border-line last:border-b-0 hover:bg-primary-soft/50">
               {columns.map((c) => (
                 <td key={c.header} className={`whitespace-nowrap px-3 ${c.align === 'right' ? 'num' : 'text-left'}`}>{c.cell(r)}</td>
               ))}

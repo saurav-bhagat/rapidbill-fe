@@ -1,3 +1,7 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
 @import '@fontsource/ibm-plex-sans/400.css';
 @import '@fontsource/ibm-plex-sans/500.css';
 @import '@fontsource/ibm-plex-sans/600.css';
@@ -12,22 +16,27 @@
 @tailwind utilities;
 
 :root {
-  --paper: 250 249 246;
+  /* One matte blue is the brand (#3556D8, 5.6:1 against white). Everything else is a neutral of the same cool hue, plus the usual
+     green / amber / red for meaning, and a burnt orange kept for offers only. Change --primary and the whole app follows. */
+  --paper: 246 247 251;
   --surface: 255 255 255;
-  --sunken: 244 242 237;
-  --line: 228 225 218;
-  --ink-900: 28 27 24;
-  --ink-600: 92 90 82;
-  --ink-400: 112 109 100;
-  --primary: 15 107 79;
-  --primary-hover: 11 87 65;
-  --primary-soft: 227 241 235;
+  --sunken: 238 241 247;
+  --line: 226 230 238;
+  --ink-900: 26 34 51;
+  --ink-600: 75 85 101;
+  --ink-400: 107 116 133;
+  --primary: 53 86 216;
+  --primary-hover: 42 70 190;
+  --primary-soft: 236 240 254;
+  --nav: 15 23 42;
+  --nav-hover: 30 41 66;
+  --offer: 194 65 12;
   --warn: 146 90 10;
-  --warn-soft: 252 240 215;
-  --danger: 180 35 24;
-  --danger-soft: 252 228 225;
-  --ok: 38 110 42;
-  --ok-soft: 226 242 227;
+  --warn-soft: 253 241 214;
+  --danger: 190 30 45;
+  --danger-soft: 253 230 232;
+  --ok: 22 116 58;
+  --ok-soft: 224 243 230;
   --highlight: 255 243 196;
 }
 
@@ -47,7 +56,7 @@
 }
 
 @layer components {
-  .num { @apply font-mono text-right tabular-nums; }
+  .num { @apply text-right tabular-nums; }
 }
 
 @media print {

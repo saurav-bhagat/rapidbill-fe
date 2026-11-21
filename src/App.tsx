@@ -26,6 +26,8 @@ const router = createBrowserRouter([
       { path: '/parties', element: <Parties /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '/license', element: <LicensePage /> },
+      { path: '/signup', element: <Navigate to="/" replace /> },
+      { path: '/login', element: <Navigate to="/" replace /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

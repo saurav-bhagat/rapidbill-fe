@@ -25,7 +25,7 @@ export function SearchInput({ value, onChange, inputRef, placeholder, onEnterRes
           if (e.key === 'ArrowDown' || e.key === 'Enter') { e.preventDefault(); onEnterResults?.() }
           else if (e.key === 'Escape') { if (value) onChange(''); else inputRef.current?.blur() }
         }}
-        className="h-8 w-full rounded border border-line bg-surface pl-8 pr-10 text-base placeholder:text-ink-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        className="h-9 w-full rounded border border-line bg-surface pl-8 pr-10 text-base placeholder:text-ink-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       />
       {!value && <Keycap combo="/" className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />}
     </div>
