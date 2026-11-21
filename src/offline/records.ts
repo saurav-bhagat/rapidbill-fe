@@ -65,18 +65,25 @@ export function editWaitingRecord(m: Mirror, kind: 'item' | 'party', id: string,
     if (e.kind === 'item') {
       const { currentStock: _s, ...rest } = patch as Partial<ItemData>
       void _s
-      const next = { ...e.payload, ...rest, ...(rest.code !== undefined && { code: rest.code.trim().toUpperCase() }) }
+      const changes = { ...rest, ...(rest.code !== undefined && { code: rest.code.trim().toUpperCase() }) }
+      const next = { ...e.payload, ...changes }
       const clash = (await m.all<Item>('items')).find((i) => i.id !== id && same(i.code, next.code))
       if (clash) throw new AppError('itemCodeUsedBy', { code: next.code, name: clash.name })
-      const row = { ...(await m.get<Item>('items', id))!, ...next, updatedAt: now }
+      // The row keeps its own stock: bills made since have already taken from it. The queued copy keeps the opening stock it will be created with.
+      const row = { ...(await m.get<Item>('items', id))!, ...changes, updatedAt: now }
       await m.batch([{ store: 'items', put: [row] }, { store: 'outbox', put: [{ ...e, status: 'pending', error: undefined, number: next.code, partyName: next.name, payload: next } satisfies ItemEntry] }])
       await refreshOutboxState(m)
       return row
     }
-    const next = { ...(e as PartyEntry).payload, ...(patch as Partial<PartyData>), id }
+    const { balance: wanted, ...changes } = patch as Partial<PartyData>
+    const current = (await m.get<Party>('parties', id))!
+    // The balance shown includes credit from bills still waiting. Only a real change to it is carried over, as a difference,
+    // so the opening balance sent to the server never counts those bills twice.
+    const delta = wanted === undefined ? 0 : wanted - current.balance
+    const next = { ...(e as PartyEntry).payload, ...changes, balance: (e as PartyEntry).payload.balance + delta, id }
     next.name = next.name.trim()
     if ((await m.all<Party>('parties')).some((p) => p.id !== id && same(p.name, next.name))) throw new AppError('partyNameTaken', { name: next.name })
-    const row = { ...(await m.get<Party>('parties', id))!, ...next, updatedAt: now }
+    const row = { ...current, ...changes, name: next.name, balance: current.balance + delta, updatedAt: now }
     await m.batch([{ store: 'parties', put: [row] }, { store: 'outbox', put: [{ ...e, status: 'pending', error: undefined, number: next.name, payload: next } satisfies PartyEntry] }])
     await refreshOutboxState(m)
     return row

@@ -150,6 +150,37 @@ describe('changing what has not been sent', () => {
     expect(sent.filter((x) => x.path === '/items')).toHaveLength(1)
   })
 
+  it('editing a waiting item keeps the stock that bills have already taken from it; the opening stock sent stays as typed', async () => {
+    const t = await setup()
+    offline(t)
+    const s = await t.services()
+    const it = await s.inventory.createItem(itemData('K1', { currentStock: 8 }))
+    await s.billing.save(bill(it.id, 3))
+    expect((await t.m.get<Item>('items', it.id))!.currentStock).toBe(5)
+    await s.inventory.updateItem(it.id, { name: 'Better name' })
+    expect(await t.m.get('items', it.id)).toMatchObject({ name: 'Better name', currentStock: 5 })
+    expect((await t.listOutbox(t.m)).find((e) => e.id === it.id)).toMatchObject({ payload: { name: 'Better name', currentStock: 8 } })
+  })
+
+  it('editing a waiting party keeps the credit its waiting bills added, and never sends it as the opening balance', async () => {
+    const t = await setup()
+    offline(t)
+    const s = await t.services()
+    const it = await s.inventory.createItem(itemData('K2', { currentStock: 20 }))
+    const p = await s.parties.create(partyData('Credit Co', { balance: 1000 }))
+    const v = await s.billing.save(bill(it.id, 2, { partyId: p.id, payment: 'CREDIT' }))
+    const owed = 1000 + v.totals.grandTotal
+    expect((await t.m.get<Party>('parties', p.id))!.balance).toBe(owed)
+    // the form sends the whole party back with the balance as shown
+    await s.parties.update(p.id, { ...partyData('Credit Co', { phone: '123' }), balance: owed })
+    expect(await t.m.get('parties', p.id)).toMatchObject({ phone: '123', balance: owed })
+    expect((await t.listOutbox(t.m)).find((e) => e.id === p.id)).toMatchObject({ payload: { phone: '123', balance: 1000 } })
+    // a real change to the balance is carried over as the difference
+    await s.parties.update(p.id, { balance: owed + 500 })
+    expect((await t.m.get<Party>('parties', p.id))!.balance).toBe(owed + 500)
+    expect((await t.listOutbox(t.m)).find((e) => e.id === p.id)).toMatchObject({ payload: { balance: 1500 } })
+  })
+
   it('an item that is already on the server is edited there', async () => {
     const t = await setup()
     t.setSync({ online: true })
