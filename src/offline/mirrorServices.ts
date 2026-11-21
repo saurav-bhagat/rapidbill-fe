@@ -73,6 +73,8 @@ export function createMirrorServices() {
       return written(httpParties.update(id, p))
     },
     remove: async (id) => { if (await removeWaitingParty(m(), id)) return; await written(httpParties.remove(id)) },
+    // Like the item import, this needs the server, and the parties and items made on this device must have reached it first (their names could clash).
+    importParties: async (ops, source) => { await noWaitingRecords(); return written(httpParties.importParties(ops, source)) },
   }
 
   const recent = async () => (await m().all<Voucher>('vouchers')).sort((a, b) => b.date.localeCompare(a.date) || b.number.localeCompare(a.number, undefined, { numeric: true }))

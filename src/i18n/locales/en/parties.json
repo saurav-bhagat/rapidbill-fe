@@ -68,5 +68,12 @@
     "nameExists": "A party with this name already exists",
     "stateMismatch": "State must match the GSTIN",
     "invalidAmount": "Enter a valid amount"
+  },
+  "page": {
+    "import": "Import",
+    "exportXlsx": ".xlsx",
+    "exportCsv": ".csv",
+    "exported": "Exported {{n}} parties",
+    "exportFailed": "Could not export the parties"
   }
 }

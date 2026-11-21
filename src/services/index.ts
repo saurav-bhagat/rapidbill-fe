@@ -1,5 +1,6 @@
 import { createRepo } from './repo'
 import { createLedgerService } from './ledger'
+import { createLocalPartyImport } from './partyImport'
 import { createInventoryService, type InventoryService } from './inventory'
 import { createBillingService, type BillingService } from './voucher'
 import { createSettingsService } from './settings'
@@ -29,7 +30,7 @@ function localServices(): Services {
     items: createRepo<Item>(adapter, 'items'),
     inventory: createInventoryService(adapter),
     billing: createBillingService(adapter),
-    parties: createRepo<Party>(adapter, 'parties'),
+    parties: { ...createRepo<Party>(adapter, 'parties'), importParties: createLocalPartyImport(adapter) },
     vouchers: createRepo<Voucher>(adapter, 'vouchers'),
     ledger: createLedgerService(adapter),
     settings: createSettingsService(adapter),

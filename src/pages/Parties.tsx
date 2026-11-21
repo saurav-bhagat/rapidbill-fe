@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useSync } from '@/offline/state'
-import { Plus } from 'lucide-react'
+import { Download, Plus, Upload } from 'lucide-react'
 import { formatINR } from '@/lib/format'
 import { stateName } from '@/lib/gst'
 import { errorText } from '@/lib/errors'
@@ -11,6 +11,8 @@ import { useAsync } from '@/lib/useAsync'
 import { services, type Party, type PartyType } from '@/services'
 import { toast } from '@/store/toast'
 import { PartyFormDrawer } from '@/components/parties/PartyFormDrawer'
+import { PartyImportWizard } from '@/components/parties/PartyImportWizard'
+import { exportParties } from '@/lib/exportParties'
 import { Badge } from '@/components/ui/Badge'
 import { LoadFailed } from '@/components/ui/LoadFailed'
 import { Button } from '@/components/ui/Button'
@@ -50,6 +52,12 @@ export function Parties() {
   }, [parties, query, type, sort])
   const selected = parties.find((p) => p.id === selectedId)
 
+  const [importing, setImporting] = useState(false)
+  const doExport = async (kind: 'xlsx' | 'csv') => {
+    try { await exportParties(rows, kind); toast.success(t('page.exported', { n: rows.length })) }
+    catch (e) { toast.error(errorText(t, e, t('page.exportFailed'))) }
+  }
+  useHotkey('i', () => setImporting(true))
   const openNew = () => setForm({ open: true })
   const openEdit = (p?: Party) => { if (p) { setSelectedId(p.id); setForm({ open: true, party: p }) } }
   const askDelete = (p?: Party) => p && setToDelete(p)
@@ -92,7 +100,12 @@ export function Parties() {
         <Select value={type} onChange={(e) => setType(e.target.value as PartyType | '')} className="!w-40" aria-label={t('typeLabel')}>
           <option value="">{t('allTypes')}</option><option value="CUSTOMER">{t('typePlural.customer')}</option><option value="DEPARTMENT">{t('typePlural.department')}</option><option value="BRANCH">{t('typePlural.branch')}</option>
         </Select>
-        <div className="ml-auto"><Button variant="primary" icon={<Plus size={14} />} hotkey="n" onClick={openNew}>{t('newParty')}</Button></div>
+        <div className="ml-auto flex items-center gap-2">
+          <Button onClick={() => setImporting(true)} icon={<Upload size={14} />} hotkey="i">{t('page.import')}</Button>
+          <Button variant="ghost" icon={<Download size={14} />} onClick={() => void doExport('xlsx')}>{t('page.exportXlsx')}</Button>
+          <Button variant="ghost" icon={<Download size={14} />} onClick={() => void doExport('csv')}>{t('page.exportCsv')}</Button>
+          <Button variant="primary" icon={<Plus size={14} />} hotkey="n" onClick={openNew}>{t('newParty')}</Button>
+        </div>
       </div>
       <p className="text-sm text-ink-600">{rows.length === parties.length ? t('count', { count: parties.length }) : t('countOf', { shown: rows.length, total: parties.length })}</p>
       <VirtualTable
@@ -110,6 +123,7 @@ export function Parties() {
       />
       <p className="text-sm text-ink-400">{t('hint')}</p>
 
+      <PartyImportWizard open={importing} parties={parties} onClose={() => setImporting(false)} onDone={() => { setImporting(false); reload() }} />
       <PartyFormDrawer
         open={form.open}
         party={form.party}

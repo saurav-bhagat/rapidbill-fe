@@ -39,6 +39,7 @@ export function createHttpParties(): PartyService {
     create: (data) => api<Party>('/parties', { method: 'POST', body: body(data) }),
     update: (id, patch) => api<Party>(`/parties/${encodeURIComponent(id)}`, { method: 'PATCH', body: body(patch) }),
     remove: (id) => api<void>(`/parties/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    importParties: (ops, source) => api<{ created: number; updated: number }>('/parties/import', { method: 'POST', body: { source, ops }, timeoutMs: 120_000 }),
   }
 }
 

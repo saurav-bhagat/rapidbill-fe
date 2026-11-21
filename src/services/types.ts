@@ -147,6 +147,10 @@ export interface Repo<T extends Meta> {
 }
 
 export type ItemService = Repo<Item>
-export type PartyService = Repo<Party>
+/** Add and change many parties in one go (a reviewed spreadsheet). All together or not at all. */
+export type PartyImportOp =
+  | { kind: 'create'; data: Omit<Party, keyof Meta> }
+  | { kind: 'update'; id: string; patch: Partial<Omit<Party, keyof Meta>> }
+export type PartyService = Repo<Party> & { importParties(ops: PartyImportOp[], source: string): Promise<{ created: number; updated: number }> }
 /** `recent` (account mode only) is the last month of bills kept on this device: instant and works offline. */
 export type VoucherService = Repo<Voucher> & { recent?: () => Promise<Voucher[]> }

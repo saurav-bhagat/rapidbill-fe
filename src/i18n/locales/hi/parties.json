@@ -68,5 +68,12 @@
     "nameExists": "इस नाम की पार्टी पहले से है",
     "stateMismatch": "राज्य GSTIN से मेल खाना चाहिए",
     "invalidAmount": "सही रकम डालें"
+  },
+  "page": {
+    "import": "इंपोर्ट",
+    "exportXlsx": ".xlsx",
+    "exportCsv": ".csv",
+    "exported": "{{n}} पार्टी एक्सपोर्ट हुईं",
+    "exportFailed": "पार्टी एक्सपोर्ट नहीं हो सकीं"
   }
 }
