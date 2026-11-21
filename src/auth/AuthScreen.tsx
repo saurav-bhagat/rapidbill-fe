@@ -6,6 +6,7 @@ import { TextSizeControl } from '@/components/layout/TextSizeControl'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/Segmented'
+import { SupportLine } from '@/components/SupportLine'
 import { useSync } from '@/offline/state'
 import { toast } from '@/store/toast'
 import { useAuth } from './session'
@@ -76,6 +77,7 @@ export function AuthScreen() {
           </Button>
         </form>
       </div>
+      <SupportLine className="mt-4" />
     </div>
   )
 }

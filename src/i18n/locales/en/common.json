@@ -155,5 +155,11 @@
     "downloaded_one": "Backup saved: {{count}} entry (a .json file to restore from and a .csv spreadsheet).",
     "downloaded_other": "Backup saved: {{count}} entries (a .json file to restore from and a .csv spreadsheet).",
     "nothingToBackUp": "Nothing is waiting, so there is nothing to back up."
+  },
+  "account": {
+    "support": "Customer support",
+    "callSupport": "Call customer support",
+    "whatsapp": "WhatsApp support",
+    "needHelp": "Need help? Call"
   }
 }

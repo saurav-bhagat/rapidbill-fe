@@ -6,6 +6,7 @@ import { useSync } from '@/offline/state'
 import { startNotices } from '@/offline/notices'
 import { attachMirror, hasSyncedBefore, startBackgroundSync, syncNow } from '@/offline/sync'
 import { Button } from '@/components/ui/Button'
+import { SupportLine } from '@/components/SupportLine'
 import { apiEnabled } from '@/services/http/client'
 import { services } from '@/services'
 import { AuthScreen } from './AuthScreen'
@@ -63,6 +64,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       <div className="mx-auto mt-24 max-w-md space-y-3 p-6">
         <h1 className="text-lg font-semibold">{t('storageBlocked.title')}</h1>
         <p className="text-ink-600">{t('storageBlocked.body')}</p>
+        <SupportLine />
       </div>
     )
   }
@@ -72,6 +74,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
         <h1 className="text-lg font-semibold">{t('needsInternet.title')}</h1>
         <p className="text-ink-600">{online ? t('needsInternet.retryHint') : t('needsInternet.body')}</p>
         <Button variant="primary" onClick={() => { setPhase('opening'); setAttempt((n) => n + 1) }}>{t('needsInternet.retry')}</Button>
+        <SupportLine />
       </div>
     )
   }
