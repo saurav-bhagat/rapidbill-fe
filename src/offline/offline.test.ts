@@ -16,7 +16,7 @@ vi.mock('@/services/http/client', () => {
     if (r instanceof Error) throw r
     return r
   })
-  return { api, apiAll: (path: string, query: Q) => api(path, { query }) }
+  return { api, apiAll: (path: string, query: Q) => api(path, { query }), apiEnabled: true, onLicenseBlocked: () => () => undefined }
 })
 
 const feed = (over: Partial<Feed> = {}): Feed => ({ epoch: 0, cursor: 'c1', hasMore: false, items: [], parties: [], settings: null, vouchers: [], deleted: { parties: [] }, ...over })

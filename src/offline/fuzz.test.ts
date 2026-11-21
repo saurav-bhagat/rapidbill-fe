@@ -16,7 +16,7 @@ let handler: (path: string, o: Opts) => Promise<unknown>
 vi.mock('@/auth/session', () => ({ useAuth: { getState: () => ({ user: { id: 'u1' }, workspace: { id: 'ws' } }) } }))
 vi.mock('@/services/http/client', () => {
   const api = vi.fn((path: string, o: Opts = {}) => handler(path, o))
-  return { api, apiAll: async (path: string, query: Opts['query']) => { const r = (await api(path, { query })) as unknown; return Array.isArray(r) ? r : (r as { data: unknown[] }).data } }
+  return { api, apiAll: async (path: string, query: Opts['query']) => { const r = (await api(path, { query })) as unknown; return Array.isArray(r) ? r : (r as { data: unknown[] }).data }, apiEnabled: true, onLicenseBlocked: () => () => undefined }
 })
 
 import { openMirror } from './db'

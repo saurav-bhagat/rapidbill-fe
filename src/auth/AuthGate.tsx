@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { loadLocale } from '@/i18n'
 import { openMirror } from '@/offline/db'
 import { useSync } from '@/offline/state'
+import { startLicenseRefresh, useLicenseStore } from '@/license/store'
 import { startNotices } from '@/offline/notices'
 import { attachMirror, hasSyncedBefore, startBackgroundSync, syncNow } from '@/offline/sync'
 import { Button } from '@/components/ui/Button'
@@ -48,7 +49,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
       if (!live) return
       const stopNotices = startNotices()
       const stopSync = startBackgroundSync()
-      stop = () => { stopSync(); stopNotices() }
+      useLicenseStore.getState().hydrate(workspaceId) // what we knew last time, even with no connection
+      const stopLicense = startLicenseRefresh()
+      stop = () => { stopSync(); stopNotices(); stopLicense() }
       setPhase('ready')
     })()
     return () => { live = false; stop?.() }

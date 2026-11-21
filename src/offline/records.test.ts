@@ -8,7 +8,7 @@ const sent: { path: string; method?: string; body?: Record<string, unknown> }[] 
 vi.mock('@/auth/session', () => ({ useAuth: { getState: () => ({ user: { id: 'u1' }, workspace: { id: 'ws' } }) } }))
 vi.mock('@/services/http/client', () => {
   const api = vi.fn(async (path: string, o: Opts = {}) => { sent.push({ path, method: o.method, body: o.body }); const r = handler(path, o); if (r instanceof Error) throw r; return r })
-  return { api, apiAll: async () => [] }
+  return { api, apiAll: async () => [], apiEnabled: true, onLicenseBlocked: () => () => undefined }
 })
 
 const day = '2026-11-20'

@@ -5,6 +5,7 @@ import type { SettingsService } from '@/services/settings'
 import type { Item, ItemService, Party, PartyService, Settings, Voucher, VoucherService } from '@/services/types'
 import { newId } from '@/lib/id'
 import { useAuth } from '@/auth/session'
+import { canWriteNow, lockedError } from '@/license/store'
 import { api } from '@/services/http/client'
 import { createHttpBilling, createHttpInventory, createHttpItems, createHttpParties, createHttpSettings, createHttpVouchers } from '@/services/http/services'
 import { cancelWaiting, editWaiting, listOutbox, localNextNumber, saveLocally } from './outbox'
@@ -59,6 +60,7 @@ export function createMirrorServices() {
     get: (id) => m().get<Party>('parties', id),
     // Online with nothing waiting: straight to the server. Otherwise (no connection, or things already waiting, which must go first) it is made here and sent later.
     create: async (d) => {
+      writable()
       const id = newId()
       if (await goDirect()) {
         try { const p = await api<Party>('/parties', { method: 'POST', body: { ...d, id }, timeoutMs: 8000 }); await m().putMany('parties', [p]); await syncNow(); return p } catch (e) { offlineOrThrow(e) }
@@ -68,13 +70,14 @@ export function createMirrorServices() {
       return p
     },
     update: async (id, p) => {
+      writable()
       const local = await editWaitingRecord(m(), 'party', id, p)
       if (local) { void syncNow(); return local }
       return written(httpParties.update(id, p))
     },
-    remove: async (id) => { if (await removeWaitingParty(m(), id)) return; await written(httpParties.remove(id)) },
+    remove: async (id) => { writable(); if (await removeWaitingParty(m(), id)) return; await written(httpParties.remove(id)) },
     // Like the item import, this needs the server, and the parties and items made on this device must have reached it first (their names could clash).
-    importParties: async (ops, source) => { await noWaitingRecords(); return written(httpParties.importParties(ops, source)) },
+    importParties: async (ops, source) => { writable(); await noWaitingRecords(); return written(httpParties.importParties(ops, source)) },
   }
 
   const recent = async () => (await m().all<Voucher>('vouchers')).sort((a, b) => b.date.localeCompare(a.date) || b.number.localeCompare(a.number, undefined, { numeric: true }))
@@ -98,6 +101,9 @@ export function createMirrorServices() {
     save: (p) => written(httpSettings.save(p)),
   }
 
+  /** After the trial or plan ends nothing new is made or changed (the server would refuse it anyway). */
+  const writable = () => { if (!canWriteNow()) throw lockedError() }
+
   /** Online and nothing waiting in the queue: the server can be asked directly. */
   const goDirect = async () => useSync.getState().online && (await listOutbox(m())).length === 0
   /** The server could not be reached: carry on locally. Anything else (a refusal) goes back to the person. */
@@ -110,6 +116,7 @@ export function createMirrorServices() {
 
   const inventory: InventoryService = {
     createItem: async (d) => {
+      writable()
       const id = newId()
       if (await goDirect()) {
         try { const it = await api<Item>('/items', { method: 'POST', body: { ...d, id }, timeoutMs: 8000 }); await m().putMany('items', [it]); await syncNow(); return it } catch (e) { offlineOrThrow(e) }
@@ -119,13 +126,14 @@ export function createMirrorServices() {
       return it
     },
     updateItem: async (id, p) => {
+      writable()
       const local = await editWaitingRecord(m(), 'item', id, p)
       if (local) { void syncNow(); return local }
       return written(httpInventory.updateItem(id, p))
     },
-    adjustStock: async (id, d, n) => { await noWaitingRecords(id); return written(httpInventory.adjustStock(id, d, n)) },
+    adjustStock: async (id, d, n) => { writable(); await noWaitingRecords(id); return written(httpInventory.adjustStock(id, d, n)) },
     ledgerFor: httpInventory.ledgerFor, // stock history is read from the server (needs the internet)
-    importItems: async (ops, source) => { await noWaitingRecords(); return written(httpInventory.importItems(ops, source)) },
+    importItems: async (ops, source) => { writable(); await noWaitingRecords(); return written(httpInventory.importItems(ops, source)) },
   }
 
   /** Keep a bill the server just confirmed, and its number, on this device straight away. */
@@ -161,6 +169,7 @@ export function createMirrorServices() {
      * so if a reply was lost and the bill is sent again, the server saves it only once.
      */
     save: async (input) => {
+      writable()
       const payload = { ...input, id: input.id ?? newId(), clientCreatedAt: new Date().toISOString() }
       if (useSync.getState().online && (await waitingCount()) === 0) {
         try {
@@ -179,11 +188,13 @@ export function createMirrorServices() {
     },
     // A bill still waiting to be sent is changed on this device (the server only ever sees the final version). One already on the server is changed there.
     update: async (id, i) => {
+      writable()
       const local = await editWaiting(m(), owner(), id, i)
       if (local) { void syncNow(); return local }
       return written(httpBilling.update(id, i))
     },
     cancel: async (id) => {
+      writable()
       const local = await cancelWaiting(m(), owner(), id)
       if (local) { void syncNow(); return local }
       return written(httpBilling.cancel(id))

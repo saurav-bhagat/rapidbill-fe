@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Download, Plus, Upload } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useLicense } from '@/license/store'
 import { useSync } from '@/offline/state'
 import { errorText } from '@/lib/errors'
 import { formatAmount, formatINR, formatQty } from '@/lib/format'
@@ -39,6 +40,7 @@ const SORTERS: Record<string, (a: Item, b: Item) => number> = {
 export function Inventory() {
   const { t } = useTranslation('inventory')
   const tCommon = useTranslation('common').t
+  const canWrite = useLicense()?.canWrite ?? true
   const waiting = useSync((x) => x.pendingIds)
   const refused = useSync((x) => x.failedIds)
   const { data: loaded, error: loadError, reload } = useAsync(() => services.items.list())
@@ -123,10 +125,10 @@ export function Inventory() {
           <option value="all">{t('page.filterAll')}</option><option value="low">{t('page.filterLow')}</option><option value="out">{t('page.filterOut')}</option>
         </Select>
         <div className="ml-auto flex gap-2">
-          <Button icon={<Upload size={14} />} hotkey="i" onClick={() => setPanel('import')}>{t('page.import')}</Button>
+          <Button icon={<Upload size={14} />} hotkey="i" disabled={!canWrite} onClick={() => setPanel('import')}>{t('page.import')}</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => doExport('xlsx')}>.xlsx</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => doExport('csv')}>.csv</Button>
-          <Button variant="primary" icon={<Plus size={14} />} hotkey="n" onClick={openNew}>{t('page.newItem')}</Button>
+          <Button variant="primary" icon={<Plus size={14} />} hotkey="n" disabled={!canWrite} onClick={openNew}>{t('page.newItem')}</Button>
         </div>
       </div>
 

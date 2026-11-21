@@ -32,7 +32,7 @@ describe('every error message the app can raise has a translation', () => {
   // The server names the message to show (`key`); the frontend must know every one, or the person sees a raw server sentence.
   const server = join(__dirname, '../../../rapidbill-be/src')
   it.skipIf(!existsSync(server))('backend: every `key` the API can send is in the English and Hindi catalogue', () => {
-    const files = walk(server)
+    const files = walk(server).filter((f) => !f.includes('/src/config/')) // plan and feature names are not error messages
     const used = keysIn(files, [/\bkey:\s*'(\w+)'/g, /\bfail\(\s*'(\w+)'/g])
     // keys that exist only to be picked inside the service and are passed on as plain values
     const ignore = new Set(['key', 'string', 'text', 'number'])

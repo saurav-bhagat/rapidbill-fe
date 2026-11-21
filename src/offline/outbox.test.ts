@@ -15,7 +15,7 @@ vi.mock('@/services/http/client', () => {
     if (r instanceof Error) throw r
     return r
   })
-  return { api, apiAll: async (path: string, query: Opts['query']) => { const r = (await api(path, { query })) as unknown; return Array.isArray(r) ? r : (r as { data: unknown[] }).data } }
+  return { api, apiAll: async (path: string, query: Opts['query']) => { const r = (await api(path, { query })) as unknown; return Array.isArray(r) ? r : (r as { data: unknown[] }).data }, apiEnabled: true, onLicenseBlocked: () => () => undefined }
 })
 
 const day = '2026-11-20'
@@ -207,6 +207,28 @@ describe('telling the person what happened', () => {
     t.setSync({ online: true })
     stop()
     expect(await messages()).toEqual([expect.stringMatching(/^warning:You are offline/), 'success:Back online.'])
+  })
+})
+
+describe('when the trial or plan has ended', () => {
+  it('nothing new is made or changed on this device, and nothing is queued; reading still works', async () => {
+    const t = await setup()
+    const { useLicenseStore } = await import('@/license/store')
+    useLicenseStore.setState({ license: { status: 'EXPIRED', canWrite: false, trialStartedAt: new Date(Date.now() - 20 * 86_400_000).toISOString(), trialEndsAt: new Date(Date.now() - 5 * 86_400_000).toISOString(), endsAt: new Date(Date.now() - 5 * 86_400_000).toISOString(), daysLeft: 0, serverTime: new Date().toISOString() }, skewMs: 0 })
+    const s = (await import('./mirrorServices')).createMirrorServices()
+    await expect(s.billing.save(bill([['a', 1]]))).rejects.toMatchObject({ key: 'trialEnded' })
+    await expect(s.inventory.createItem(item('z') as never)).rejects.toMatchObject({ key: 'trialEnded' })
+    await expect(s.parties.create(party('Nope') as never)).rejects.toMatchObject({ key: 'trialEnded' })
+    await expect(s.inventory.adjustStock('a', 1, 'x')).rejects.toMatchObject({ key: 'trialEnded' })
+    await expect(s.billing.cancel('whatever')).rejects.toMatchObject({ key: 'trialEnded' })
+    expect(await t.listOutbox(t.m)).toHaveLength(0)
+    expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(10)
+    expect((await s.items.list()).length).toBeGreaterThan(0)
+    expect((await s.settings.get()).id).toBe('s')
+    useLicenseStore.setState({ license: { ...useLicenseStore.getState().license!, status: 'ACTIVE', canWrite: true, endsAt: new Date(Date.now() + 86_400_000).toISOString(), licenseEndsAt: new Date(Date.now() + 86_400_000).toISOString() } })
+    t.setSync({ online: false }); handler = (p) => (p === '/vouchers' ? t.net() : emptyFeed)
+    await expect(s.billing.save(bill([['a', 1]]))).resolves.toBeDefined() // buying a plan unlocks it at once
+    await t.syncNow() // let the background send from that save finish before the next test starts
   })
 })
 

@@ -1,0 +1,164 @@
+{
+  "title": "Plans & License",
+  "card": {
+    "trial": "Free trial",
+    "trialEnded": "Trial ended",
+    "planEnded": "Plan ended",
+    "daysLeft_one": "{{count}} day left",
+    "daysLeft_other": "{{count}} days left",
+    "choose": "Choose a plan",
+    "renew": "Renew or extend",
+    "activeUntil": "Active until {{date}}",
+    "active": "Active",
+    "viewPlans": "View plans",
+    "readOnly": "View only until you choose a plan",
+    "collapsedTitle": "{{status}}: {{detail}}"
+  },
+  "planName": {
+    "Y1": "Mobile + Web · 1 Year",
+    "Y3": "Mobile + Web · 3 Years"
+  },
+  "banner": {
+    "trialSoon_one": "Your free trial ends in {{count}} day. Choose a plan to keep billing without a break.",
+    "trialSoon_other": "Your free trial ends in {{count}} days. Choose a plan to keep billing without a break.",
+    "trialEnded": "Your free trial has ended. You can still view, print and export everything, but new bills and changes are paused until you choose a plan.",
+    "planEnded": "Your plan has ended. You can still view, print and export everything, but new bills and changes are paused until you renew.",
+    "planSoon_one": "Your plan ends in {{count}} day. Renew now so billing never stops.",
+    "planSoon_other": "Your plan ends in {{count}} days. Renew now so billing never stops.",
+    "choose": "Choose a plan",
+    "renew": "Renew",
+    "dismiss": "Hide for today"
+  },
+  "status": {
+    "TRIAL": "Free trial",
+    "ACTIVE": "Active",
+    "EXPIRED": "Expired"
+  },
+  "offer": {
+    "title": "Early Bird Offer",
+    "upTo": "Save up to {{percent}}%",
+    "body": "Launch prices for early customers. Pay once, use for the whole period, on your phone and on the web.",
+    "taxes": "All prices include taxes."
+  },
+  "current": {
+    "title": "Your license",
+    "trialTitle": "You are on the free trial",
+    "trialBody_one": "{{count}} day left. Everything works, so try it on real bills. Choose a plan any time before it ends and no days are lost.",
+    "trialBody_other": "{{count}} days left. Everything works, so try it on real bills. Choose a plan any time before it ends and no days are lost.",
+    "expiredTitle": "Your license has ended",
+    "expiredTrial": "Your free trial ended on {{date}}. Your data is safe and you can view, print and export it. Choose a plan to start billing again.",
+    "expiredPaid": "Your plan ended on {{date}}. Your data is safe and you can view, print and export it. Renew to start billing again.",
+    "plan": "Plan",
+    "validFrom": "Started",
+    "validUntil": "Valid until",
+    "daysLeft": "Days left",
+    "extendNote": "Buying another plan adds its time after your current end date. No days are lost."
+  },
+  "plan": {
+    "name": {
+      "Y1": "1 Year",
+      "Y3": "3 Years"
+    },
+    "bestValue": "Best value",
+    "off": "{{percent}}% OFF",
+    "was": "was",
+    "perYear": "{{price}} per year",
+    "perMonth": "about {{price}} a month",
+    "saves": "Save {{amount}} compared with buying the 1 Year plan {{years}} times",
+    "buy": "Buy {{plan}} plan",
+    "extend": "Add {{plan}}",
+    "pay": "Pay {{amount}} securely",
+    "includes": "Everything included",
+    "bothDevices": "Mobile + Web"
+  },
+  "highlights": {
+    "title": "Why shops choose RapidBill",
+    "offline": {
+      "title": "Works offline",
+      "body": "Keep billing when the internet drops. Everything is saved on your device and sent when you are back online."
+    },
+    "devices": {
+      "title": "Mobile + Web, one plan",
+      "body": "Use it as a website and install it on your phone. One plan covers both."
+    },
+    "support": {
+      "title": "Constant customer support",
+      "body": "Call or WhatsApp us any time you are stuck. The number is always in the sidebar."
+    },
+    "updates": {
+      "title": "Regular updates",
+      "body": "New features and fixes reach the website for you automatically. No reinstalling."
+    },
+    "gst": {
+      "title": "GST-ready invoices",
+      "body": "Tax invoices, challans and bills of supply with CGST, SGST and IGST worked out for you."
+    },
+    "language": {
+      "title": "English and Hindi",
+      "body": "Use the screen and print your invoices in either language."
+    },
+    "safe": {
+      "title": "Your data stays yours",
+      "body": "Backed up on our server, exportable to Excel any time, even after your plan ends."
+    },
+    "fast": {
+      "title": "Built for the keyboard",
+      "body": "Make a bill in seconds with shortcuts, even on a busy counter."
+    }
+  },
+  "compare": {
+    "title": "Compare plans",
+    "feature": "Feature",
+    "trial": "Free trial",
+    "yes": "Included",
+    "no": "Not included",
+    "years_one": "{{count}} year",
+    "years_other": "{{count}} years",
+    "days": "{{count}} days",
+    "rows": {
+      "duration": "How long it lasts",
+      "offlineBilling": "Billing without internet",
+      "mobileAndWeb": "Mobile + Web",
+      "gstInvoices": "GST invoices, challans and non-GST bills",
+      "inventory": "Inventory and stock tracking",
+      "partyLedger": "Party ledger and credit balances",
+      "importExport": "Import and export with Excel",
+      "hindiEnglish": "English and Hindi (screen and invoices)",
+      "cloudBackup": "Online backup and sync",
+      "support": "Customer support (call and WhatsApp)",
+      "updates": "Regular updates",
+      "keepBilling": "Keep billing after 15 days",
+      "earlyBirdPrice": "Early Bird price"
+    }
+  },
+  "history": {
+    "title": "Payment history",
+    "none": "No payments yet.",
+    "date": "Paid on",
+    "plan": "Plan",
+    "amount": "Amount",
+    "validity": "Valid",
+    "reference": "Reference"
+  },
+  "pay": {
+    "opening": "Opening secure payment…",
+    "testTitle": "Test payment",
+    "testBody": "This is a practice payment that charges nothing. It exists only while the app is being built and is switched off on the live site.",
+    "testPay": "Pay {{amount}} (test)",
+    "cancel": "Cancel",
+    "success": "Payment received. Your plan is active until {{date}}.",
+    "pending": "We have your payment but could not confirm it yet. Do not pay again: it will be added automatically within a few minutes. If it is not, call support and quote reference {{ref}}.",
+    "needInternet": "Connect to the internet to pay.",
+    "unavailable": "Online payment is not available yet. Please call or WhatsApp us to buy a plan.",
+    "contact": "Call {{phone}}",
+    "failed": "Payment was not completed. You have not been charged.",
+    "scriptFailed": "Could not open the payment window. Check your connection and try again."
+  },
+  "footer": {
+    "help": "Questions before you buy? Call or WhatsApp",
+    "note": "After your plan ends you can still view, print and export all your data."
+  },
+  "toast": {
+    "loadFailed": "Could not load plans. Please try again."
+  }
+}

@@ -4,6 +4,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { NAV } from '@/lib/nav'
 import { useUI } from '@/store/ui'
 import { Keycap } from '../ui/Keycap'
+import { LicenseCard } from '@/license/LicenseCard'
 import { AccountBox } from './AccountBox'
 
 export function Sidebar() {
@@ -39,6 +40,7 @@ export function Sidebar() {
           )
         })}
       </nav>
+      <LicenseCard collapsed={c} />
       <AccountBox collapsed={c} />
       <button
         onClick={toggleSidebar}

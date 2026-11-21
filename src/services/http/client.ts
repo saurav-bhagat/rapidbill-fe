@@ -26,6 +26,10 @@ const writeRefresh = (v: string | null) => {
   try { if (v) localStorage.setItem(REFRESH_KEY, v); else localStorage.removeItem(REFRESH_KEY) } catch { /* storage blocked: stay signed in for this tab only */ }
 }
 
+const blockedListeners = new Set<() => void>()
+/** Called when the server answers 402: the license ended, so the app should look again. */
+export const onLicenseBlocked = (fn: () => void) => { blockedListeners.add(fn); return () => { blockedListeners.delete(fn) } }
+
 export const tokens = {
   hasRefresh: () => readRefresh() !== null,
   set(s: Session) { accessToken = s.accessToken; accessExpiresAt = Date.parse(s.accessTokenExpiresAt); writeRefresh(s.refreshToken) },
@@ -96,6 +100,7 @@ export async function api<T>(path: string, o: Opts = {}): Promise<T> {
     let body: ErrorBody | null = null
     try { body = (await res.json()) as ErrorBody } catch { /* not JSON */ }
     if (res.status === 401 && o.auth !== false) { tokens.clear(); lostHandler?.() }
+    if (res.status === 402) blockedListeners.forEach((f) => f())
     throw toAppError(res.status, body)
   }
   if (res.status === 204) return undefined as T

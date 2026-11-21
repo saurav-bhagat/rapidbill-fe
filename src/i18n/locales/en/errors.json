@@ -59,5 +59,10 @@
   "loadFailed": "Could not load this screen. Check your connection and try again.",
   "loadFailedTitle": "Could not load",
   "retry": "Try again",
-  "syncCursor": "The data download got out of step. Reload the page and try again."
+  "syncCursor": "The data download got out of step. Reload the page and try again.",
+  "trialEnded": "Your free trial has ended. Choose a plan to keep billing.",
+  "licenseEnded": "Your plan has ended. Renew to keep billing.",
+  "paymentsUnavailable": "Online payment is not available right now. Please call us to buy a plan.",
+  "paymentNotConfirmed": "We could not confirm this payment. If money was taken, it will be added automatically; otherwise please call support.",
+  "planUnknown": "That plan does not exist."
 }

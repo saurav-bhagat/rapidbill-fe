@@ -6,6 +6,7 @@ import { calcVoucher, type CalcLine } from '@/lib/calc'
 import { formatAmount, formatINR, todayISO } from '@/lib/format'
 import { stateName } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
+import { useLicense } from '@/license/store'
 import { isWaiting } from '@/lib/saved'
 import { useAsync } from '@/lib/useAsync'
 import { BillingError, services, type Item, type PaymentStatus, type Party, type Voucher, type VoucherMode } from '@/services'
@@ -43,6 +44,8 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     return rawItems.map((i) => (back.has(i.id) ? { ...i, currentStock: i.currentStock + back.get(i.id)! } : i))
   }, [rawItems, source, editId])
   const { data: parties = [], reload: reloadParties } = useAsync(() => services.parties.list())
+  const lic = useLicense()
+  const canWrite = lic?.canWrite ?? true // no license info (browser-only mode, or never loaded) never blocks
   const settingsQ = useAsync(() => services.settings.get())
   const { data: settings } = settingsQ
 
@@ -376,7 +379,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         onRoundOff={setRoundOff}
         payment={payment}
         onPayment={setPayment}
-        saving={saving}
+        saving={saving || !canWrite}
         onSavePrint={() => save('print')}
         onSaveNew={() => save('new')}
         onDiscard={() => (dirty ? setConfirmDiscard(true) : undefined)}

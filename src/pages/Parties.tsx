@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
+import { useLicense } from '@/license/store'
 import { useSync } from '@/offline/state'
 import { Download, Plus, Upload } from 'lucide-react'
 import { formatINR } from '@/lib/format'
@@ -32,6 +33,7 @@ const SORT: Record<string, (a: Party, b: Party) => number> = {
 export function Parties() {
   const { t } = useTranslation('parties')
   const tCommon = useTranslation('common').t
+  const canWrite = useLicense()?.canWrite ?? true
   const waiting = useSync((x) => x.pendingIds)
   const refused = useSync((x) => x.failedIds)
   const { data: loaded, error: loadError, reload } = useAsync(() => services.parties.list())
@@ -101,10 +103,10 @@ export function Parties() {
           <option value="">{t('allTypes')}</option><option value="CUSTOMER">{t('typePlural.customer')}</option><option value="DEPARTMENT">{t('typePlural.department')}</option><option value="BRANCH">{t('typePlural.branch')}</option>
         </Select>
         <div className="ml-auto flex items-center gap-2">
-          <Button onClick={() => setImporting(true)} icon={<Upload size={14} />} hotkey="i">{t('page.import')}</Button>
+          <Button onClick={() => setImporting(true)} icon={<Upload size={14} />} hotkey="i" disabled={!canWrite}>{t('page.import')}</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => void doExport('xlsx')}>{t('page.exportXlsx')}</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => void doExport('csv')}>{t('page.exportCsv')}</Button>
-          <Button variant="primary" icon={<Plus size={14} />} hotkey="n" onClick={openNew}>{t('newParty')}</Button>
+          <Button variant="primary" icon={<Plus size={14} />} hotkey="n" disabled={!canWrite} onClick={openNew}>{t('newParty')}</Button>
         </div>
       </div>
       <p className="text-sm text-ink-600">{rows.length === parties.length ? t('count', { count: parties.length }) : t('countOf', { shown: rows.length, total: parties.length })}</p>

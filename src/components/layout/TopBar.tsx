@@ -16,7 +16,7 @@ export function TopBar() {
   const setShortcutsOpen = useUI((s) => s.setShortcutsOpen)
   return (
     <header className="no-print flex h-12 shrink-0 items-center justify-between border-b border-line bg-surface px-5">
-      <h1 className="text-lg font-semibold">{current ? t(current.titleKey) : 'RapidBill'}</h1>
+      <h1 className="text-lg font-semibold">{current ? t(current.titleKey) : pathname.startsWith('/license') ? t('title', { ns: 'license' }) : 'RapidBill'}</h1>
       <div className="flex items-center gap-2">
         <SyncStatus />
         <TextSizeControl />

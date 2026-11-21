@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { AppError } from '@/services/errors'
 import { api, tokens, type Session, type SessionUser, type SessionWorkspace } from '@/services/http/client'
 import i18n from '@/i18n'
+import { useLicenseStore } from '@/license/store'
 import { toast } from '@/store/toast'
 import { deleteMirror } from '@/offline/db'
 import { attachMirror } from '@/offline/sync'
@@ -53,6 +54,7 @@ export const useAuth = create<AuthState>((set) => {
       const ws = useAuth.getState().workspace?.id
       tokens.clear()
       dropInfo()
+      useLicenseStore.getState().reset()
       attachMirror(null)
       if (ws) await deleteMirror(ws) // the copy of the business data does not stay behind on a shared computer
       set({ status: 'out', user: undefined, workspace: undefined, notice: undefined })

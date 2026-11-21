@@ -9,6 +9,8 @@ vi.mock('@/auth/session', () => ({ useAuth: { getState: () => ({ user: { id: 'u1
 vi.mock('@/services/http/client', () => ({
   api: vi.fn(async (path: string, o: Opts = {}) => { sent.push({ path, body: o.body }); const r = handler(path, o); if (r instanceof Error) throw r; return r }),
   apiAll: async () => [],
+  apiEnabled: true,
+  onLicenseBlocked: () => () => undefined,
 }))
 
 const day = '2026-11-20'
