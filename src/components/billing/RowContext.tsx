@@ -1,17 +1,18 @@
 import { useTranslation } from 'react-i18next'
+import { Info } from 'lucide-react'
 import { formatINR, formatQty } from '@/lib/format'
 import type { Row } from '@/lib/billing'
 import { parseRate } from '@/lib/billing'
 
 /** What the operator needs to see without leaving the grid: stock, MRP, last cost, HSN, batch, margin. */
-export function RowContext({ row, flash }: { row?: Row; flash: string }) {
+export function RowContext({ row, flash, over }: { row?: Row; flash: string; over?: string }) {
   const { t } = useTranslation('billing')
   const it = row?.item
   const rate = row ? parseRate(row.rate) : null
   const margin = it && rate && rate > 0 && it.purchaseRate ? ((rate - it.purchaseRate) / rate) * 100 : null
   const tone = !it ? '' : it.currentStock <= 0 ? 'text-danger' : it.currentStock <= it.lowStockThreshold ? 'text-warn' : 'text-ok'
   return (
-    <div className="flex h-9 shrink-0 items-center gap-6 rounded-md border border-line bg-sunken px-4 text-sm" aria-live="polite">
+    <div className="flex h-8 shrink-0 items-center gap-5 overflow-hidden rounded-md border border-line bg-sunken px-3 text-sm" aria-live="polite">
       {flash ? (
         <span className="font-medium text-danger">{flash}</span>
       ) : it ? (
@@ -27,6 +28,7 @@ export function RowContext({ row, flash }: { row?: Row; flash: string }) {
       ) : (
         <span className="text-ink-400">{t('context.empty')}</span>
       )}
+      {over && <span className="ml-auto flex shrink-0 items-center gap-1.5 font-medium text-warn"><Info size={15} />{over}</span>}
     </div>
   )
 }

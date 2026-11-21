@@ -1,11 +1,11 @@
 import { Fragment, forwardRef, useEffect, useImperativeHandle, useRef, type KeyboardEvent } from 'react'
-import { X } from 'lucide-react'
+import { Info, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { blankRow, parseDisc, parseQty, parseRate, rowStatus, rupeesText, defaultRate, usageByItem, type Row } from '@/lib/billing'
 import type { CalcLine } from '@/lib/calc'
 import { formatAmount } from '@/lib/format'
 import type { Item } from '@/services'
-import { ItemCell } from './ItemCell'
+import { ItemCell, type SearchMemory } from './ItemCell'
 
 export type Col = 'item' | 'qty' | 'rate' | 'disc'
 export interface GridHandle { focusCell: (row: number, col: Col) => void; pickItem: (row: number, item: Item) => void }
@@ -61,6 +61,10 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
 
   useImperativeHandle(ref, () => ({ focusCell, pickItem }))
 
+  // The picker remembers its last search only while this bill is in progress: a saved or cleared bill starts fresh.
+  const memory = useRef<SearchMemory | null>(null)
+  useEffect(() => { if (rows.every((r) => !r.item && !r.query)) memory.current = null }, [rows])
+
   const onEnter = (e: KeyboardEvent<HTMLInputElement>, i: number, col: 'qty' | 'rate' | 'disc') => {
     const r = rows[i]
     if (col === 'qty') {
@@ -106,10 +110,10 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
   )
 
   return (
-    <div ref={box} className="min-h-0 flex-1 overflow-auto rounded-md border border-line bg-surface">
+    <div ref={box} className="min-h-[352px] flex-1 overflow-auto rounded-lg border border-line bg-surface">
       <table className="w-full border-collapse text-base" style={{ tableLayout: 'fixed', minWidth: 1020 }}>
         <thead>
-          <tr className="h-9">
+          <tr className="h-8">
             {[['#', 36, 'center'], ['item', 0, 'left'], ['batch', 104, 'left'], ['exp', 58, 'left'], ['qty', 84, 'right'], ['unit', 56, 'left'], ['mrp', 84, 'right'], ['rate', 96, 'right'], ['disc', 68, 'right'], ['gst', 60, 'right'], ['amount', 116, 'right'], ['', 32, 'left']].filter(([h]) => showGst || h !== 'gst').map(([h, w, a]) => (
               <th key={h as string} style={{ width: w ? (w as number) : undefined }} className={`sticky top-0 z-10 border-b border-line bg-sunken px-2 text-sm font-medium text-ink-600 text-${a}`}>{h === '#' || h === '' ? h : t(`grid.col.${h}`)}</th>
             ))}
@@ -122,10 +126,14 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
             return (
               <Fragment key={r.key}>
                 <tr
-                  className="h-10 border-b border-line focus-within:bg-primary-soft/40 [&_input:focus]:shadow-[inset_0_0_0_2px_rgb(var(--primary))]"
+                  className="h-8 border-b border-line focus-within:bg-primary-soft/40 [&_input:focus]:shadow-[inset_0_0_0_2px_rgb(var(--primary))]"
                   onFocusCapture={() => onActive(i)}
                 >
-                  <td className="text-center text-sm text-ink-400">{i + 1}</td>
+                  <td className="text-center text-sm text-ink-400">
+                    {st.shortBy ? (
+                      <span title={`${(() => { const across = st.shortBy.requested !== parseQty(r.qty) ? t('grid.across', { n: st.shortBy.requested }) : ''; return st.shortBy.available <= 0 ? t('grid.shortNone', { across }) : t('grid.shortOnly', { n: st.shortBy.available, across }) })()} ${blockOverIssue ? t('grid.reduceQty') : t('grid.canSave')}`} className={`inline-grid cursor-help place-items-center ${blockOverIssue ? 'text-danger' : 'text-warn'}`}><Info size={16} /></span>
+                    ) : i + 1}
+                  </td>
                   <td className="relative p-0">
                     <ItemCell
                       row={r}
@@ -138,11 +146,12 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
                       onRemove={() => onRemove(i)}
                       onFocused={() => onActive(i)}
                       showGst={showGst}
+                      memory={memory}
                     />
                   </td>
                   <td className="truncate px-2 font-mono text-sm text-ink-600">{r.item?.batchNo || ''}</td>
                   <td className="px-2 font-mono text-sm text-ink-600">{r.item?.expiry || ''}</td>
-                  <td className="p-0">{r.item ? numInput(i, 'qty', r.qty, st.qtyInvalid || !!st.shortBy) : null}</td>
+                  <td className={`p-0 ${st.shortBy && !blockOverIssue ? '[&_input]:font-semibold [&_input]:text-warn' : ''}`}>{r.item ? numInput(i, 'qty', r.qty, st.qtyInvalid || (!!st.shortBy && blockOverIssue)) : null}</td>
                   <td className="px-2 text-sm text-ink-600">{r.item?.unit}</td>
                   <td className="num px-2 text-ink-600">{r.item ? formatAmount(r.item.mrp) : ''}</td>
                   <td className="p-0">{r.item ? numInput(i, 'rate', r.rate, st.rateInvalid) : null}</td>
@@ -155,18 +164,6 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
                     )}
                   </td>
                 </tr>
-                {st.shortBy && (
-                  <tr className={`border-b border-line ${blockOverIssue ? 'bg-danger-soft' : 'bg-warn-soft'}`}>
-                    <td />
-                    <td colSpan={showGst ? 11 : 10} className={`px-2 py-1 text-sm ${blockOverIssue ? 'text-danger' : 'text-warn'}`}>
-                      {(() => {
-                        const across = st.shortBy.requested !== parseQty(r.qty) ? t('grid.across', { n: st.shortBy.requested }) : ''
-                        return st.shortBy.available <= 0 ? t('grid.shortNone', { across }) : t('grid.shortOnly', { n: st.shortBy.available, across })
-                      })()}{' '}
-                      {blockOverIssue ? t('grid.reduceQty') : t('grid.canSave')}
-                    </td>
-                  </tr>
-                )}
               </Fragment>
             )
           })}

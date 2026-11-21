@@ -67,7 +67,9 @@
     "nameRequired": "Name is required",
     "nameExists": "A party with this name already exists",
     "stateMismatch": "State must match the GSTIN",
-    "invalidAmount": "Enter a valid amount"
+    "invalidAmount": "Enter a valid amount",
+    "stateSelect": "Select state",
+    "stateRequired": "Choose the state"
   },
   "page": {
     "import": "Import",

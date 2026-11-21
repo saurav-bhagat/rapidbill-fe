@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react'
 import { useTranslation, Trans } from 'react-i18next'
 import { rankItems, type Row } from '@/lib/billing'
 import { formatAmount, formatQty } from '@/lib/format'
@@ -17,22 +17,27 @@ interface Props {
   onRemove: () => void
   onFocused: () => void
   showGst: boolean
+  /** Last search and pick on this bill: the next empty row's picker opens from there. Lives only while this bill is being made. */
+  memory: MutableRefObject<SearchMemory | null>
 }
 
-const POP_W = 780
+export interface SearchMemory { query: string; itemId: string }
+
+/** Wide enough for long item names; never wider than the window. */
+const popWidth = () => Math.min(1040, window.innerWidth - 16)
 const POP_H = 330
 
 const stockClass = (i: Item) => (i.currentStock <= 0 ? 'text-danger' : i.currentStock <= i.lowStockThreshold ? 'text-warn' : 'text-ok')
 
 /** Item input with a floating, keyboard-driven picker. */
-export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdvance, onRemove, onFocused, showGst }: Props) {
+export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdvance, onRemove, onFocused, showGst, memory }: Props) {
   const { t } = useTranslation('billing')
   const cols = showGst ? 'grid-cols-[1fr_88px_110px_96px_72px_72px_48px]' : 'grid-cols-[1fr_88px_110px_96px_72px_72px]'
   const input = useRef<HTMLInputElement>(null)
   const list = useRef<HTMLUListElement>(null)
   const [open, setOpen] = useState(false)
   const [hl, setHl] = useState(0)
-  const [pos, setPos] = useState({ left: 0, top: 0, up: false })
+  const [pos, setPos] = useState({ left: 0, top: 0, up: false, w: 780 })
 
   const results = useMemo(() => (open ? rankItems(items, row.query, matchesQuery) : []), [open, items, row.query])
 
@@ -40,7 +45,8 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
     if (!open || !input.current) return
     const r = input.current.getBoundingClientRect()
     const up = r.bottom + POP_H > window.innerHeight && r.top > POP_H
-    setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - POP_W - 8)), top: up ? r.top : r.bottom + 2, up })
+    const w = popWidth()
+    setPos({ left: Math.max(8, Math.min(r.left, window.innerWidth - w - 8)), top: up ? r.top : r.bottom + 2, up, w })
   }, [open, results.length])
 
   useEffect(() => {
@@ -48,7 +54,18 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
   }, [hl, results])
 
   const close = () => setOpen(false)
-  const pick = (i: Item) => { close(); onPick(i) }
+  const pick = (i: Item) => { memory.current = { query: row.query, itemId: i.id }; close(); onPick(i) }
+
+  /** Open the picker. On an empty row, start where the last search left off: same text (selected, so typing replaces it) and the same item highlighted. */
+  const openPicker = () => {
+    const m = memory.current
+    if (m && !row.query) {
+      if (m.query) { onQuery(m.query); requestAnimationFrame(() => input.current?.select()) }
+      const at = rankItems(items, m.query, matchesQuery).findIndex((x) => x.id === m.itemId)
+      setHl(Math.max(0, at))
+    } else setHl(0)
+    setOpen(true)
+  }
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return
@@ -60,11 +77,11 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
       return
     }
     switch (e.key) {
-      case 'ArrowDown': e.preventDefault(); if (!open) { setOpen(true); setHl(0) } else setHl((h) => Math.min(results.length - 1, h + 1)); break
+      case 'ArrowDown': e.preventDefault(); if (!open) openPicker(); else setHl((h) => Math.min(results.length - 1, h + 1)); break
       case 'ArrowUp': if (open) { e.preventDefault(); setHl((h) => Math.max(0, h - 1)) } break
       case 'Enter':
         e.preventDefault()
-        if (!open) { setOpen(true); setHl(0) } else if (results[hl]) pick(results[hl])
+        if (!open) openPicker(); else if (results[hl]) pick(results[hl])
         break
       case 'Escape': if (open) { e.preventDefault(); close() } break
       case 'Tab': close(); break
@@ -94,7 +111,7 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
       />
       {open && (
         <div
-          style={{ position: 'fixed', left: pos.left, top: pos.up ? undefined : pos.top, bottom: pos.up ? window.innerHeight - pos.top + 2 : undefined, width: POP_W, maxHeight: POP_H }}
+          style={{ position: 'fixed', left: pos.left, top: pos.up ? undefined : pos.top, bottom: pos.up ? window.innerHeight - pos.top + 2 : undefined, width: pos.w, maxHeight: POP_H }}
           className="z-30 flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-float"
           onMouseDown={(e) => e.preventDefault()}
         >
@@ -120,9 +137,9 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
                 data-hl={n === hl}
                 onMouseMove={() => n !== hl && setHl(n)}
                 onClick={() => pick(i)}
-                className={`grid h-9 cursor-default ${cols} items-center gap-x-2 px-3 ${n === hl ? 'bg-primary-soft' : ''}`}
+                className={`grid min-h-9 cursor-default ${cols} items-center gap-x-2 px-3 py-1 ${n === hl ? 'bg-primary-soft' : ''}`}
               >
-                <span className="truncate font-medium">{i.name}</span>
+                <span className="break-words font-medium leading-snug" title={i.name}>{i.name}</span>
                 <span className="font-mono text-sm text-ink-600">{i.code}</span>
                 <span className="truncate font-mono text-sm text-ink-600">{i.batchNo || '-'}</span>
                 <span className={`num font-medium ${stockClass(i)}`}>{formatQty(i.currentStock)} {i.unit}</span>

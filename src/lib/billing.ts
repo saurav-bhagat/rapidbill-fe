@@ -87,10 +87,39 @@ export function repriceRows(rows: Row[], basis: 'SALE' | 'COST'): Row[] {
   return rows.map((r) => (r.item && !r.rateTouched ? { ...r, rate: rupeesText(defaultRate(r.item, basis)) } : r))
 }
 
-/** Rank picker results: exact code, then name prefix, then the rest by name. */
+const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+/** A token that is plain letters/digits has to start a word ("w" finds "Wire"); anything with punctuation (0.75", 1/2) is matched as written. */
+const startsAWord = (ws: string[], hay: string, tok: string) => (/^[a-z0-9]+$/.test(tok) ? ws.some((w) => w.startsWith(tok)) : hay.includes(tok))
+/** Each token starts a later word than the one before: "a w" finds "Anchor Wire" but not "Wire Anchor". */
+function inOrder(ws: string[], toks: string[]): boolean {
+  let at = 0
+  for (const t of toks) {
+    while (at < ws.length && !ws[at]!.startsWith(t)) at++
+    if (at === ws.length) return false
+    at++
+  }
+  return true
+}
+
+/**
+ * Rank picker results. Typing initials works: "a w" finds Anchor Wire. Best first: exact code, name starts with the text,
+ * the words of the name start with each typed piece in order, code prefix, every piece starts some word, anything that merely contains it.
+ */
 export function rankItems(items: Item[], query: string, matches: (q: string, fields: string[]) => boolean, limit = 50): Item[] {
   const q = query.trim().toLowerCase()
-  const hits = items.filter((i) => matches(query, [i.name, i.code, i.category, i.batchNo, i.hsn]))
-  const score = (i: Item) => (i.code.toLowerCase() === q ? 0 : i.name.toLowerCase().startsWith(q) ? 1 : i.code.toLowerCase().startsWith(q) ? 2 : 3)
+  const toks = q.split(/\s+/).filter(Boolean)
+  const fieldsOf = (i: Item) => [i.name, i.code, i.category, i.batchNo, i.hsn]
+  const word = (i: Item) => { const f = fieldsOf(i).join(' '); return toks.length > 1 && toks.every((t) => startsAWord(words(f), f.toLowerCase(), t)) }
+  let hits = items.filter((i) => matches(query, fieldsOf(i)))
+  // with several pieces, the word-start matches are what was meant; drop the "contains the letters somewhere" noise when there are any
+  if (toks.length > 1) { const strict = hits.filter(word); if (strict.length) hits = strict }
+  const score = (i: Item) => {
+    const name = i.name.toLowerCase()
+    if (i.code.toLowerCase() === q) return 0
+    if (name.startsWith(q)) return 1
+    if (toks.length > 1 && inOrder(words(i.name), toks)) return 2
+    if (i.code.toLowerCase().startsWith(q)) return 3
+    return word(i) ? 4 : 5
+  }
   return hits.sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name)).slice(0, limit)
 }

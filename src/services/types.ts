@@ -135,7 +135,20 @@ export interface Settings extends Meta {
   bankAccount: string
   bankIfsc: string
   upiId: string
+  /** Extra business details (older accounts do not have them until saved once). */
+  email?: string
+  pan?: string
+  /** Terms printed on invoices. Empty = the standard line. */
+  terms?: string
+  /** Which parts of the printed invoice are shown. Use `invoiceFieldsOf(settings)`, which fills any gaps. */
+  invoiceFields?: Partial<Record<InvoiceFieldKey, boolean>>
 }
+
+export const INVOICE_FIELD_KEYS = [
+  'hsn', 'batchExpiry', 'mrp', 'unit', 'discount', 'hsnSummary', 'amountInWords', 'bank', 'upi', 'terms', 'signature',
+  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan',
+] as const
+export type InvoiceFieldKey = (typeof INVOICE_FIELD_KEYS)[number]
 
 /** Async service contracts. The localStorage implementations below can be swapped for an HTTP client. */
 export interface Repo<T extends Meta> {

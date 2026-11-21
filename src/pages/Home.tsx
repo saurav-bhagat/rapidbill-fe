@@ -103,6 +103,12 @@ export function Home() {
         </Link>
       </div>
 
+      {(!settings.address.trim() || !settings.stateCode) && (
+        <Link to="/settings?tab=profile" className="flex items-center justify-between gap-3 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-base text-warn hover:brightness-95">
+          <span><b>{t('profileNudge.title')}</b> {t('profileNudge.body')}</span>
+          <span className="shrink-0 font-semibold underline">{t('profileNudge.cta')}</span>
+        </Link>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Tile icon={IndianRupee} label={t('tile.todayBilling')} value={formatINR(d.today.amount)} sub={<Change now={d.today.amount} before={d.yesterday.amount} />} />
         <Tile icon={FileText} tone="green" label={t('tile.billsToday')} value={d.today.bills} sub={t('tile.unitsIssued', { qty: formatQty(d.today.qty) })} />

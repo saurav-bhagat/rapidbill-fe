@@ -212,6 +212,7 @@ export function buildPartyPreview(rows: Cell[][], headerRow: number, map: PartyM
     }
 
     // new party: every field has a value
+    if (!data.stateCode && !opts.defaultState) { out.push({ ...base, action: 'error', note: { key: 'row.stateMissing' }, data: {} }); return }
     if (!data.stateCode) { data.stateCode = opts.defaultState; warnings.push({ key: 'warn.stateDefault', params: { state: stateName(opts.defaultState) } }) }
     const full: PartyData = { name, type: 'CUSTOMER', gstin: '', address: '', phone: '', balance: balance ?? 0, ...data, stateCode: data.stateCode }
     const row: PartyPreviewRow = { ...base, action: 'create', data: full }

@@ -20,6 +20,9 @@ interface AuthState {
   status: Status
   /** Why the person is looking at the sign-in screen when they did not ask to sign out. */
   notice?: 'expired'
+  /** Just created an account: ask for the business details once (can be skipped). */
+  onboarding: boolean
+  finishOnboarding(): void
   user?: SessionUser
   workspace?: SessionWorkspace
   /** Resume a saved login on page load. */
@@ -34,6 +37,8 @@ export const useAuth = create<AuthState>((set) => {
   tokens.onLost(() => set({ status: 'out', user: undefined, workspace: undefined, notice: 'expired' }))
   return {
     status: 'loading',
+    onboarding: false,
+    finishOnboarding: () => set({ onboarding: false }),
     async init() {
       if (!tokens.hasRefresh()) { set({ status: 'out' }); return }
       try {
@@ -48,7 +53,7 @@ export const useAuth = create<AuthState>((set) => {
       }
     },
     async login(email, password) { accept(await api<Session>('/auth/login', { method: 'POST', body: { email, password }, auth: false })) },
-    async signup(v) { accept(await api<Session>('/auth/signup', { method: 'POST', body: v, auth: false })) },
+    async signup(v) { accept(await api<Session>('/auth/signup', { method: 'POST', body: v, auth: false })); set({ onboarding: true }) },
     async logout() {
       const rt = (() => { try { return localStorage.getItem('rapidbill:refresh-token') } catch { return null } })()
       const ws = useAuth.getState().workspace?.id

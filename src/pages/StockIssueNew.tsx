@@ -24,7 +24,7 @@ import { LoadFailed } from '@/components/ui/LoadFailed'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Segmented } from '@/components/ui/Segmented'
 
-const input = 'h-9 rounded border border-line bg-surface px-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
+const input = 'h-8 rounded border border-line bg-surface px-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
 
 /** New voucher, or (editId) edit an existing one, or (?from=id) duplicate one. */
 export function StockIssueNew({ editId }: { editId?: string }) {
@@ -136,7 +136,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const calc = useMemo(
     () => calcVoucher({
       lines: billable.map((r) => ({ qty: parseQty(r.qty)!, rate: parseRate(r.rate) ?? 0, discPct: parseDisc(r.disc) ?? 0, gstPct: r.item.gstPercent })),
-      taxApplicable: effTax, sellerState: settings?.stateCode ?? '29', partyState: party?.stateCode ?? null,
+      taxApplicable: effTax, sellerState: settings?.stateCode ?? '', partyState: party?.stateCode ?? null,
       billDiscount: bd && bd !== 'invalid' ? bd : undefined, roundOff,
     }),
     [billable, effTax, settings?.stateCode, party?.stateCode, bd, roundOff],
@@ -263,7 +263,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   if (sourceId && !source) return <div className="p-6 text-ink-600">{t('notFound')}</div>
 
   return (
-    <div className="flex h-full min-h-[560px] flex-col gap-3">
+    <div className="-m-2 flex min-h-full flex-col gap-2">
       {sourceId && source && (
         <div className="shrink-0 rounded-md border border-line bg-warn-soft px-4 py-2 text-sm text-warn">
           {editId
@@ -272,20 +272,20 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         </div>
       )}
       {/* ---- header */}
-      <section className="shrink-0 rounded-md border border-line bg-surface px-4 py-3">
-        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+      <section className="shrink-0 rounded-lg border border-line bg-surface px-3 py-2">
+        <div className="flex flex-wrap items-end gap-x-3 gap-y-2">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-ink-600">{t('header.voucherNo')}</span>
+            <span className="mb-0.5 block text-xs font-medium text-ink-600">{t('header.voucherNo')}</span>
             <input
               value={number}
               onChange={(e) => { setNumber(e.target.value); setNumberTouched(true) }}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); dateInput.current?.focus() } }}
-              className={`${input} w-40 font-mono`}
+              className={`${input} w-36 font-mono`}
               aria-label={t('header.voucherNumber')}
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-ink-600">{t('header.issueDate')}</span>
+            <span className="mb-0.5 block text-xs font-medium text-ink-600">{t('header.issueDate')}</span>
             <input
               ref={dateInput}
               type="date"
@@ -293,30 +293,28 @@ export function StockIssueNew({ editId }: { editId?: string }) {
               max="2099-12-31"
               onChange={(e) => e.target.value && setDate(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); partyInput.current?.focus() } }}
-              className={`${input} w-40 font-mono`}
+              className={`${input} w-36 font-mono`}
               aria-label={t('header.issueDate')}
             />
           </label>
           <div>
-            <span className="mb-1 block text-sm font-medium text-ink-600">{t('header.voucherType')}</span>
+            <span className="mb-0.5 block text-xs font-medium text-ink-600">{t('header.voucherType')}</span>
             <Segmented label={t('header.voucherType')} value={mode} onChange={changeMode} options={[{ value: 'TAX_INVOICE', label: gstOn ? t('header.taxInvoiceGst') : t('header.invoice') }, { value: 'CHALLAN', label: t('header.challan') }]} />
           </div>
           {mode === 'CHALLAN' && (
             <>
               {gstOn && <div>
-                <span className="mb-1 block text-sm font-medium text-ink-600">{t('header.tax')}</span>
+                <span className="mb-0.5 block text-xs font-medium text-ink-600">{t('header.tax')}</span>
                 <Segmented label={t('header.tax')} value={taxYes ? 'YES' : 'NO'} onChange={(v) => setTaxYes(v === 'YES')} options={[{ value: 'YES', label: t('header.yes') }, { value: 'NO', label: t('header.no') }]} />
               </div>}
               <div>
-                <span className="mb-1 block text-sm font-medium text-ink-600">{t('header.issueAt')}</span>
+                <span className="mb-0.5 block text-xs font-medium text-ink-600">{t('header.issueAt')}</span>
                 <Segmented label={t('header.rateBasis')} value={basis} onChange={changeBasis} options={[{ value: 'SALE', label: t('header.saleRate') }, { value: 'COST', label: t('header.costRate') }]} />
               </div>
             </>
           )}
-        </div>
-        <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-3">
-          <div className="w-[26rem]">
-            <span className="mb-1 block text-sm font-medium text-ink-600">{t('header.partyRecipient')}</span>
+          <div className="w-[17rem]">
+            <span className="mb-0.5 block text-xs font-medium text-ink-600">{t('header.partyRecipient')}</span>
             <PartyCombobox
               parties={parties}
               value={partyId}
@@ -326,7 +324,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
               inputRef={partyInput}
             />
           </div>
-          <div className="flex h-9 items-center gap-2 text-sm text-ink-600">
+          <div className="flex h-8 items-center gap-2 text-sm text-ink-600">
             {party ? (
               <>
                 {gstOn && <><span className="font-mono">{party.gstin || t('header.unregistered')}</span><span>·</span><span>{stateName(party.stateCode)}</span></>}
@@ -335,8 +333,8 @@ export function StockIssueNew({ editId }: { editId?: string }) {
               </>
             ) : <span className="text-ink-400">{t('header.counterSale')}</span>}
           </div>
-          <label className="block min-w-[14rem] flex-1">
-            <span className="mb-1 block text-sm font-medium text-ink-600">{t('header.remarksLabel')}</span>
+          <label className="block min-w-[12rem] flex-1">
+            <span className="mb-0.5 block text-xs font-medium text-ink-600">{t('header.remarksLabel')}</span>
             <input
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
@@ -364,7 +362,8 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         onRemove={removeRow}
         onMessage={showFlash}
       />
-      <RowContext row={rows[active]} flash={flash || (overCount ? t('flash.exceedAvailable', { count: overCount }) : '')} />
+      <div className="sticky bottom-0 z-20 -mx-2 -mb-2 space-y-2 bg-paper px-2 pb-2 pt-1">
+      <RowContext row={rows[active]} flash={flash} over={overCount ? t('flash.exceedAvailable', { count: overCount }) : undefined} />
 
       <TotalsFooter
         ref={billDiscInput}
@@ -384,6 +383,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         onSaveNew={() => save('new')}
         onDiscard={() => (dirty ? setConfirmDiscard(true) : undefined)}
       />
+      </div>
 
       {/* ---- overlays */}
       <ItemFormDrawer

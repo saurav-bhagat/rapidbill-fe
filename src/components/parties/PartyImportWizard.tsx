@@ -59,7 +59,7 @@ export function PartyImportWizard({ open, parties, onClose, onDone }: Props) {
     finally { setBusy(false) }
   }
 
-  const defaultState = settings?.stateCode ?? '29'
+  const defaultState = settings?.stateCode ?? ''
   const preview = useMemo(() => (step === 'preview' ? buildPartyPreview(rows, headerRow, map, parties, { ...opts, defaultState }) : []), [step, rows, headerRow, map, parties, opts, defaultState])
   const counts = useMemo(() => ({
     create: preview.filter((r) => r.action === 'create').length, update: preview.filter((r) => r.action === 'update').length,

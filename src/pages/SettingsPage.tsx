@@ -1,13 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useBlocker } from 'react-router-dom'
+import { useBlocker, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LANGS, loadLocale, setLang, type Lang } from '@/i18n'
 import { errorText } from '@/lib/errors'
 import { setFlash } from '@/lib/flash'
 import { checkGstin, STATES } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
+import { invoiceFieldsOf } from '@/lib/invoiceFields'
 import { useAsync } from '@/lib/useAsync'
-import { clearAllData, resetDemoData, services, type Settings } from '@/services'
+import { clearAllData, resetDemoData, services, type InvoiceFieldKey, type Settings } from '@/services'
 import { LocalDataUpload } from '@/auth/LocalDataUpload'
 import { DeviceData } from '@/components/settings/DeviceData'
 import { apiEnabled } from '@/services/http/client'
@@ -20,6 +21,14 @@ import { Segmented } from '@/components/ui/Segmented'
 import { TypedConfirm } from '@/components/ui/TypedConfirm'
 
 type Errors = Partial<Record<keyof Settings, string>>
+type Tab = 'general' | 'profile' | 'invoice'
+const PROFILE_KEYS = ['companyName', 'address', 'phone', 'email', 'pan', 'gstin', 'stateCode', 'bankName', 'bankAccount', 'bankIfsc', 'upiId']
+const FIELD_GROUPS: { title: string; keys: InvoiceFieldKey[] }[] = [
+  { title: 'columns', keys: ['hsn', 'batchExpiry', 'mrp', 'unit', 'discount'] },
+  { title: 'header', keys: ['companyPhone', 'companyEmail', 'companyPan', 'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode'] },
+  { title: 'summary', keys: ['hsnSummary', 'amountInWords'] },
+  { title: 'footer', keys: ['bank', 'upi', 'terms', 'signature'] },
+]
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
@@ -38,6 +47,8 @@ export function SettingsPage() {
   const [errors, setErrors] = useState<Errors>({})
   const [saving, setSaving] = useState(false)
   const [danger, setDanger] = useState<'reset' | 'clear'>()
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState<Tab>(params.get('tab') === 'profile' ? 'profile' : 'general')
 
   useEffect(() => { if (saved) setD(saved) }, [saved])
   const dirty = !!d && !!saved && JSON.stringify(d) !== JSON.stringify(saved)
@@ -53,14 +64,22 @@ export function SettingsPage() {
     if (!d.gstin.trim()) { if (d.gstEnabled) e.gstin = t('errors.gstinNeeded') }
     else if (gst.error) e.gstin = gst.errorKey ? t(gst.errorKey, { ns: 'errors', ...gst.params }) : gst.error
     else if (gst.stateCode && gst.stateCode !== d.stateCode) e.stateCode = t('errors.stateMismatch', { code: gst.stateCode })
+    if (d.gstEnabled && !d.stateCode) e.stateCode = t('errors.stateNeeded')
     if (!/^[A-Za-z0-9]{1,6}$/.test(d.invoicePrefix)) e.invoicePrefix = t('errors.prefix')
+    if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) e.email = t('errors.email')
+    if (d.pan && !/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/.test(d.pan)) e.pan = t('errors.pan')
     if (d.upiId && !/^[\w.\-]{2,}@[A-Za-z]{2,}$/.test(d.upiId)) e.upiId = t('errors.upi')
     if (d.bankIfsc && !/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/.test(d.bankIfsc)) e.bankIfsc = t('errors.ifsc')
     setErrors(e)
-    if (Object.keys(e).length) { document.querySelector<HTMLElement>(`[name="${Object.keys(e)[0]}"]`)?.focus(); return }
+    if (Object.keys(e).length) {
+      const first = Object.keys(e)[0]!
+      setTab(PROFILE_KEYS.includes(first) ? 'profile' : 'general')
+      setTimeout(() => document.querySelector<HTMLElement>(`[name="${first}"]`)?.focus(), 0)
+      return
+    }
     setSaving(true)
     try {
-      await services.settings.save({ ...d, companyName: d.companyName.trim(), gstin: d.gstin.trim().toUpperCase(), invoicePrefix: d.invoicePrefix.toUpperCase(), bankIfsc: d.bankIfsc.toUpperCase() })
+      await services.settings.save({ ...d, companyName: d.companyName.trim(), gstin: d.gstin.trim().toUpperCase(), invoicePrefix: d.invoicePrefix.toUpperCase(), bankIfsc: d.bankIfsc.toUpperCase(), pan: (d.pan ?? '').toUpperCase(), email: (d.email ?? '').trim(), invoiceFields: invoiceFieldsOf(d) })
       await loadLocale(d.printLanguage)
       toast.success(t('footer.toastSaved'))
       reload()
@@ -70,14 +89,21 @@ export function SettingsPage() {
   useHotkey('mod+s', save, { scope: 'list' })
 
   if (!d) return loadError ? <LoadFailed error={loadError} onRetry={reload} /> : <div className="p-6 text-ink-400">{t('loading')}</div>
-  const txt = (k: 'companyName' | 'phone' | 'invoicePrefix' | 'bankName' | 'bankAccount' | 'bankIfsc' | 'upiId', label: string, extra?: { hint?: string; mono?: boolean }) => (
+  const txt = (k: 'companyName' | 'phone' | 'email' | 'pan' | 'invoicePrefix' | 'bankName' | 'bankAccount' | 'bankIfsc' | 'upiId', label: string, extra?: { hint?: string; mono?: boolean }) => (
     <Field label={label} error={errors[k]} hint={extra?.hint}>
-      <Input name={k} value={d[k]} onChange={(e) => set(k, e.target.value)} className={extra?.mono ? 'font-mono' : ''} aria-invalid={!!errors[k]} />
+      <Input name={k} value={d[k] ?? ''} onChange={(e) => set(k, e.target.value)} className={extra?.mono ? 'font-mono' : ''} aria-invalid={!!errors[k]} />
     </Field>
   )
 
   return (
     <div className="mx-auto max-w-5xl">
+      <div role="tablist" className="mb-2 flex gap-1 border-b border-line">
+        {(['general', 'profile', 'invoice'] as Tab[]).map((k) => (
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`-mb-px border-b-2 px-4 py-2.5 text-base font-semibold ${tab === k ? 'border-primary text-primary' : 'border-transparent text-ink-600 hover:text-ink-900'}`}>{t(`tabs.${k}`)}</button>
+        ))}
+      </div>
+
+      {tab === 'general' && <>
       <Section title={t('language.title')} hint={t('language.hint')}>
         <div>
           <span className="mb-1 block text-sm font-medium text-ink-600">{t('language.screen')}</span>
@@ -101,18 +127,6 @@ export function SettingsPage() {
         </div>
       </Section>
 
-      <Section title={t('business.title')} hint={t('business.hint')}>
-        <div className="col-span-2">{txt('companyName', t('business.companyName'))}</div>
-        <div className="col-span-2"><Field label={t('business.address')}><Textarea name="address" rows={2} value={d.address} onChange={(e) => set('address', e.target.value)} /></Field></div>
-        {txt('phone', t('business.phone'))}
-        <Field label={d.gstEnabled ? t('business.gstinRequired') : t('business.gstinOptional')} error={errors.gstin} hint={!errors.gstin && gst.warning ? (gst.warningKey ? t(gst.warningKey, { ns: 'errors' }) : gst.warning) : undefined}>
-          <Input name="gstin" value={d.gstin} onChange={(e) => { const v = e.target.value.toUpperCase().replace(/\s/g, ''); set('gstin', v); const r = checkGstin(v); if (r.stateCode) set('stateCode', r.stateCode) }} maxLength={15} className="font-mono uppercase" aria-invalid={!!errors.gstin} />
-        </Field>
-        <Field label={t('business.state')} error={errors.stateCode} hint={d.gstEnabled ? t('business.stateHintGst') : t('business.stateHintNonGst')}>
-          <Select name="stateCode" value={d.stateCode} onChange={(e) => set('stateCode', e.target.value)}>{STATES.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.name}</option>)}</Select>
-        </Field>
-      </Section>
-
       <Section title={t('billing.title')} hint={t('billing.hint')}>
         {txt('invoicePrefix', t('billing.prefix'), { hint: t('billing.prefixHint'), mono: true })}
         <div>
@@ -130,13 +144,6 @@ export function SettingsPage() {
           <span className="mb-1 block text-sm font-medium text-ink-600">{t('printing.paper')}</span>
           <Segmented label={t('printing.paperLabel')} value={d.paperSize} onChange={(v) => set('paperSize', v)} options={[{ value: 'A4', label: t('printing.a4') }, { value: 'A5', label: t('printing.a5') }]} />
         </div>
-      </Section>
-
-      <Section title={t('bank.title')} hint={t('bank.hint')}>
-        <div className="col-span-2">{txt('bankName', t('bank.bankName'))}</div>
-        {txt('bankAccount', t('bank.account'), { mono: true })}
-        {txt('bankIfsc', t('bank.ifsc'), { mono: true })}
-        {txt('upiId', t('bank.upi'), { hint: t('bank.upiHint') })}
       </Section>
 
       {apiEnabled && (
@@ -158,6 +165,54 @@ export function SettingsPage() {
         </div>
         <p className="col-span-2 text-sm text-ink-600">{t('data.explain')}</p>
       </Section>
+
+      </>}
+
+      {tab === 'profile' && <>
+      <Section title={t('business.title')} hint={t('business.hint')}>
+        <div className="col-span-2">{txt('companyName', t('business.companyName'))}</div>
+        <div className="col-span-2"><Field label={t('business.address')}><Textarea name="address" rows={2} value={d.address} onChange={(e) => set('address', e.target.value)} /></Field></div>
+        {txt('phone', t('business.phone'))}
+        {txt('email', t('business.email'))}
+        {txt('pan', t('business.pan'), { mono: true })}
+        <Field label={d.gstEnabled ? t('business.gstinRequired') : t('business.gstinOptional')} error={errors.gstin} hint={!errors.gstin && gst.warning ? (gst.warningKey ? t(gst.warningKey, { ns: 'errors' }) : gst.warning) : undefined}>
+          <Input name="gstin" value={d.gstin} onChange={(e) => { const v = e.target.value.toUpperCase().replace(/\s/g, ''); set('gstin', v); const r = checkGstin(v); if (r.stateCode) set('stateCode', r.stateCode) }} maxLength={15} className="font-mono uppercase" aria-invalid={!!errors.gstin} />
+        </Field>
+        <Field label={t('business.state')} error={errors.stateCode} hint={d.gstEnabled ? t('business.stateHintGst') : t('business.stateHintNonGst')}>
+          <Select name="stateCode" value={d.stateCode} onChange={(e) => set('stateCode', e.target.value)}><option value="">{t('business.stateSelect')}</option>{STATES.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.name}</option>)}</Select>
+        </Field>
+      </Section>
+
+      <Section title={t('bank.title')} hint={t('bank.hint')}>
+        <div className="col-span-2">{txt('bankName', t('bank.bankName'))}</div>
+        {txt('bankAccount', t('bank.account'), { mono: true })}
+        {txt('bankIfsc', t('bank.ifsc'), { mono: true })}
+        {txt('upiId', t('bank.upi'), { hint: t('bank.upiHint') })}
+      </Section>
+
+      </>}
+
+      {tab === 'invoice' && <>
+        <p className="py-4 text-base text-ink-600">{t('invoiceFields.intro')}</p>
+        {FIELD_GROUPS.map((g) => (
+          <Section key={g.title} title={t(`invoiceFields.groups.${g.title}`)}>
+            {g.keys.map((k) => (
+              <label key={k} className="col-span-2 flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-sunken">
+                <span>{t(`invoiceFields.keys.${k}`)}</span>
+                <input type="checkbox" checked={invoiceFieldsOf(d)[k]} onChange={(e) => set('invoiceFields', { ...invoiceFieldsOf(d), [k]: e.target.checked })} className="h-5 w-5 accent-[rgb(var(--primary))]" />
+              </label>
+            ))}
+            {g.title === 'footer' && (
+              <div className="col-span-2">
+                <Field label={t('invoiceFields.termsLabel')} hint={t('invoiceFields.termsHint')}>
+                  <Textarea name="terms" rows={3} maxLength={500} value={d.terms ?? ''} onChange={(e) => set('terms', e.target.value)} placeholder={t('invoiceFields.termsPlaceholder')} />
+                </Field>
+              </div>
+            )}
+          </Section>
+        ))}
+        <p className="pb-4 text-sm text-ink-600">{t('invoiceFields.alwaysShown')}</p>
+      </>}
 
       <div className="sticky bottom-0 -mx-5 flex items-center justify-end gap-3 border-t border-line bg-paper/95 px-5 py-3">
         <span className="text-sm text-ink-600" role="status">{dirty ? t('footer.unsaved') : t('footer.saved')}</span>

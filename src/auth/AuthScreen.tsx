@@ -67,8 +67,8 @@ export function AuthScreen({ initialMode = 'login' }: { initialMode?: Mode }) {
       <main className="flex flex-1 flex-col items-center justify-center p-6">
       <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-card">
         <button type="button" onClick={() => go('/')} className="mb-4 text-sm font-medium text-ink-600 hover:text-primary">← Back to home</button>
-        <h1 className="text-3xl font-bold">{t('welcome')}</h1>
-        <p className="mb-6 mt-1 text-base text-ink-600">{t('welcomeSub')}</p>
+        <h1 className="text-3xl font-bold">{mode === 'signup' ? t('createTitle') : t('welcome')}</h1>
+        <p className="mb-6 mt-1 text-base text-ink-600">{mode === 'signup' ? t('createSub') : t('welcomeSub')}</p>
         {notice === 'expired' && (
           <p role="alert" className="mb-3 rounded border border-line bg-warn-soft px-3 py-2 text-sm text-warn">
             {t('sessionExpired')}{unsent > 0 && ` ${t('sessionExpiredUnsent', { count: unsent })}`}

@@ -13,6 +13,7 @@ import { services } from '@/services'
 import { Landing } from '@/landing/Landing'
 import { usePath } from '@/landing/nav'
 import { AuthScreen } from './AuthScreen'
+import { Onboarding } from './Onboarding'
 import { useAuth } from './session'
 
 type Phase = 'opening' | 'downloading' | 'needsInternet' | 'storageBlocked' | 'ready'
@@ -21,6 +22,7 @@ type Phase = 'opening' | 'downloading' | 'needsInternet' | 'storageBlocked' | 'r
 export function AuthGate({ children }: { children: ReactNode }) {
   const { t } = useTranslation('auth')
   const status = useAuth((s) => s.status)
+  const onboarding = useAuth((s) => s.onboarding)
   const workspaceId = useAuth((s) => s.workspace?.id)
   const init = useAuth((s) => s.init)
   const [phase, setPhase] = useState<Phase>('opening')
@@ -84,5 +86,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
       </div>
     )
   }
+  if (onboarding) return <Onboarding />
   return <>{children}</>
 }

@@ -26,7 +26,10 @@
     "gstinOptional": "GSTIN (optional)",
     "state": "State *",
     "stateHintGst": "Decides CGST+SGST vs IGST on every bill",
-    "stateHintNonGst": "Shown on invoices"
+    "stateHintNonGst": "Shown on invoices",
+    "email": "Email",
+    "pan": "PAN (optional)",
+    "stateSelect": "Select your state"
   },
   "billing": {
     "title": "Billing",
@@ -80,7 +83,10 @@
     "stateMismatch": "GSTIN says state {{code}}",
     "prefix": "1 to 6 letters or digits",
     "upi": "Looks like name@bank",
-    "ifsc": "IFSC is 11 characters, like CNRB0000412"
+    "ifsc": "IFSC is 11 characters, like CNRB0000412",
+    "email": "Enter a valid email, like name@example.com",
+    "pan": "PAN is 10 characters, like ABCDE1234F",
+    "stateNeeded": "Choose your state"
   },
   "footer": {
     "unsaved": "You have unsaved changes",
@@ -94,5 +100,43 @@
     "title": "Leave without saving?",
     "confirm": "Leave and discard",
     "body": "Your settings changes have not been saved."
+  },
+  "tabs": {
+    "general": "General",
+    "profile": "Business Profile",
+    "invoice": "Invoice Fields"
+  },
+  "invoiceFields": {
+    "intro": "Choose what shows on your printed invoices and challans. Turn off anything you do not need. Changes apply to every bill, including old ones, when printed.",
+    "groups": {
+      "columns": "Item table columns",
+      "header": "Top of the invoice",
+      "summary": "Tax and totals",
+      "footer": "Bottom of the invoice"
+    },
+    "keys": {
+      "hsn": "HSN / SAC code",
+      "batchExpiry": "Batch and expiry",
+      "mrp": "MRP",
+      "unit": "Unit (PCS, KG…)",
+      "discount": "Discount %",
+      "companyPhone": "Your phone number",
+      "companyEmail": "Your email",
+      "companyPan": "Your PAN",
+      "partyGstin": "Customer GSTIN",
+      "partyAddress": "Customer address",
+      "placeOfSupply": "Place of supply",
+      "paymentMode": "Payment mode",
+      "hsnSummary": "HSN-wise tax summary",
+      "amountInWords": "Amount in words",
+      "bank": "Bank details",
+      "upi": "UPI ID",
+      "terms": "Terms and conditions",
+      "signature": "Signature line"
+    },
+    "termsLabel": "Terms and conditions text",
+    "termsHint": "Leave empty to print the standard line.",
+    "termsPlaceholder": "e.g. Goods once sold will not be taken back.",
+    "alwaysShown": "Always shown: your company name and address, GSTIN, bill number and date, item name, quantity, rate, amounts and the grand total."
   }
 }

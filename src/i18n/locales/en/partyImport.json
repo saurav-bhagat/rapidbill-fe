@@ -88,7 +88,8 @@
   "row": {
     "nameEmpty": "No party name",
     "nameLong": "Name is longer than 120 characters",
-    "totals": "Totals row, ignored"
+    "totals": "Totals row, ignored",
+    "stateMissing": "No state in the file, and your own state is not set. Add it in Settings → Business Profile"
   },
   "note": {
     "exists": "Already exists: skipped",

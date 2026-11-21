@@ -67,7 +67,9 @@
     "nameRequired": "नाम ज़रूरी है",
     "nameExists": "इस नाम की पार्टी पहले से है",
     "stateMismatch": "राज्य GSTIN से मेल खाना चाहिए",
-    "invalidAmount": "सही रकम डालें"
+    "invalidAmount": "सही रकम डालें",
+    "stateSelect": "राज्य चुनें",
+    "stateRequired": "राज्य चुनें"
   },
   "page": {
     "import": "इंपोर्ट",

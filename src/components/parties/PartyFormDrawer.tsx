@@ -13,7 +13,7 @@ import { Field, Input, Select, Textarea } from '../ui/Field'
 import { Drawer } from '../ui/Modal'
 
 interface Draft { name: string; type: PartyType; gstin: string; stateCode: string; phone: string; address: string; balance: string }
-const empty: Draft = { name: '', type: 'CUSTOMER', gstin: '', stateCode: '29', phone: '', address: '', balance: '' }
+const empty: Draft = { name: '', type: 'CUSTOMER', gstin: '', stateCode: '', phone: '', address: '', balance: '' }
 const fromParty = (p: Party): Draft => ({ name: p.name, type: p.type, gstin: p.gstin, stateCode: p.stateCode, phone: p.phone, address: p.address, balance: p.balance ? String(toRupees(p.balance)) : '' })
 
 interface Props {
@@ -26,7 +26,7 @@ interface Props {
   onSaved: (p: Party) => void
 }
 
-export function PartyFormDrawer({ open, party, existing, defaultState = '29', onClose, onSaved }: Props) {
+export function PartyFormDrawer({ open, party, existing, defaultState = '', onClose, onSaved }: Props) {
   const { t } = useTranslation('parties')
   const ref = useRef<HTMLFormElement>(null)
   const [d, setD] = useState<Draft>(empty)
@@ -59,7 +59,8 @@ export function PartyFormDrawer({ open, party, existing, defaultState = '29', on
     if (!name) errs.name = t('form.nameRequired')
     else if (existing.some((p) => p.id !== party?.id && p.name.toLowerCase() === name.toLowerCase())) errs.name = t('form.nameExists')
     if (gst.error) errs.gstin = gst.errorKey ? t(gst.errorKey, { ns: 'errors', ...gst.params }) : gst.error
-    if (d.gstin && gst.stateCode && gst.stateCode !== d.stateCode) errs.stateCode = t('form.stateMismatch')
+    if (!d.stateCode) errs.stateCode = t('form.stateRequired')
+    else if (d.gstin && gst.stateCode && gst.stateCode !== d.stateCode) errs.stateCode = t('form.stateMismatch')
     let balance = 0
     if (d.balance.trim()) {
       const b = parseRupees(d.balance)
@@ -105,6 +106,7 @@ export function PartyFormDrawer({ open, party, existing, defaultState = '29', on
         </div>
         <Field label={t('form.state')} error={errors.stateCode}>
           <Select name="stateCode" value={d.stateCode} onChange={(e) => set('stateCode', e.target.value)}>
+            <option value="">{t('form.stateSelect')}</option>
             {STATES.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.name}</option>)}
           </Select>
         </Field>

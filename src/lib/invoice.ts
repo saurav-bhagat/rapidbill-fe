@@ -4,7 +4,7 @@ import type { PaymentStatus, Voucher } from '@/services/types'
 
 export interface HsnRow { hsn: string; gstPct: number; taxable: Paise; cgst: Paise; sgst: Paise; igst: Paise; tax: Paise }
 
-export const isInterState = (v: Voucher, sellerState: string): boolean => v.partyStateCode !== null && v.partyStateCode !== sellerState
+export const isInterState = (v: Voucher, sellerState: string): boolean => v.partyStateCode !== null && sellerState !== '' && v.partyStateCode !== sellerState
 
 /** Key (in the `invoice` catalogue) of what the document is called. An invoice that carries no tax (non-GST business) is just an INVOICE. */
 export const docTitleKey = (v: Voucher): 'title.challan' | 'title.taxInvoice' | 'title.invoice' =>

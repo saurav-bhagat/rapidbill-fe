@@ -47,5 +47,10 @@
     "viewRegister": "View register",
     "empty": "No bills yet. Press N to make the first one.",
     "walkIn": "Walk-in"
+  },
+  "profileNudge": {
+    "title": "Finish your business profile.",
+    "body": "Add your address and state so your invoices and tax are correct.",
+    "cta": "Add now"
   }
 }

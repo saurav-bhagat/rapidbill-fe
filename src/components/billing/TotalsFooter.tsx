@@ -30,9 +30,9 @@ interface Props {
 }
 
 const Stat = ({ label, value, strong, tone }: { label: string; value: string; strong?: boolean; tone?: string }) => (
-  <div className="min-w-[84px]">
-    <div className="text-sm text-ink-600">{label}</div>
-    <div className={`num !text-left ${strong ? 'font-medium' : ''} ${tone ?? ''}`}>{value}</div>
+  <div className="flex items-baseline gap-1.5 whitespace-nowrap text-sm">
+    <span className="text-ink-600">{label}</span>
+    <span className={`num !text-left ${strong ? 'font-semibold' : 'font-medium'} ${tone ?? ''}`}>{value}</span>
   </div>
 )
 
@@ -42,26 +42,32 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
   const c = p.calc
   return (
     <div className="shrink-0 rounded-md border border-line bg-surface">
-      <div className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-line px-4 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 border-b border-line px-3 py-1">
         <Stat label={t('totals.itemsQty')} value={`${c.itemCount} / ${formatQty(c.totalQty)}`} />
         <Stat label={t('totals.gross')} value={formatAmount(c.gross)} />
-        <Stat label={t('totals.lineDiscount')} value={c.lineDiscount ? `-${formatAmount(c.lineDiscount)}` : '0.00'} />
-        <Stat label={t('totals.billDiscount')} value={c.billDiscount ? `-${formatAmount(c.billDiscount)}` : '0.00'} />
+        {c.lineDiscount > 0 && <Stat label={t('totals.lineDiscount')} value={`-${formatAmount(c.lineDiscount)}`} />}
+        {c.billDiscount > 0 && <Stat label={t('totals.billDiscount')} value={`-${formatAmount(c.billDiscount)}`} />}
         <Stat label={t('totals.taxable')} value={formatAmount(c.taxable)} strong />
         {p.taxApplicable && (c.interState
           ? <Stat label="IGST" value={formatAmount(c.igst)} />
           : <><Stat label="CGST" value={formatAmount(c.cgst)} /><Stat label="SGST" value={formatAmount(c.sgst)} /></>)}
         {!p.taxApplicable && p.gstEnabled !== false && <Stat label={t('totals.tax')} value={t('totals.notApplied')} tone="text-ink-400" />}
-        <Stat label={t('totals.roundOffStat')} value={`${c.roundOff > 0 ? '+' : c.roundOff < 0 ? '-' : ''}${formatAmount(Math.abs(c.roundOff))}`} tone="text-ink-600" />
-        <div className="ml-auto text-right">
-          <div className="text-sm text-ink-600">{t('totals.grandTotal')}</div>
-          <div className="num text-3xl font-bold leading-9" aria-live="polite">{formatAmount(c.grandTotal)}</div>
+        {c.roundOff !== 0 && <Stat label={t('totals.roundOffStat')} value={`${c.roundOff > 0 ? '+' : c.roundOff < 0 ? '-' : ''}${formatAmount(Math.abs(c.roundOff))}`} tone="text-ink-600" />}
+        <div className="ml-auto flex items-center gap-5">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-600">
+            <input type="checkbox" checked={p.roundOff} onChange={(e) => p.onRoundOff(e.target.checked)} className="h-4 w-4 accent-[rgb(var(--primary))]" />
+            {t('totals.roundOff')}
+          </label>
+        <div className="flex items-baseline gap-2">
+          <span className="text-sm font-medium text-ink-600">{t('totals.grandTotal')}</span>
+          <span className="num text-2xl font-bold leading-8" aria-live="polite">{formatAmount(c.grandTotal)}</span>
+        </div>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-1.5">
         <label className="flex items-center gap-2 text-sm text-ink-600">
           {t('totals.payment')}
-          <select value={p.payment} onChange={(e) => p.onPayment(e.target.value as PaymentStatus)} className="h-9 rounded border border-line bg-surface px-2 text-base text-ink-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+          <select value={p.payment} onChange={(e) => p.onPayment(e.target.value as PaymentStatus)} className="h-8 rounded border border-line bg-surface px-2 text-base text-ink-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
             {PAYMENT_CODES.map((k) => <option key={k} value={k}>{paymentLabel(k, t)}</option>)}
           </select>
         </label>
@@ -74,18 +80,14 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); p.onBillDiscEnter() } }}
             placeholder={t('totals.billDiscountPlaceholder')}
             aria-invalid={p.billDiscInvalid}
-            className={`num h-9 w-28 rounded border bg-surface px-2 text-base text-ink-900 focus:outline-none focus:ring-1 focus:ring-primary ${p.billDiscInvalid ? 'border-danger' : 'border-line focus:border-primary'}`}
+            className={`num h-8 w-24 rounded border bg-surface px-2 text-base text-ink-900 focus:outline-none focus:ring-1 focus:ring-primary ${p.billDiscInvalid ? 'border-danger' : 'border-line focus:border-primary'}`}
           />
         </label>
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-600">
-          <input type="checkbox" checked={p.roundOff} onChange={(e) => p.onRoundOff(e.target.checked)} className="h-4 w-4 accent-[rgb(var(--primary))]" />
-          {t('totals.roundOff')}
-        </label>
-        <p className="min-w-0 flex-1 truncate text-sm text-ink-600" title={words(c.grandTotal)}>{c.grandTotal ? words(c.grandTotal) : ''}</p>
-        <div className="flex gap-2">
-          <Button onClick={p.onDiscard} hotkey="escape">{t('totals.discard')}</Button>
-          <Button onClick={p.onSaveNew} hotkey="mod+enter" disabled={p.saving}>{t('totals.saveNew')}</Button>
-          <Button variant="primary" onClick={p.onSavePrint} hotkey="mod+s" disabled={p.saving}>{t('totals.savePrint')}</Button>
+        <p className="hidden min-w-0 flex-1 truncate text-sm text-ink-600 xl:block" title={words(c.grandTotal)}>{c.grandTotal ? words(c.grandTotal) : ''}</p>
+        <div className="ml-auto flex gap-2">
+          <Button className="[&>span]:hidden min-[1200px]:[&>span]:inline" onClick={p.onDiscard} hotkey="escape">{t('totals.discard')}</Button>
+          <Button className="[&>span]:hidden min-[1200px]:[&>span]:inline" onClick={p.onSaveNew} hotkey="mod+enter" disabled={p.saving}>{t('totals.saveNew')}</Button>
+          <Button variant="primary" className="[&>span]:hidden min-[1200px]:[&>span]:inline" onClick={p.onSavePrint} hotkey="mod+s" disabled={p.saving}>{t('totals.savePrint')}</Button>
         </div>
       </div>
     </div>

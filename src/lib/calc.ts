@@ -49,7 +49,8 @@ export interface CalcResult {
 /** Pure voucher maths. Single source of truth for grid, saved snapshot and print. */
 export function calcVoucher(input: CalcInput): CalcResult {
   // Unknown party state (cash counter) is treated as intra-state.
-  const interState = input.partyState !== null && input.partyState !== input.sellerState
+  // no seller state set yet = treat as same state (CGST+SGST) rather than guessing IGST
+  const interState = input.partyState !== null && input.sellerState !== '' && input.partyState !== input.sellerState
 
   const base = input.lines.map((l) => {
     const gross = Math.round(l.qty * l.rate)
