@@ -84,5 +84,10 @@
         "body": "Also the party list, with balance 0."
       }
     }
+  },
+  "unsaved": {
+    "title": "Leave this business?",
+    "body": "You have changes that are not saved (a bill or settings). If you open {{name}} now, they will be lost.",
+    "confirm": "Open {{name}} anyway"
   }
 }

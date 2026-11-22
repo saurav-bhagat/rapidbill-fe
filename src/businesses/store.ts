@@ -13,6 +13,8 @@ interface State {
   /** The Add business dialog and the Manage page's colour/rename dialogs are opened from several places (menu, page, shortcut). */
   addOpen: boolean
   setAddOpen(v: boolean): void
+  /** A switch waiting for the person to say it is fine to lose unsaved work. */
+  confirmSwitch?: BusinessRow
   switching?: { id: string; name: string; color: string | null }
   load(): Promise<void>
   reset(): void
@@ -45,7 +47,7 @@ export const useBusinesses = create<State>((set) => ({
       void pruneCopies(me.businesses.map((b) => b.id))
     } catch { /* offline: keep what we knew */ }
   },
-  reset: () => set({ list: [], account: null, switching: undefined, addOpen: false }),
+  reset: () => set({ list: [], account: null, switching: undefined, confirmSwitch: undefined, addOpen: false }),
 }))
 
 /** The colours a business can have, picked so white text on them is readable (contrast 4.5 or more). */

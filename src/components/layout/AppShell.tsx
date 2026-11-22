@@ -5,6 +5,7 @@ import { apiEnabled } from '@/services/http/client'
 import { useHotkey } from '@/lib/hotkeys'
 import { useUI } from '@/store/ui'
 import { LicenseBanner } from '@/license/LicenseBanner'
+import { SwitchGuard } from '@/businesses/SwitchGuard'
 import { AddBusinessWizard } from '@/businesses/AddBusinessWizard'
 import { DeviceWarnings } from './DeviceWarnings'
 import { ShortcutsOverlay } from './ShortcutsOverlay'
@@ -45,6 +46,7 @@ export function AppShell() {
       </div>
       <ShortcutsOverlay />
       {apiEnabled && <AddBusinessWizard />}
+      {apiEnabled && <SwitchGuard />}
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { useReportUnsaved } from '@/businesses/unsaved'
 import { useBlocker, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LANGS, loadLocale, setLang, type Lang } from '@/i18n'
@@ -53,6 +54,7 @@ export function SettingsPage() {
 
   useEffect(() => { if (saved) setD(saved) }, [saved])
   const dirty = !!d && !!saved && JSON.stringify(d) !== JSON.stringify(saved)
+  useReportUnsaved('settings', dirty)
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname)
 
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => { setD((x) => (x ? { ...x, [k]: v } : x)); setErrors((e) => ({ ...e, [k]: undefined })) }

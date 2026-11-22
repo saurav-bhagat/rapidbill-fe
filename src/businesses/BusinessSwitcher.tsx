@@ -16,6 +16,7 @@ import { useSync } from '@/offline/state'
 import { useDevices } from '@/offline/devices'
 import { Keycap } from '@/components/ui/Keycap'
 import { BusinessAvatar } from './BusinessAvatar'
+import { hasUnsaved } from './unsaved'
 import { useBusinesses, type BusinessRow } from './store'
 
 /** Open the menu from anywhere (Alt+B) and jump to the nth business (Alt+1 to Alt+5). */
@@ -29,7 +30,9 @@ export const useSwitcherUI = (() => {
   }
 })()
 
-export async function openBusiness(b: BusinessRow, t: TFunction) {
+export async function openBusiness(b: BusinessRow, t: TFunction, force = false) {
+  // work that is not saved would be lost: ask first (the dialog calls this again with force)
+  if (!force && !b.current && hasUnsaved()) { useBusinesses.setState({ confirmSwitch: b }); return }
   useBusinesses.setState({ switching: { id: b.id, name: b.name, color: b.color } })
   try {
     await switchBusiness(b.id)

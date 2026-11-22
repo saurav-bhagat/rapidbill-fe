@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useReportUnsaved } from '@/businesses/unsaved'
 import { BillingAs } from '@/businesses/BillingAs'
 import { useTranslation, Trans } from 'react-i18next'
 import { useBlocker, useNavigate, useSearchParams } from 'react-router-dom'
@@ -161,6 +162,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     : rows.some((r) => r.item || r.query) || !!partyId || !!remarks.trim() || !!billDisc.trim()
 
   // ---- unsaved-work guards
+  useReportUnsaved('bill', dirty)
   const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && !leaving.current && currentLocation.pathname !== nextLocation.pathname)
   useEffect(() => {
     if (!dirty) return
