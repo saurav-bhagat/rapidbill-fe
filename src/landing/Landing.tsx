@@ -339,6 +339,8 @@ function Footer() {
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-[15px]">
           {NAV.map(([l, id]) => <button key={id} onClick={() => jump(id)} className="hover:text-white">{l}</button>)}
           <button onClick={login} className="hover:text-white">Log in</button>
+          <a href="/support.html" className="hover:text-white">Support</a>
+          <a href="/privacy.html" className="hover:text-white">Privacy</a>
         </div>
         <div className="flex items-center gap-2 text-sm"><ShieldCheck size={16} />Your data stays yours</div>
       </div>
