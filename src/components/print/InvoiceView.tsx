@@ -33,15 +33,18 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
   const discount = v.totals.lineDiscount + v.totals.billDiscount
   const a4 = paper === 'A4'
   const f = invoiceFieldsOf(s)
+  // a line sold in another unit can also show what it took from stock: 900 GM (0.9 KG)
+  const both = (l: Voucher['lines'][number]) => f.baseQty && (l.per ?? 1) !== 1
+  const own = (l: Voucher['lines'][number]) => `${formatQty(l.stockQty ?? l.qty)} ${l.baseUnit ?? ''}`.trim()
   const cols: Col[] = ([
     { key: 'sno', w: 4, head: t('cols.sno'), cell: (_l, i) => i + 1 },
     { key: 'desc', head: t('cols.description'), cell: (l) => l.name },
     f.hsn && { key: 'hsn', w: 9, head: t('cols.hsn'), mono: true, cell: (l) => l.hsn },
     f.batchExpiry && { key: 'batch', w: 12, head: t('cols.batchExp'), mono: true, cell: (l) => `${l.batchNo}${l.expiry ? ` / ${l.expiry}` : ''}` },
-    { key: 'qty', w: 7, head: t('cols.qty'), right: true, cell: (l) => formatQty(l.qty) },
-    f.unit && { key: 'unit', w: 6, head: t('cols.unit'), cell: (l) => l.unit },
+    { key: 'qty', w: 7, head: t('cols.qty'), right: true, cell: (l) => (both(l) && !f.unit ? `${formatQty(l.qty)} (${own(l)})` : formatQty(l.qty)) },
+    f.unit && { key: 'unit', w: f.baseQty ? 12 : 6, head: t('cols.unit'), cell: (l) => (both(l) ? `${l.unit} (${own(l)})` : l.unit) },
     f.mrp && { key: 'mrp', w: 8, head: t('cols.mrp'), right: true, cell: (l) => formatAmount(l.mrp) },
-    { key: 'rate', w: 8, head: t('cols.rate'), right: true, cell: (l) => formatAmount(l.rate) },
+    { key: 'rate', w: 8, head: t('cols.rate'), right: true, cell: (l) => ((l.per ?? 1) !== 1 ? `${formatAmount(l.rate)}/${l.baseUnit ?? ''}` : formatAmount(l.rate)) },
     f.discount && { key: 'disc', w: 6, head: t('cols.disc'), right: true, cell: (l) => (l.discPct ? l.discPct : '-') },
     { key: 'taxable', w: 10, head: taxed ? t('cols.taxable') : t('cols.amount'), right: true, cell: (l) => formatAmount(l.taxable) },
     taxed && { key: 'gst', w: 6, head: t('cols.gst'), right: true, cell: (l) => `${l.gstPct}%` },

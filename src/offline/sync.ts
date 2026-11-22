@@ -83,6 +83,18 @@ let mirrorRef: Mirror | null = null
 let running: Promise<void> | null = null
 let troubleTold = false
 let again = false
+/** Goes up on every business switch, so a download that was started for the old business cannot clear the new business's "running" mark. */
+let generation = 0
+
+/** Let go of the open business: close its copy, forget any download or retry in progress. The next business starts from nothing. */
+export function detachBusiness() {
+  generation++
+  if (mirrorRef) mirrorRef.close()
+  mirrorRef = null
+  running = null
+  again = false
+  troubleTold = false
+}
 
 /** Use `m` for all device-copy reads and writes. The previous one, if any, is closed. */
 export const attachMirror = (m: Mirror | null) => {
@@ -104,6 +116,7 @@ export function syncNow(): Promise<void> {
   if (!mirrorRef) return Promise.resolve()
   if (running) { again = true; return running }
   const m = mirrorRef
+  const gen = generation
   running = (async () => {
     setSync({ syncing: true })
     try {
@@ -129,8 +142,7 @@ export function syncNow(): Promise<void> {
       if (e instanceof AppError && e.key === 'networkError') setSync({ online: false })
       else if (!troubleTold) { troubleTold = true; noticeServerTrouble() } // once per spell of trouble, not every minute
     } finally {
-      setSync({ syncing: false })
-      running = null
+      if (gen === generation) { setSync({ syncing: false }); running = null }
     }
   })()
   return running

@@ -109,3 +109,20 @@ describe('non-GST business import', () => {
     expect(r.warnings.map((w) => w.key)).not.toContain('warn.gstMissing')
   })
 })
+
+describe('import: also sold in', () => {
+  const opts: ImportOptions = { mode: 'UPSERT', stockMode: 'REPLACE', gstEnabled: true }
+  const run = (rows: Cell[][]) => { const map = autoMap(rows[0]); return buildPreview(rows, 0, map, [], opts) }
+  it('reads the other unit and how many make one', () => {
+    const rows: Cell[][] = [['Item Name', 'Unit', 'Alternate Unit', 'Conversion', 'S.Rate'], ['Basmati Rice', 'kg', 'gram', 1000, 100]]
+    expect(run(rows)[0].data).toMatchObject({ unit: 'KG', altUnits: [{ unit: 'GM', per: 1000 }] })
+  })
+  it('warns and ignores a missing number or the same unit', () => {
+    const noNum = run([['Item Name', 'Unit', 'Alternate Unit', 'Conversion', 'S.Rate'], ['Rice', 'kg', 'gm', '', 100]])[0]
+    expect(noNum.data.altUnits).toBeUndefined()
+    expect(noNum.warnings.map((w) => w.key)).toContain('warn.altPer')
+    const same = run([['Item Name', 'Unit', 'Alternate Unit', 'Conversion', 'S.Rate'], ['Rice', 'kg', 'kg', 2, 100]])[0]
+    expect(same.data.altUnits).toBeUndefined()
+    expect(same.warnings.map((w) => w.key)).toContain('warn.altSame')
+  })
+})

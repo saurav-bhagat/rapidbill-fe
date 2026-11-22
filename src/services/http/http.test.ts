@@ -55,6 +55,30 @@ describe('api()', () => {
     expect(localStorage.getItem('rapidbill:refresh-token')).toBe('rt2')
   })
 
+  it('tells the server who is calling and which business the screen is showing', async () => {
+    const { api, tokens } = await import('./client')
+    tokens.set({ ...session(1), workspace: { id: 'biz-9', name: 'Nine' } })
+    expect(tokens.businessId()).toBe('biz-9')
+    let seen: Record<string, string> = {}
+    vi.stubGlobal('fetch', vi.fn(async (_u: URL | string, init?: RequestInit) => { seen = init?.headers as Record<string, string>; return json(200, {}) }))
+    await api('/items')
+    expect(seen).toMatchObject({ Authorization: 'Bearer at1', 'X-Client': 'web', 'X-Business-Id': 'biz-9' })
+    await api('/health', { auth: false })
+    expect(seen['X-Business-Id']).toBeUndefined() // signed-out calls carry no business
+    tokens.clear()
+    expect(tokens.businessId()).toBeNull()
+  })
+
+  it('moves to the business the new session is for', async () => {
+    const { api, tokens } = await import('./client')
+    tokens.set({ ...session(1), workspace: { id: 'biz-1', name: 'One' } })
+    tokens.set({ ...session(2), workspace: { id: 'biz-2', name: 'Two' } })
+    let seen: Record<string, string> = {}
+    vi.stubGlobal('fetch', vi.fn(async (_u: URL | string, init?: RequestInit) => { seen = init?.headers as Record<string, string>; return json(200, {}) }))
+    await api('/items')
+    expect(seen['X-Business-Id']).toBe('biz-2')
+  })
+
   it('signs the user out when the refresh token is rejected', async () => {
     const { api, tokens } = await import('./client')
     tokens.set({ ...session(1), accessTokenExpiresAt: new Date(Date.now() - 1000).toISOString() })

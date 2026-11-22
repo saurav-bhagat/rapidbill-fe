@@ -1,13 +1,9 @@
+import { SignOutDialog, useUnsentEverywhere } from '@/auth/SignOutDialog'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LogOut } from 'lucide-react'
 import { useAuth } from '@/auth/session'
-import { downloadBackup } from '@/offline/backup'
-import { useSync } from '@/offline/state'
-import { currentMirror } from '@/offline/sync'
 import { apiEnabled } from '@/services/http/client'
-import { Button } from '../ui/Button'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
 
 /**
  * The bottom of the sidebar, on every screen: who is signed in and sign out (support lives in the top bar).
@@ -16,7 +12,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog'
 export function AccountBox({ collapsed }: { collapsed: boolean }) {
   const { t } = useTranslation()
   const { user, workspace, logout } = useAuth()
-  const unsent = useSync((x) => x.pendingIds.length + x.failedIds.length)
+  const unsent = useUnsentEverywhere()
   const [ask, setAsk] = useState(false)
   const signedIn = apiEnabled && !!user
   const link = 'flex h-9 items-center gap-2 rounded-md px-2.5 text-white/80 hover:bg-nav-hover hover:text-white'
@@ -37,10 +33,7 @@ export function AccountBox({ collapsed }: { collapsed: boolean }) {
         </button>
       )}
 
-      <ConfirmDialog open={ask} danger title={t('logoutWarn.title', { ns: 'auth' })} confirmLabel={t('logoutWarn.confirm', { ns: 'auth' })} onCancel={() => setAsk(false)} onConfirm={() => { setAsk(false); void logout() }}>
-        <p>{t('logoutWarn.body', { ns: 'auth', count: unsent })}</p>
-        {workspace && <Button className="mt-3" onClick={() => void downloadBackup(currentMirror(), workspace.id)}>{t('device.download', { ns: 'common' })}</Button>}
-      </ConfirmDialog>
+      <SignOutDialog open={ask} onCancel={() => setAsk(false)} onConfirm={() => { setAsk(false); void logout() }} />
     </div>
   )
 }

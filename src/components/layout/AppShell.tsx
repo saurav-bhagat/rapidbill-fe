@@ -5,6 +5,7 @@ import { apiEnabled } from '@/services/http/client'
 import { useHotkey } from '@/lib/hotkeys'
 import { useUI } from '@/store/ui'
 import { LicenseBanner } from '@/license/LicenseBanner'
+import { AddBusinessWizard } from '@/businesses/AddBusinessWizard'
 import { DeviceWarnings } from './DeviceWarnings'
 import { ShortcutsOverlay } from './ShortcutsOverlay'
 import { Sidebar } from './Sidebar'
@@ -19,6 +20,7 @@ function GlobalHotkeys() {
   useHotkey('alt+i', () => navigate('/inventory'))
   useHotkey('alt+p', () => navigate('/parties'))
   useHotkey('alt+s', () => navigate('/settings'))
+  useHotkey('alt+shift+b', () => navigate('/businesses'))
   useHotkey('shift+/', () => setShortcutsOpen(true), { allowInInput: false })
   useHotkey('mod+b', () => toggleSidebar())
   return null
@@ -42,6 +44,7 @@ export function AppShell() {
         </main>
       </div>
       <ShortcutsOverlay />
+      {apiEnabled && <AddBusinessWizard />}
     </div>
   )
 }

@@ -11,9 +11,13 @@ export interface Meta {
   updatedAt: string
 }
 
-export type Unit = 'PCS' | 'BOX' | 'STRIP' | 'KG' | 'LTR' | 'NOS'
-export const UNITS: Unit[] = ['PCS', 'BOX', 'STRIP', 'KG', 'LTR', 'NOS']
+export type Unit = 'PCS' | 'BOX' | 'STRIP' | 'KG' | 'LTR' | 'NOS' | 'GM' | 'ML' | 'MTR' | 'FT' | 'SQFT' | 'DOZ' | 'PKT' | 'BAG' | 'ROLL' | 'SET' | 'PAIR' | 'SHEET' | 'TON' | 'QTL'
+export const UNITS: Unit[] = ['PCS', 'BOX', 'STRIP', 'KG', 'LTR', 'NOS', 'GM', 'ML', 'MTR', 'FT', 'SQFT', 'DOZ', 'PKT', 'BAG', 'ROLL', 'SET', 'PAIR', 'SHEET', 'TON', 'QTL']
 export const GST_SLABS = [0, 5, 12, 18, 28] as const
+
+/** Another unit an item is also sold in: `per` of them make 1 of the item's own (stock) unit. 1 KG = 1000 GM is { unit: 'GM', per: 1000 }. */
+export interface AltUnit { unit: Unit; per: number }
+export const MAX_ALT_UNITS = 3
 
 export interface Item extends Meta {
   name: string
@@ -21,6 +25,8 @@ export interface Item extends Meta {
   category: string
   hsn: string
   unit: Unit
+  /** Other units it is also sold in (up to 3). Absent on older items. */
+  altUnits?: AltUnit[]
   batchNo: string
   /** MM/YY */
   expiry: string
@@ -57,8 +63,14 @@ export interface VoucherLine {
   hsn: string
   batchNo: string
   expiry: string
+  /** The unit this line was sold in (the item's own unit unless sold in one of its alternates). */
   unit: Unit
   qty: number
+  /** How many of `unit` make 1 of the item's own unit (1 when sold in the item's own unit). Absent on older bills. */
+  per?: number
+  /** The item's own unit, and how much of it left stock: qty / per. Absent on older bills (then the same as unit and qty). */
+  baseUnit?: Unit
+  stockQty?: number
   mrp: Paise
   rate: Paise
   discPct: number
@@ -140,13 +152,21 @@ export interface Settings extends Meta {
   pan?: string
   /** Terms printed on invoices. Empty = the standard line. */
   terms?: string
+  /** What the business sells. '' or missing = not chosen. */
+  businessType?: BusinessType | ''
   /** Which parts of the printed invoice are shown. Use `invoiceFieldsOf(settings)`, which fills any gaps. */
   invoiceFields?: Partial<Record<InvoiceFieldKey, boolean>>
 }
 
+export const BUSINESS_TYPES = [
+  'grocery', 'sanitary', 'plumbing', 'electrical', 'hardware', 'construction', 'paint', 'furniture',
+  'pharmacy', 'stationery', 'electronics', 'clothing', 'autoparts', 'agri', 'other',
+] as const
+export type BusinessType = (typeof BUSINESS_TYPES)[number]
+
 export const INVOICE_FIELD_KEYS = [
   'hsn', 'batchExpiry', 'mrp', 'unit', 'discount', 'hsnSummary', 'amountInWords', 'bank', 'upi', 'terms', 'signature',
-  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan',
+  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan', 'baseQty',
 ] as const
 export type InvoiceFieldKey = (typeof INVOICE_FIELD_KEYS)[number]
 

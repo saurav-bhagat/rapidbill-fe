@@ -6,6 +6,7 @@ import { useUI } from '@/store/ui'
 import { Keycap } from '../ui/Keycap'
 import { LicenseCard } from '@/license/LicenseCard'
 import { AccountBox } from './AccountBox'
+import { BusinessSwitcher } from '@/businesses/BusinessSwitcher'
 
 export function Sidebar() {
   const { t } = useTranslation()
@@ -16,6 +17,7 @@ export function Sidebar() {
         <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-white font-mono text-lg font-semibold text-primary">₹</div>
         {!c && <span className="text-xl font-semibold tracking-tight">RapidBill</span>}
       </div>
+      <BusinessSwitcher collapsed={c} />
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2" aria-label={t('layout.primaryNav')}>
         {NAV.map(({ path, labelKey, combo, icon: Icon }) => {
           const label = t(labelKey)

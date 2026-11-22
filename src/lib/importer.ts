@@ -4,10 +4,10 @@ import { roundQty } from './qty'
 import { GST_SLABS, UNITS, type Item, type Meta, type Unit } from '@/services/types'
 
 export type { Msg }
-export type FieldKey = 'name' | 'code' | 'category' | 'hsn' | 'unit' | 'batchNo' | 'expiry' | 'mrp' | 'purchaseRate' | 'issueRate' | 'gstPercent' | 'currentStock' | 'lowStockThreshold'
+export type FieldKey = 'name' | 'code' | 'category' | 'hsn' | 'unit' | 'altUnit' | 'altPer' | 'batchNo' | 'expiry' | 'mrp' | 'purchaseRate' | 'issueRate' | 'gstPercent' | 'currentStock' | 'lowStockThreshold'
 export const FIELDS: { key: FieldKey; label: string; required?: boolean }[] = [
   { key: 'name', label: 'Item name', required: true }, { key: 'code', label: 'Item code / SKU' }, { key: 'category', label: 'Category / Company' },
-  { key: 'hsn', label: 'HSN / SAC' }, { key: 'unit', label: 'Unit' }, { key: 'batchNo', label: 'Batch no.' }, { key: 'expiry', label: 'Expiry' },
+  { key: 'hsn', label: 'HSN / SAC' }, { key: 'unit', label: 'Unit' }, { key: 'altUnit', label: 'Also sold in (unit)' }, { key: 'altPer', label: 'How many per 1 item unit' }, { key: 'batchNo', label: 'Batch no.' }, { key: 'expiry', label: 'Expiry' },
   { key: 'mrp', label: 'MRP' }, { key: 'purchaseRate', label: 'Purchase rate' }, { key: 'issueRate', label: 'Issue / sale rate' },
   { key: 'gstPercent', label: 'GST %' }, { key: 'currentStock', label: 'Current stock' }, { key: 'lowStockThreshold', label: 'Low stock alert' },
 ]
@@ -23,6 +23,8 @@ const SYN: Record<FieldKey, string[]> = {
   category: ['category', 'company', 'mfr', 'manufacturer', 'brand', 'group', 'companyname', 'mfgcompany', 'itemgroup', 'mfg'],
   hsn: ['hsn', 'hsncode', 'hsnsac', 'sac', 'hsnsaccode'],
   unit: ['unit', 'uom', 'units', 'unitofmeasure'],
+  altUnit: ['altunit', 'alternateunit', 'alternativeunit', 'secondaryunit', 'secondunit', 'unit2', 'alsosoldin', 'altuom'],
+  altPer: ['altper', 'altunitqty', 'conversion', 'conversionfactor', 'factor', 'unit2per', 'unitsperunit', 'altfactor'],
   batchNo: ['batch', 'batchno', 'batchnumber', 'batchnum'],
   expiry: ['expiry', 'exp', 'expirydate', 'expdate', 'expiration', 'expiryon'],
   mrp: ['mrp', 'maxretailprice', 'maxrp'],
@@ -91,6 +93,20 @@ const UNIT_MAP: Record<string, Unit> = {
   kg: 'KG', kgs: 'KG', kilo: 'KG', kilogram: 'KG',
   ltr: 'LTR', l: 'LTR', lt: 'LTR', litre: 'LTR', liter: 'LTR', ltrs: 'LTR',
   nos: 'NOS', no: 'NOS', number: 'NOS', numbers: 'NOS',
+  gm: 'GM', gms: 'GM', gram: 'GM', grams: 'GM', g: 'GM',
+  ml: 'ML', mls: 'ML', millilitre: 'ML', milliliter: 'ML',
+  mtr: 'MTR', m: 'MTR', meter: 'MTR', metre: 'MTR', meters: 'MTR', metres: 'MTR',
+  ft: 'FT', feet: 'FT', foot: 'FT',
+  sqft: 'SQFT', sqfeet: 'SQFT', sqfoot: 'SQFT',
+  doz: 'DOZ', dozen: 'DOZ', dzn: 'DOZ',
+  pkt: 'PKT', packet: 'PKT', pack: 'PKT', packets: 'PKT', pk: 'PKT',
+  bag: 'BAG', bags: 'BAG', sack: 'BAG',
+  roll: 'ROLL', rolls: 'ROLL', rl: 'ROLL',
+  set: 'SET', sets: 'SET',
+  pair: 'PAIR', pairs: 'PAIR', pr: 'PAIR',
+  sheet: 'SHEET', sheets: 'SHEET', sht: 'SHEET',
+  ton: 'TON', tonne: 'TON', tons: 'TON', tonnes: 'TON', mt: 'TON',
+  qtl: 'QTL', quintal: 'QTL', quintals: 'QTL',
 }
 export function parseUnit(c: Cell): Unit | undefined {
   const t = norm(c)
@@ -188,6 +204,13 @@ export function buildPreview(rows: Cell[][], headerRow: number, map: Mapping, ex
       const u = parseUnit(get(r, 'unit'))
       if (u) data.unit = u; else warnings.push({ key: 'warn.unit', params: { value: text(get(r, 'unit')) } })
     }
+    if (map.altUnit >= 0 && text(get(r, 'altUnit'))) {
+      const au = parseUnit(get(r, 'altUnit'))
+      const per = num('altPer', 'altPer')
+      if (!au) warnings.push({ key: 'warn.unit', params: { value: text(get(r, 'altUnit')) } })
+      else if (per === undefined || !(per > 0)) warnings.push({ key: 'warn.altPer', params: { value: text(get(r, 'altUnit')) } })
+      else data.altUnits = [{ unit: au, per }]
+    }
     if (base.batch) data.batchNo = base.batch
     const ex = parseExpiry(get(r, 'expiry'))
     if (ex === null) warnings.push({ key: 'warn.expiry', params: { value: text(get(r, 'expiry')) } })
@@ -214,6 +237,7 @@ export function buildPreview(rows: Cell[][], headerRow: number, map: Mapping, ex
     // ---- match against existing items and earlier rows of this file
     const nb = `${name.toLowerCase()}|${base.batch.toLowerCase()}`
     const hit = (code && byCode.get(code.toLowerCase())) || byNameBatch.get(nb)
+    if (data.altUnits?.[0] && data.altUnits[0].unit === (data.unit ?? (hit ? hit.unit : 'PCS'))) { warnings.push({ key: 'warn.altSame', params: { value: data.altUnits[0].unit } }); delete data.altUnits }
     const claimKey = hit ? hit.id : (code && createdKeys.get(code.toLowerCase())) || createdKeys.get(nb)
 
     if (claimKey) {

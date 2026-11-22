@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Info } from 'lucide-react'
-import { formatINR, formatQty } from '@/lib/format'
+import { formatINR } from '@/lib/format'
+import { stockText } from '@/lib/units'
 import type { Row } from '@/lib/billing'
 import { parseRate } from '@/lib/billing'
 
@@ -18,7 +19,7 @@ export function RowContext({ row, flash, over }: { row?: Row; flash: string; ove
       ) : it ? (
         <>
           <span className="max-w-[260px] truncate font-medium text-ink-900">{it.name}</span>
-          <span className="text-ink-600">{t('context.available')} <span className={`font-mono font-medium ${tone}`}>{formatQty(it.currentStock)} {it.unit}</span></span>
+          <span className="text-ink-600">{t('context.available')} <span className={`font-mono font-medium ${tone}`}>{stockText(it, it.currentStock)}</span></span>
           <span className="text-ink-600">{t('context.mrp')} <span className="font-mono text-ink-900">{formatINR(it.mrp)}</span></span>
           <span className="text-ink-600">{t('context.lastPurchase')} <span className="font-mono text-ink-900">{formatINR(it.purchaseRate)}</span></span>
           <span className="text-ink-600">{t('context.hsn')} <span className="font-mono text-ink-900">{it.hsn || '-'}</span></span>

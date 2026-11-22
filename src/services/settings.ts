@@ -9,7 +9,7 @@ export const defaultSettings = (): Settings => {
     gstin: '29AAKFS4821M1ZM', stateCode: '29', invoicePrefix: 'SI', defaultTaxMode: 'TAX_INVOICE',
     overIssue: 'ALLOW_WARN', roundOffDefault: true, paperSize: 'A4',
     bankName: 'Canara Bank, Jayanagar', bankAccount: '0412101003388', bankIfsc: 'CNRB0000412', upiId: 'shreeganesh@canarabank',
-    email: '', pan: '', terms: '',
+    email: '', pan: '', terms: '', businessType: '',
   }
 }
 

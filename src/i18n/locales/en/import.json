@@ -1,6 +1,11 @@
 {
   "title": "Import inventory",
-  "steps": { "label": "Steps", "upload": "File", "map": "Map columns", "preview": "Review" },
+  "steps": {
+    "label": "Steps",
+    "upload": "File",
+    "map": "Map columns",
+    "preview": "Review"
+  },
   "back": "Back",
   "cancel": "Cancel",
   "reviewRows": "Review rows",
@@ -45,8 +50,23 @@
   "noRows": "No rows in this view.",
   "done": "Imported {{created}} new and updated {{updated}} items",
   "failed": "Import failed",
-  "col": { "row": "Row", "status": "Status", "item": "Item", "code": "Code", "saleRate": "Sale rate", "gst": "GST", "stock": "Stock", "notes": "Notes" },
-  "status": { "create": "New item", "update": "Update", "error": "Error", "skip": "Skipped", "warning": "Warning" },
+  "col": {
+    "row": "Row",
+    "status": "Status",
+    "item": "Item",
+    "code": "Code",
+    "saleRate": "Sale rate",
+    "gst": "GST",
+    "stock": "Stock",
+    "notes": "Notes"
+  },
+  "status": {
+    "create": "New item",
+    "update": "Update",
+    "error": "Error",
+    "skip": "Skipped",
+    "warning": "Warning"
+  },
   "emptyName": "(empty)",
   "field": {
     "name": "Item name",
@@ -61,7 +81,9 @@
     "issueRate": "Issue / sale rate",
     "gstPercent": "GST %",
     "currentStock": "Current stock",
-    "lowStockThreshold": "Low stock alert"
+    "lowStockThreshold": "Low stock alert",
+    "altUnit": "Also sold in (unit)",
+    "altPer": "How many per 1 item unit"
   },
   "lbl": {
     "mrp": "MRP",
@@ -69,7 +91,8 @@
     "saleRate": "Sale rate",
     "gstPercent": "GST %",
     "lowStockAlert": "Low stock alert",
-    "stock": "Stock"
+    "stock": "Stock",
+    "altPer": "How many per 1 item unit"
   },
   "row": {
     "nameEmpty": "Item name is empty",
@@ -92,6 +115,8 @@
     "codeTaken": "Code {{code}} is taken, a new one was assigned",
     "rateFromMrp": "No sale rate, using MRP",
     "rateZero": "No sale rate and no MRP, rate is 0",
-    "gstMissing": "GST % missing, using 12%"
+    "gstMissing": "GST % missing, using 12%",
+    "altPer": "\"{{value}}\" needs a number for how many make one of the item's unit, other unit ignored",
+    "altSame": "{{value}} is already the item's unit, other unit ignored"
   }
 }

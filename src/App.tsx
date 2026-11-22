@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router-dom'
+import { ManageBusinesses } from '@/businesses/ManageBusinesses'
 import { AppShell } from './components/layout/AppShell'
 import { LicensePage } from './license/LicensePage'
 import { Home } from './pages/Home'
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: '/parties', element: <Parties /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '/license', element: <LicensePage /> },
+      { path: '/businesses', element: <ManageBusinesses /> },
       { path: '/signup', element: <Navigate to="/" replace /> },
       { path: '/login', element: <Navigate to="/" replace /> },
       { path: '*', element: <Navigate to="/" replace /> },

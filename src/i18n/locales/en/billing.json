@@ -57,7 +57,8 @@
       "qty": "qty row {{n}}",
       "rate": "rate row {{n}}",
       "disc": "disc row {{n}}",
-      "remove": "Remove row {{n}}"
+      "remove": "Remove row {{n}}",
+      "unit": "unit row {{n}}"
     },
     "enterQty": "Enter a quantity greater than 0",
     "exceedsStock": "Exceeds stock: {{available}} available",

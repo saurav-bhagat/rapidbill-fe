@@ -39,6 +39,9 @@
     "billDiscount": "Jump to bill discount (5% or an amount)",
     "savePreview": "Save & preview print (Ctrl+W is best effort, see browser limits)",
     "saveNext": "Save & start next voucher",
-    "billEscape": "Close an open picker, otherwise discard voucher (asks first)"
+    "billEscape": "Close an open picker, otherwise discard voucher (asks first)",
+    "switchMenu": "Open the business switcher",
+    "switchNth": "Open the 1st to 5th business",
+    "manageBusinesses": "Manage businesses"
   }
 }

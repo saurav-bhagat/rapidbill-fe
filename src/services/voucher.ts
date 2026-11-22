@@ -2,14 +2,16 @@ import { calcVoucher } from '@/lib/calc'
 import { newId } from '@/lib/id'
 import type { Paise } from '@/lib/money'
 import { roundQty } from '@/lib/qty'
+import { lineStockQty, sellingUnit, stockQtyOf } from '@/lib/units'
 import { nextVoucherNo } from '@/lib/voucherNo'
 import { AppError, type ErrorKey, type ErrorParams } from './errors'
 import { stampLedger } from './ledger'
 import { createSettingsService } from './settings'
 import type { StorageAdapter } from './storage/localStorageAdapter'
-import { LOCAL_USER, WORKSPACE_ID, type Item, type Party, type PaymentStatus, type Settings, type StockLedgerEntry, type Voucher, type VoucherLine, type VoucherMode } from './types'
+import { LOCAL_USER, WORKSPACE_ID, type Unit, type Item, type Party, type PaymentStatus, type Settings, type StockLedgerEntry, type Voucher, type VoucherLine, type VoucherMode } from './types'
 
-export interface VoucherLineInput { itemId: string; qty: number; rate: Paise; discPct: number }
+/** `unit` is one of the item's alternate units; leave it out to sell in the item's own unit. `rate` is always per the item's own unit. */
+export interface VoucherLineInput { itemId: string; qty: number; rate: Paise; discPct: number; unit?: Unit }
 
 export interface VoucherInput {
   /** Chosen by the device, so a bill sent twice is saved once. */
@@ -62,9 +64,10 @@ function reverseEffect(v: Voucher, w: Pick<World, 'items' | 'parties'>, type: 'C
   for (const l of v.lines) {
     const it = byId.get(l.itemId)
     if (!it) continue // item no longer exists; nothing to restore
-    it.currentStock = roundQty(it.currentStock + l.qty)
+    const back = lineStockQty(l)
+    it.currentStock = roundQty(it.currentStock + back)
     it.updatedAt = now
-    entries.push(stampLedger({ itemId: it.id, type, qtyDelta: l.qty, balanceAfter: it.currentStock, voucherId: v.id, voucherNo: v.number }, now))
+    entries.push(stampLedger({ itemId: it.id, type, qtyDelta: back, balanceAfter: it.currentStock, voucherId: v.id, voucherNo: v.number }, now))
   }
   const parties = v.partyId && v.payment === 'CREDIT'
     ? w.parties.map((p) => (p.id === v.partyId ? { ...p, balance: p.balance - v.totals.grandTotal, updatedAt: now } : p))
@@ -115,7 +118,10 @@ export function createBillingService(adapter: StorageAdapter, owner: BillingOwne
       if (!(l.qty > 0) || !Number.isFinite(l.qty)) fail('lineQty', { n: n + 1 })
       if (!(l.rate >= 0)) fail('lineRate', { n: n + 1 })
       if (!(l.discPct >= 0 && l.discPct <= 100)) fail('lineDisc', { n: n + 1 })
+      if (!sellingUnit(byId.get(l.itemId)!, l.unit)) fail('lineUnit', { n: n + 1, unit: l.unit ?? '' })
     })
+    /** What each line takes from stock, in the item's own unit. */
+    const sold = input.lines.map((l) => { const s = sellingUnit(byId.get(l.itemId)!, l.unit)!; return { unit: s.unit, per: s.per, stockQty: stockQtyOf(l.qty, s.per) } })
 
     // Stock never blocks a bill: goods can be on the shelf before the count is updated. Stock simply goes negative until someone fixes the count.
 
@@ -131,7 +137,7 @@ export function createBillingService(adapter: StorageAdapter, owner: BillingOwne
     // Non-GST business: never any tax. Otherwise a Tax Invoice is always taxed and a Challan follows the toggle.
     const taxApplicable = w.settings.gstEnabled === false ? false : input.mode === 'TAX_INVOICE' ? true : input.taxApplicable
     const calc = calcVoucher({
-      lines: input.lines.map((l) => ({ qty: l.qty, rate: l.rate, discPct: l.discPct, gstPct: byId.get(l.itemId)!.gstPercent })),
+      lines: input.lines.map((l, i) => ({ qty: sold[i].stockQty, rate: l.rate, discPct: l.discPct, gstPct: byId.get(l.itemId)!.gstPercent })),
       taxApplicable, sellerState: w.settings.stateCode, partyState: party?.stateCode ?? null,
       billDiscount: input.billDiscount ?? undefined, roundOff: input.roundOff,
     })
@@ -139,8 +145,8 @@ export function createBillingService(adapter: StorageAdapter, owner: BillingOwne
     const lines: VoucherLine[] = input.lines.map((l, i) => {
       const it = byId.get(l.itemId)!
       return {
-        itemId: it.id, name: it.name, code: it.code, hsn: it.hsn, batchNo: it.batchNo, expiry: it.expiry, unit: it.unit,
-        qty: l.qty, mrp: it.mrp, rate: l.rate, discPct: l.discPct, gstPct: it.gstPercent,
+        itemId: it.id, name: it.name, code: it.code, hsn: it.hsn, batchNo: it.batchNo, expiry: it.expiry, unit: sold[i].unit,
+        qty: l.qty, per: sold[i].per, baseUnit: it.unit, stockQty: sold[i].stockQty, mrp: it.mrp, rate: l.rate, discPct: l.discPct, gstPct: it.gstPercent,
         taxable: calc.lines[i].taxable, tax: calc.lines[i].tax, total: calc.lines[i].total,
       }
     })
@@ -163,11 +169,12 @@ export function createBillingService(adapter: StorageAdapter, owner: BillingOwne
     const items = w.items.map((i) => ({ ...i }))
     const nextById = new Map(items.map((i) => [i.id, i]))
     const entries: StockLedgerEntry[] = []
-    for (const l of input.lines) {
+    for (const [i, l] of input.lines.entries()) {
       const it = nextById.get(l.itemId)!
-      it.currentStock = roundQty(it.currentStock - l.qty)
+      const out = sold[i].stockQty
+      it.currentStock = roundQty(it.currentStock - out)
       it.updatedAt = now
-      entries.push(stampLedger({ itemId: it.id, type: 'ISSUE', qtyDelta: -l.qty, balanceAfter: it.currentStock, voucherId: id, voucherNo: number }, now))
+      entries.push(stampLedger({ itemId: it.id, type: 'ISSUE', qtyDelta: -out, balanceAfter: it.currentStock, voucherId: id, voucherNo: number }, now))
     }
     const parties = party && input.payment === 'CREDIT'
       ? w.parties.map((p) => (p.id === party.id ? { ...p, balance: p.balance + calc.grandTotal, updatedAt: now } : p))

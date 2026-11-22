@@ -24,6 +24,9 @@ export const SHORTCUTS: ShortcutDoc[] = [
   { id: 'navInventory', combo: 'alt+i', scope: 'global', group: 'Navigate', description: 'Inventory Master', phase: 1 },
   { id: 'navParties', combo: 'alt+p', scope: 'global', group: 'Navigate', description: 'Parties & Departments', phase: 1 },
   { id: 'navSettings', combo: 'alt+s', scope: 'global', group: 'Navigate', description: 'Settings', phase: 1 },
+  { id: 'switchMenu', combo: 'alt+b', scope: 'global', group: 'Navigate', description: 'Open the business switcher', phase: 7 },
+  { id: 'switchNth', combo: 'alt+1', alt: ['alt+2', 'alt+3', 'alt+4', 'alt+5'], scope: 'global', group: 'Navigate', description: 'Open the 1st to 5th business', phase: 7 },
+  { id: 'manageBusinesses', combo: 'alt+shift+b', scope: 'global', group: 'Navigate', description: 'Manage businesses', phase: 8 },
   { id: 'showShortcuts', combo: 'shift+/', scope: 'global', group: 'Navigate', description: 'Show this shortcuts list', phase: 1 },
   { id: 'toggleSidebar', combo: 'mod+b', scope: 'global', group: 'Navigate', description: 'Collapse / expand sidebar', phase: 1 },
   { id: 'closeDialog', combo: 'escape', scope: 'modal', group: 'Dialogs', description: 'Close dialog or drawer', phase: 1 },
@@ -53,4 +56,4 @@ export const SHORTCUTS: ShortcutDoc[] = [
 ]
 
 /** Phase whose features are live right now. Bump as phases ship. */
-export const CURRENT_PHASE = 6
+export const CURRENT_PHASE = 8

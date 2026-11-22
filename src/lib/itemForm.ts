@@ -1,10 +1,14 @@
 import type { TFunction } from 'i18next'
 import { parseRupees, toRupees } from './money'
 import { roundQty } from './qty'
-import { GST_SLABS, UNITS, type Item, type Meta, type Unit } from '@/services/types'
+import { snapPer } from './units'
+import { GST_SLABS, MAX_ALT_UNITS, UNITS, type AltUnit, type Item, type Meta, type Unit } from '@/services/types'
 
 export type ItemData = Omit<Item, keyof Meta>
-export type ItemDraft = Record<'name' | 'code' | 'category' | 'hsn' | 'unit' | 'batchNo' | 'expiry' | 'mrp' | 'purchaseRate' | 'issueRate' | 'gstPercent' | 'currentStock' | 'lowStockThreshold', string>
+export type ItemDraft = Record<'name' | 'code' | 'category' | 'hsn' | 'unit' | 'batchNo' | 'expiry' | 'mrp' | 'purchaseRate' | 'issueRate' | 'gstPercent' | 'currentStock' | 'lowStockThreshold', string> & {
+  /** Other units it is also sold in: `per` of them make 1 of `unit` (typed as text while editing). */
+  altUnits: { unit: string; per: string }[]
+}
 /** Translatable message: `key` lives in the `inventory` namespace (or `import` for importer messages). */
 export interface Msg { key: string; params?: Record<string, string | number> }
 export type ItemErrors = Partial<Record<keyof ItemDraft, Msg>>
@@ -26,13 +30,14 @@ export function formatExpiryInput(raw: string): string {
 
 export const emptyDraft = (code: string): ItemDraft => ({
   name: '', code, category: '', hsn: '', unit: 'PCS', batchNo: '', expiry: '', mrp: '', purchaseRate: '', issueRate: '',
-  gstPercent: '12', currentStock: '', lowStockThreshold: '10',
+  gstPercent: '12', currentStock: '', lowStockThreshold: '10', altUnits: [],
 })
 
 export const draftFromItem = (i: Item): ItemDraft => ({
   name: i.name, code: i.code, category: i.category, hsn: i.hsn, unit: i.unit, batchNo: i.batchNo, expiry: i.expiry,
   mrp: String(toRupees(i.mrp)), purchaseRate: String(toRupees(i.purchaseRate)), issueRate: String(toRupees(i.issueRate)),
   gstPercent: String(i.gstPercent), currentStock: String(i.currentStock), lowStockThreshold: String(i.lowStockThreshold),
+  altUnits: (i.altUnits ?? []).map((a) => ({ unit: a.unit, per: String(a.per) })),
 })
 
 export interface ItemValidation { errors: ItemErrors; warnings: Msg[]; value?: ItemData }
@@ -67,6 +72,18 @@ export function validateItemDraft(d: ItemDraft, takenCodes: string[]): ItemValid
   const low = d.lowStockThreshold.trim() === '' ? 10 : Number(d.lowStockThreshold)
   if (!Number.isFinite(low) || low < 0) errors.lowStockThreshold = { key: 'form.err.zeroOrMore' }
 
+  const altUnits: AltUnit[] = []
+  if (d.altUnits.length > MAX_ALT_UNITS) errors.altUnits = { key: 'form.err.altMany', params: { n: MAX_ALT_UNITS } }
+  const seen = new Set<string>([d.unit])
+  for (const a of d.altUnits) {
+    const per = Number(a.per)
+    if (!UNITS.includes(a.unit as Unit)) errors.altUnits = { key: 'form.err.altPick' }
+    else if (seen.has(a.unit)) errors.altUnits = { key: 'form.err.altSame', params: { unit: a.unit } }
+    else if (a.per.trim() === '' || !Number.isFinite(per) || per <= 0 || per > 1_000_000) errors.altUnits = { key: 'form.err.altPer', params: { unit: a.unit } }
+    else altUnits.push({ unit: a.unit as Unit, per: snapPer(per) })
+    seen.add(a.unit)
+  }
+
   if (mrp && issueRate > mrp) warnings.push({ key: 'form.warn.aboveMrp' })
   if (purchaseRate && issueRate && issueRate < purchaseRate) warnings.push({ key: 'form.warn.loss' })
 
@@ -76,7 +93,7 @@ export function validateItemDraft(d: ItemDraft, takenCodes: string[]): ItemValid
     value: {
       name, code, category: d.category.trim(), hsn: d.hsn, unit: (UNITS.includes(d.unit as Unit) ? d.unit : 'PCS') as Unit,
       batchNo: d.batchNo.trim(), expiry: d.expiry, mrp, purchaseRate, issueRate, gstPercent: gst,
-      currentStock: roundQty(stock), lowStockThreshold: low,
+      currentStock: roundQty(stock), lowStockThreshold: low, altUnits,
     },
   }
 }

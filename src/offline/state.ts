@@ -31,6 +31,9 @@ export const useSync = create<SyncState>(() => ({
   clockSkewMs: null,
 }))
 
+/** Forget everything that belongs to the business that was open (bills waiting, last download, clock). Reachability stays (it is about the server), and so does `version`: it only ever goes up, so no screen is told to reload against a copy that is not there. */
+export const resetBusinessSync = () => useSync.setState({ syncing: false, lastSyncAt: null, pendingIds: [], failedIds: [], oldestWaiting: null, clockSkewMs: null })
+
 const connectivity = new Set<(online: boolean) => void>()
 /** Called when the app first notices it has lost, or got back, the server. */
 export const onConnectivity = (fn: (online: boolean) => void) => { connectivity.add(fn); return () => { connectivity.delete(fn) } }

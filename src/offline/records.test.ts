@@ -43,12 +43,12 @@ const offline = (t: T) => { t.setSync({ online: false }); handler = () => t.net(
 describe('making items and parties on this device', () => {
   it('an item is saved here and queued together, with its code in capitals and its opening stock', async () => {
     const t = await setup()
-    const it = await t.createItemLocally(t.m, t.owner, itemData('abc-1', { currentStock: 12.3456 }))
-    expect(it).toMatchObject({ code: 'ABC-1', currentStock: 12.346, workspaceId: 'ws' })
+    const it = await t.createItemLocally(t.m, t.owner, itemData('abc-1', { currentStock: 12.3456789 }))
+    expect(it).toMatchObject({ code: 'ABC-1', currentStock: 12.345679, workspaceId: 'ws' })
     expect(await t.m.get('items', it.id)).toBeDefined()
     const q = await t.listOutbox(t.m)
     expect(q).toHaveLength(1)
-    expect(q[0]).toMatchObject({ kind: 'item', id: it.id, status: 'pending', number: 'ABC-1', payload: { id: it.id, code: 'ABC-1', currentStock: 12.346 } })
+    expect(q[0]).toMatchObject({ kind: 'item', id: it.id, status: 'pending', number: 'ABC-1', payload: { id: it.id, code: 'ABC-1', currentStock: 12.345679 } })
     expect(t.useSync.getState().pendingIds).toEqual([it.id])
   })
 

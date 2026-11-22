@@ -1,0 +1,88 @@
+{
+  "opening": "Opening {{name}}…",
+  "chip": "You are in {{name}}",
+  "switcherLabel": "Business: {{name}}. Switch business",
+  "yours": "Your businesses",
+  "current": "current",
+  "readOnly": "View only: the plan has ended",
+  "unsent": "{{count}} bills not sent yet",
+  "billingAs": "Billing as",
+  "role": {
+    "OWNER": "Owner",
+    "MANAGER": "Manager",
+    "STAFF": "Staff"
+  },
+  "plan": {
+    "paid": "{{plan}} · up to {{max}} businesses · {{days}} days left",
+    "trial": "Free trial · {{days}} days left · {{count}} of {{max}} businesses",
+    "ended": "Plan ended · view only"
+  },
+  "menu": {
+    "manage": "Manage businesses",
+    "add": "Add business"
+  },
+  "manage": {
+    "title": "Manage businesses",
+    "sub": "All the businesses on your account. Each one has its own items, parties and bills.",
+    "open": "Open now",
+    "openAction": "Open",
+    "rename": "Rename",
+    "renamed": "Business renamed",
+    "colour": "Colour",
+    "save": "Save",
+    "created": "Created {{date}}"
+  },
+  "colours": {
+    "amber": "Amber",
+    "blue": "Blue",
+    "green": "Green",
+    "red": "Red",
+    "purple": "Purple",
+    "teal": "Teal",
+    "coral": "Coral",
+    "pink": "Pink"
+  },
+  "blocked": {
+    "trial": "Your free trial includes {{n}} businesses. Choose a plan to add more.",
+    "ended": "Renew your plan to add a business.",
+    "cap": "You can have up to {{n}} businesses on one plan. Contact us if you need more.",
+    "plans": "Choose a plan"
+  },
+  "add": {
+    "title": "Add business",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip",
+    "create": "Create business",
+    "creating": "Creating…",
+    "step": "Step {{n}} of {{total}}",
+    "name": "Business name",
+    "nameNeeded": "Give the business a name",
+    "type": "What do you sell?",
+    "state": "State",
+    "stateHint": "Needed for GST. You can add it later in Settings.",
+    "statePlaceholder": "Choose a state",
+    "gstin": "GSTIN (optional)",
+    "gstinHint": "Leave empty if this business is not registered for GST.",
+    "address": "Address (optional)",
+    "startWith": "Start with",
+    "source": "Copy from",
+    "copySettings": "Also copy bank, UPI, terms and print settings",
+    "copyNote": "A copy is separate from then on. Stock and balances start at 0, and the bill number series and GSTIN are never copied.",
+    "start": {
+      "EMPTY": {
+        "title": "Empty",
+        "body": "A clean business. Add items and parties as you go."
+      },
+      "ITEMS": {
+        "title": "Copy items",
+        "body": "Same items, rates and units, with stock 0."
+      },
+      "ITEMS_PARTIES": {
+        "title": "Copy items and parties",
+        "body": "Also the party list, with balance 0."
+      }
+    }
+  }
+}

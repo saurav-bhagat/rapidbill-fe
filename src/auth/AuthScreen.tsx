@@ -10,6 +10,7 @@ import { SupportLine } from '@/components/SupportLine'
 import { useSync } from '@/offline/state'
 import { toast } from '@/store/toast'
 import { go } from '@/landing/nav'
+import { ForgotPassword } from './ForgotPassword'
 import { useAuth } from './session'
 
 type Mode = 'login' | 'signup'
@@ -24,6 +25,7 @@ export function AuthScreen({ initialMode = 'login' }: { initialMode?: Mode }) {
   const [errs, setErrs] = useState<Partial<Record<keyof typeof v, string>>>({})
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [forgot, setForgot] = useState(false)
   const set = (k: keyof typeof v, val: string) => { setV((x) => ({ ...x, [k]: val })); setErrs((e) => ({ ...e, [k]: undefined })); setFormError('') }
 
   const submit = async (e: FormEvent) => {
@@ -66,6 +68,7 @@ export function AuthScreen({ initialMode = 'login' }: { initialMode?: Mode }) {
       </aside>
       <main className="flex flex-1 flex-col items-center justify-center p-6">
       <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-card">
+        {forgot ? <ForgotPassword initialEmail={v.email} onBack={() => setForgot(false)} onDone={(email) => { setV((x) => ({ ...x, email, password: '' })); setForgot(false) }} /> : <>
         <button type="button" onClick={() => go('/')} className="mb-4 text-sm font-medium text-ink-600 hover:text-primary">← Back to home</button>
         <h1 className="text-3xl font-bold">{mode === 'signup' ? t('createTitle') : t('welcome')}</h1>
         <p className="mb-6 mt-1 text-base text-ink-600">{mode === 'signup' ? t('createSub') : t('welcomeSub')}</p>
@@ -86,11 +89,13 @@ export function AuthScreen({ initialMode = 'login' }: { initialMode?: Mode }) {
           <Field label={t('password')} error={errs.password} hint={mode === 'signup' ? t('passwordHint') : undefined}>
             <Input name="password" type="password" value={v.password} onChange={(e) => set('password', e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} maxLength={128} />
           </Field>
+          {mode === 'login' && <div className="-mt-2 text-right"><button type="button" onClick={() => setForgot(true)} className="text-sm font-medium text-primary hover:underline">{t('forgot.link')}</button></div>}
           {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
           <Button type="submit" variant="primary" className="h-12 w-full justify-center text-lg" disabled={busy}>
             {busy ? t('working') : mode === 'login' ? t('submitLogin') : t('submitSignup')}
           </Button>
         </form>
+        </>}
       </div>
       <SupportLine className="mt-5 lg:hidden" />
       </main>

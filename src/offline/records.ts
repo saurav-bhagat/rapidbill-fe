@@ -5,7 +5,7 @@ import { api } from '@/services/http/client'
 import type { BillingOwner } from '@/services/voucher'
 import type { Item, Meta, Party, Voucher } from '@/services/types'
 import type { Mirror } from './db'
-import { exclusive, FLUSH_LOCK, isVoucherEntry, listOutbox, refreshOutboxState, type ItemEntry, type OutboxEntry, type PartyEntry, type VoucherEntry } from './outbox'
+import { exclusive, flushLock, isVoucherEntry, listOutbox, refreshOutboxState, type ItemEntry, type OutboxEntry, type PartyEntry, type VoucherEntry } from './outbox'
 
 /**
  * Items and parties made on this device while there is no connection. Like a bill, each is saved in the device copy and queued in one
@@ -58,7 +58,7 @@ const billsUsing = (entries: OutboxEntry[], kind: 'item' | 'party', id: string):
 export function editWaitingRecord(m: Mirror, kind: 'item', id: string, patch: Partial<ItemData>): Promise<Item | undefined>
 export function editWaitingRecord(m: Mirror, kind: 'party', id: string, patch: Partial<PartyData>): Promise<Party | undefined>
 export function editWaitingRecord(m: Mirror, kind: 'item' | 'party', id: string, patch: Partial<ItemData> | Partial<PartyData>): Promise<Item | Party | undefined> {
-  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+  return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = await m.get<OutboxEntry>('outbox', id)
     if (!e || e.kind !== kind) return undefined
     const now = new Date().toISOString()
@@ -92,7 +92,7 @@ export function editWaitingRecord(m: Mirror, kind: 'item' | 'party', id: string,
 
 /** Delete a party that was made here and not sent yet. Returns false if it is not waiting (it is on the server). */
 export function removeWaitingParty(m: Mirror, id: string): Promise<boolean> {
-  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+  return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = await m.get<OutboxEntry>('outbox', id)
     if (!e || e.kind !== 'party') return false
     const using = billsUsing(await listOutbox(m), 'party', id).length
@@ -114,7 +114,7 @@ const settle = (e: OutboxEntry) => { if (e.kind !== 'item' && e.kind !== 'party'
  * now points at the existing one. Stock typed in for the new item is not added to the existing item.
  */
 export function useExisting(m: Mirror, entryId: string): Promise<void> {
-  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+  return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = settle((await m.get<OutboxEntry>('outbox', entryId))!)
     let found: Item | Party | undefined
     if (e.kind === 'item') found = (await api<{ data: Item[] }>('/items', { query: { q: e.payload.code, limit: 50 } })).data.find((i) => same(i.code, e.payload.code))
@@ -149,7 +149,7 @@ export function useExisting(m: Mirror, entryId: string): Promise<void> {
 
 /** "It is a different one": give it another code or name and send it again. */
 export function renameRecord(m: Mirror, entryId: string, value: string): Promise<void> {
-  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+  return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = settle((await m.get<OutboxEntry>('outbox', entryId))!)
     const v = value.trim()
     if (!v) throw new AppError('serverError')
@@ -172,7 +172,7 @@ export function renameRecord(m: Mirror, entryId: string, value: string): Promise
 
 /** Throw away an item or party that was made here and refused. Refused if waiting bills still use it. */
 export function discardRecord(m: Mirror, id: string): Promise<void> {
-  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+  return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = settle((await m.get<OutboxEntry>('outbox', id))!)
     const using = billsUsing(await listOutbox(m), e.kind, id).length
     if (using > 0) throw new AppError('recordInUse', { count: using })

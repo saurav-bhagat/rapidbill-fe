@@ -29,7 +29,10 @@
     "stateHintNonGst": "Shown on invoices",
     "email": "Email",
     "pan": "PAN (optional)",
-    "stateSelect": "Select your state"
+    "stateSelect": "Select your state",
+    "type": "Type of business",
+    "typeHint": "Helps us suggest ready item lists for your kind of shop.",
+    "typeSelect": "Select type of business"
   },
   "billing": {
     "title": "Billing",
@@ -132,11 +135,29 @@
       "bank": "Bank details",
       "upi": "UPI ID",
       "terms": "Terms and conditions",
-      "signature": "Signature line"
+      "signature": "Signature line",
+      "baseQty": "Also show the quantity in the item's own unit, e.g. 900 GM (0.9 KG)"
     },
     "termsLabel": "Terms and conditions text",
     "termsHint": "Leave empty to print the standard line.",
     "termsPlaceholder": "e.g. Goods once sold will not be taken back.",
     "alwaysShown": "Always shown: your company name and address, GSTIN, bill number and date, item name, quantity, rate, amounts and the grand total."
+  },
+  "businessTypes": {
+    "grocery": "Grocery & kirana",
+    "sanitary": "Sanitary & bathroom fittings",
+    "plumbing": "Plumbing & pipes",
+    "electrical": "Electrical & lighting",
+    "hardware": "Hardware & tools",
+    "construction": "Construction & building material",
+    "paint": "Paint & decor",
+    "furniture": "Furniture & interiors",
+    "pharmacy": "Pharmacy & medical",
+    "stationery": "Stationery & books",
+    "electronics": "Electronics & mobile",
+    "clothing": "Clothing & textile",
+    "autoparts": "Auto parts",
+    "agri": "Agriculture, seeds & fertiliser",
+    "other": "Other"
   }
 }

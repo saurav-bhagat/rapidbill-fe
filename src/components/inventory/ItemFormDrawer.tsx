@@ -12,6 +12,9 @@ import { toast } from '@/store/toast'
 import { Button } from '../ui/Button'
 import { Drawer } from '../ui/Modal'
 import { Field, Input, Select } from '../ui/Field'
+import { MAX_ALT_UNITS } from '@/services/types'
+import { suggestAlt } from '@/lib/units'
+import { Plus, X } from 'lucide-react'
 
 interface Props {
   open: boolean
@@ -46,7 +49,7 @@ export function ItemFormDrawer({ open, item, initialName, existingItems, onClose
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item?.id, settings?.gstEnabled])
 
-  const set = (k: keyof ItemDraft) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const set = (k: Exclude<keyof ItemDraft, 'altUnits'>) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const v = k === 'expiry' ? formatExpiryInput(e.target.value) : e.target.value
     setDraft((d) => ({ ...d, [k]: v }))
     if (errors[k]) setErrors((x) => ({ ...x, [k]: undefined }))
@@ -111,6 +114,9 @@ export function ItemFormDrawer({ open, item, initialName, existingItems, onClose
         <Field label={t('form.unit')}>
           <Select name="unit" value={draft.unit} onChange={set('unit')}>{UNITS.map((u) => <option key={u}>{u}</option>)}</Select>
         </Field>
+        <div className="col-span-2">
+          <AltUnits draft={draft} setDraft={setDraft} error={err('altUnits')} />
+        </div>
         <Field label={t('form.batchNo')}>
           <Input name="batchNo" value={draft.batchNo} onChange={set('batchNo')} className="font-mono" />
         </Field>
@@ -142,5 +148,34 @@ export function ItemFormDrawer({ open, item, initialName, existingItems, onClose
         )}
       </form>
     </Drawer>
+  )
+}
+
+/** "Also sold in": other units this item can be sold in on a bill, with how many make one of its own unit. Hidden behind a link until needed. */
+function AltUnits({ draft, setDraft, error }: { draft: ItemDraft; setDraft: (fn: (d: ItemDraft) => ItemDraft) => void; error?: string }) {
+  const { t } = useTranslation('inventory')
+  const [shown, setShown] = useState(false)
+  const alts = draft.altUnits
+  if (!shown && alts.length === 0) {
+    return <button type="button" onClick={() => { setShown(true); setDraft((d) => ({ ...d, altUnits: [{ unit: suggestAlt(d.unit, [], UNITS), per: '' }] })) }} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"><Plus size={14} />{t('form.altAdd')}</button>
+  }
+  const edit = (n: number, p: Partial<{ unit: string; per: string }>) => setDraft((d) => ({ ...d, altUnits: d.altUnits.map((a, i) => (i === n ? { ...a, ...p } : a)) }))
+  return (
+    <div className="rounded-lg border border-line bg-sunken/50 p-3">
+      <div className="mb-1 text-sm font-medium text-ink-900">{t('form.altTitle')}</div>
+      <p className="mb-2 text-sm text-ink-600">{t('form.altHint', { unit: draft.unit })}</p>
+      <div className="space-y-2">
+        {alts.map((a, n) => (
+          <div key={n} className="flex items-center gap-2 text-sm">
+            <span className="shrink-0 text-ink-600">1 {draft.unit} =</span>
+            <Input aria-label={t('form.altPer')} value={a.per} onChange={(e) => edit(n, { per: e.target.value })} inputMode="decimal" className="num w-24" placeholder="1000" />
+            <Select aria-label={t('form.altUnit')} value={a.unit} onChange={(e) => edit(n, { unit: e.target.value })} className="w-28">{UNITS.filter((u) => u !== draft.unit).map((u) => <option key={u}>{u}</option>)}</Select>
+            <button type="button" onClick={() => setDraft((d) => ({ ...d, altUnits: d.altUnits.filter((_, i) => i !== n) }))} aria-label={t('form.altRemove')} className="grid h-8 w-8 place-items-center rounded text-ink-400 hover:text-danger"><X size={14} /></button>
+          </div>
+        ))}
+      </div>
+      {alts.length < MAX_ALT_UNITS && <button type="button" onClick={() => setDraft((d) => ({ ...d, altUnits: [...d.altUnits, { unit: suggestAlt(d.unit, d.altUnits.map((a) => a.unit), UNITS), per: '' }] }))} className="mt-2 flex items-center gap-1 text-sm font-medium text-primary hover:underline"><Plus size={14} />{t('form.altAnother')}</button>}
+      {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
+    </div>
   )
 }

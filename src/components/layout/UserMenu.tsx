@@ -1,20 +1,16 @@
+import { SignOutDialog, useUnsentEverywhere } from '@/auth/SignOutDialog'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, CreditCard, LogOut } from 'lucide-react'
 import { useAuth } from '@/auth/session'
-import { downloadBackup } from '@/offline/backup'
-import { useSync } from '@/offline/state'
-import { currentMirror } from '@/offline/sync'
 import { apiEnabled } from '@/services/http/client'
-import { Button } from '../ui/Button'
-import { ConfirmDialog } from '../ui/ConfirmDialog'
 
 /** Who is signed in, and Sign out, always at the top right where people look for it. */
 export function UserMenu() {
   const { t } = useTranslation()
   const { user, workspace, logout } = useAuth()
-  const unsent = useSync((x) => x.pendingIds.length + x.failedIds.length)
+  const unsent = useUnsentEverywhere()
   const [open, setOpen] = useState(false)
   const [ask, setAsk] = useState(false)
   const box = useRef<HTMLDivElement>(null)
@@ -49,10 +45,7 @@ export function UserMenu() {
           <button role="menuitem" onClick={signOut} className="flex h-10 w-full items-center gap-2.5 border-t border-line px-4 text-sm font-medium text-danger hover:bg-danger-soft"><LogOut size={16} />{t('logout', { ns: 'auth' })}</button>
         </div>
       )}
-      <ConfirmDialog open={ask} danger title={t('logoutWarn.title', { ns: 'auth' })} confirmLabel={t('logoutWarn.confirm', { ns: 'auth' })} onCancel={() => setAsk(false)} onConfirm={() => { setAsk(false); void logout() }}>
-        <p>{t('logoutWarn.body', { ns: 'auth', count: unsent })}</p>
-        {workspace && <Button className="mt-3" onClick={() => void downloadBackup(currentMirror(), workspace.id)}>{t('device.download', { ns: 'common' })}</Button>}
-      </ConfirmDialog>
+      <SignOutDialog open={ask} onCancel={() => setAsk(false)} onConfirm={() => { setAsk(false); void logout() }} />
     </div>
   )
 }

@@ -223,3 +223,38 @@ describe('default over-issue policy', () => {
     expect((await a.read<Item>('items')).find((i) => i.id === it0.id)!.currentStock).toBe(-2)
   })
 })
+
+describe('selling in another unit', () => {
+  async function riceSetup() {
+    const s = await setup()
+    const rice: Item = { ...s.para, id: 'rice-1', code: 'RICE-1', name: 'Basmati Rice', unit: 'KG', altUnits: [{ unit: 'GM', per: 1000 }], issueRate: 10000, gstPercent: 5, currentStock: 10 }
+    await s.a.write('items', [...s.items, rice])
+    return { ...s, rice }
+  }
+  const stock = async (a: StorageAdapter, id: string) => (await a.read<Item>('items')).find((i) => i.id === id)!.currentStock
+
+  it('900 GM of a KG item takes 0.9 KG, bills 900 GM at the KG rate, and the ledger agrees', async () => {
+    const { a, svc, rice } = await riceSetup()
+    const v = await svc.save(base({ lines: [{ itemId: rice.id, qty: 900, unit: 'GM', rate: 10000, discPct: 0 }] }))
+    expect(v.lines[0]).toMatchObject({ unit: 'GM', qty: 900, per: 1000, baseUnit: 'KG', stockQty: 0.9 })
+    expect(v.totals.taxable).toBe(9000)
+    expect(await stock(a, rice.id)).toBe(9.1)
+    const led = (await a.read<StockLedgerEntry>('ledger')).filter((e) => e.voucherId === v.id)
+    expect(led.map((e) => [e.qtyDelta, e.balanceAfter])).toEqual([[-0.9, 9.1]])
+  })
+
+  it('editing and cancelling put back the stock in the item unit', async () => {
+    const { a, svc, rice } = await riceSetup()
+    const v = await svc.save(base({ lines: [{ itemId: rice.id, qty: 250, unit: 'GM', rate: 10000, discPct: 0 }, { itemId: rice.id, qty: 1, rate: 10000, discPct: 0 }] }))
+    expect(await stock(a, rice.id)).toBe(8.75)
+    await svc.update(v.id, base({ number: v.number, lines: [{ itemId: rice.id, qty: 500, unit: 'GM', rate: 10000, discPct: 0 }] }))
+    expect(await stock(a, rice.id)).toBe(9.5)
+    await svc.cancel(v.id)
+    expect(await stock(a, rice.id)).toBe(10)
+  })
+
+  it('refuses a unit the item is not sold in', async () => {
+    const { svc, rice } = await riceSetup()
+    await expect(svc.save(base({ lines: [{ itemId: rice.id, qty: 1, unit: 'LTR', rate: 10000, discPct: 0 }] }))).rejects.toMatchObject({ key: 'lineUnit' })
+  })
+})

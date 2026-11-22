@@ -2,6 +2,7 @@ import { newId } from './id'
 import { parseRupees, type Paise } from './money'
 import { roundQty } from './qty'
 import type { Item } from '@/services/types'
+import { sellingUnit, stockQtyOf } from './units'
 
 /** One line in the billing grid. Inputs stay as strings while the user types. */
 export interface Row {
@@ -12,15 +13,24 @@ export interface Row {
   qty: string
   rate: string
   disc: string
+  /** The unit chosen for this line: '' means the item's own unit, otherwise one of its alternate units. */
+  unit: string
   /** True once the user typed a rate, so switching Sale/Cost never overwrites it. */
   rateTouched: boolean
 }
 
-export const blankRow = (): Row => ({ key: newId(), query: '', qty: '', rate: '', disc: '', rateTouched: false })
+export const blankRow = (): Row => ({ key: newId(), query: '', qty: '', rate: '', disc: '', unit: '', rateTouched: false })
 
 export const defaultRate = (item: Item, basis: 'SALE' | 'COST'): Paise => (basis === 'COST' ? item.purchaseRate : item.issueRate)
 
 export const rupeesText = (p: Paise): string => (p / 100).toFixed(2)
+
+/** How much of the item's own unit this row takes from stock (900 GM of a KG item is 0.9). null when the quantity is not valid. */
+export function rowStockQty(r: Row): number | null {
+  const q = r.item ? parseQty(r.qty) : null
+  if (q === null || !r.item) return null
+  return stockQtyOf(q, sellingUnit(r.item, r.unit)?.per ?? 1)
+}
 
 export function parseQty(s: string): number | null {
   if (s.trim() === '') return null
@@ -58,7 +68,7 @@ export const isFilled = (r: Row): r is Row & { item: Item } => !!r.item
 export function usageByItem(rows: Row[]): Map<string, number> {
   const m = new Map<string, number>()
   for (const r of rows) {
-    const q = r.item ? parseQty(r.qty) : null
+    const q = rowStockQty(r)
     if (r.item && q) m.set(r.item.id, roundQty((m.get(r.item.id) ?? 0) + q))
   }
   return m

@@ -11,6 +11,10 @@ export type StoreName = 'items' | 'parties' | 'vouchers' | 'settings' | 'outbox'
 export interface BatchOp { store: StoreName; put?: object[] /* each row has an `id` */; remove?: string[] }
 
 export interface Mirror {
+  /** The business this copy belongs to. */
+  readonly id: string
+  /** Opened only to send its waiting bills in the background: it must not change what the screen shows for the open business. */
+  background?: boolean
   all<T>(store: StoreName): Promise<T[]>
   get<T>(store: StoreName, id: string): Promise<T | undefined>
   putMany<T extends { id: string }>(store: StoreName, rows: T[]): Promise<void>
@@ -53,6 +57,7 @@ export async function openMirror(workspaceId: string): Promise<Mirror> {
       await Promise.all(work)
   }
   return {
+    id: workspaceId,
     all: (store) => db.getAll(store) as Promise<never>,
     get: (store, id) => db.get(store, id) as Promise<never>,
     async putMany(store, rows) {

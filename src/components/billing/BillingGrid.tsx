@@ -1,13 +1,14 @@
 import { Fragment, forwardRef, useEffect, useImperativeHandle, useRef, type KeyboardEvent } from 'react'
 import { Info, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { blankRow, parseDisc, parseQty, parseRate, rowStatus, rupeesText, defaultRate, usageByItem, type Row } from '@/lib/billing'
+import { blankRow, parseDisc, parseQty, parseRate, rowStatus, rowStockQty, rupeesText, defaultRate, usageByItem, type Row } from '@/lib/billing'
+import { sellingUnit, stockText, unitsOf } from '@/lib/units'
 import type { CalcLine } from '@/lib/calc'
 import { formatAmount } from '@/lib/format'
 import type { Item } from '@/services'
 import { ItemCell, type SearchMemory } from './ItemCell'
 
-export type Col = 'item' | 'qty' | 'rate' | 'disc'
+export type Col = 'item' | 'qty' | 'unit' | 'rate' | 'disc'
 export interface GridHandle { focusCell: (row: number, col: Col) => void; pickItem: (row: number, item: Item) => void }
 
 interface Props {
@@ -53,7 +54,7 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
 
   const pickItem = (i: number, item: Item) => {
     setRows((rs) => {
-      const next = rs.map((r, n) => (n === i ? { ...r, item, query: '', rate: rupeesText(defaultRate(item, basis)), rateTouched: false, disc: r.disc || '' } : r))
+      const next = rs.map((r, n) => (n === i ? { ...r, item, query: '', rate: rupeesText(defaultRate(item, basis)), rateTouched: false, disc: r.disc || '', unit: '' } : r))
       return i === next.length - 1 ? [...next, blankRow()] : next
     })
     focusCell(i, 'qty')
@@ -70,8 +71,8 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
     if (col === 'qty') {
       if (parseQty(r.qty) === null) return onMessage(t('grid.enterQty'))
       const st = rowStatus(r, usage)
-      if (st.shortBy && blockOverIssue) return onMessage(t('grid.exceedsStock', { available: st.shortBy.available }))
-      focusCell(i, 'rate')
+      if (st.shortBy && blockOverIssue) return onMessage(t('grid.exceedsStock', { available: stockText(r.item!, st.shortBy.available) }))
+      focusCell(i, r.item && (r.item.altUnits?.length ?? 0) > 0 ? 'unit' : 'rate') // an item sold in more than one unit stops on the unit so it is confirmed
     } else if (col === 'rate') {
       if (parseRate(r.rate) === null) return onMessage(t('grid.enterRate'))
       focusCell(i, 'disc')
@@ -111,10 +112,10 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
 
   return (
     <div ref={box} className="min-h-[352px] flex-1 overflow-auto rounded-lg border border-line bg-surface">
-      <table className="w-full border-collapse text-base" style={{ tableLayout: 'fixed', minWidth: 1020 }}>
+      <table className="w-full border-collapse text-base" style={{ tableLayout: 'fixed', minWidth: 1036 }}>
         <thead>
           <tr className="h-8">
-            {[['#', 36, 'center'], ['item', 0, 'left'], ['batch', 104, 'left'], ['exp', 58, 'left'], ['qty', 84, 'right'], ['unit', 56, 'left'], ['mrp', 84, 'right'], ['rate', 96, 'right'], ['disc', 68, 'right'], ['gst', 60, 'right'], ['amount', 116, 'right'], ['', 32, 'left']].filter(([h]) => showGst || h !== 'gst').map(([h, w, a]) => (
+            {[['#', 36, 'center'], ['item', 0, 'left'], ['batch', 104, 'left'], ['exp', 58, 'left'], ['qty', 84, 'right'], ['unit', 72, 'left'], ['mrp', 84, 'right'], ['rate', 96, 'right'], ['disc', 68, 'right'], ['gst', 60, 'right'], ['amount', 116, 'right'], ['', 32, 'left']].filter(([h]) => showGst || h !== 'gst').map(([h, w, a]) => (
               <th key={h as string} style={{ width: w ? (w as number) : undefined }} className={`sticky top-0 z-10 border-b border-line bg-sunken px-2 text-sm font-medium text-ink-600 text-${a}`}>{h === '#' || h === '' ? h : t(`grid.col.${h}`)}</th>
             ))}
           </tr>
@@ -131,7 +132,7 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
                 >
                   <td className="text-center text-sm text-ink-400">
                     {st.shortBy ? (
-                      <span title={`${(() => { const across = st.shortBy.requested !== parseQty(r.qty) ? t('grid.across', { n: st.shortBy.requested }) : ''; return st.shortBy.available <= 0 ? t('grid.shortNone', { across }) : t('grid.shortOnly', { n: st.shortBy.available, across }) })()} ${blockOverIssue ? t('grid.reduceQty') : t('grid.canSave')}`} className={`inline-grid cursor-help place-items-center ${blockOverIssue ? 'text-danger' : 'text-warn'}`}><Info size={16} /></span>
+                      <span title={`${(() => { const across = st.shortBy.requested !== rowStockQty(r) ? t('grid.across', { n: stockText(r.item!, st.shortBy.requested) }) : ''; return st.shortBy.available <= 0 ? t('grid.shortNone', { across }) : t('grid.shortOnly', { n: stockText(r.item!, st.shortBy.available), across }) })()} ${blockOverIssue ? t('grid.reduceQty') : t('grid.canSave')}`} className={`inline-grid cursor-help place-items-center ${blockOverIssue ? 'text-danger' : 'text-warn'}`}><Info size={16} /></span>
                     ) : i + 1}
                   </td>
                   <td className="relative p-0">
@@ -141,7 +142,7 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
                       items={items}
                       onQuery={(q) => patch(i, { query: q })}
                       onPick={(it) => pickItem(i, it)}
-                      onClear={(q) => patch(i, { item: undefined, query: q, qty: '', rate: '', disc: '', rateTouched: false })}
+                      onClear={(q) => patch(i, { item: undefined, query: q, qty: '', rate: '', disc: '', unit: '', rateTouched: false })}
                       onAdvance={() => focusCell(i, 'qty')}
                       onRemove={() => onRemove(i)}
                       onFocused={() => onActive(i)}
@@ -152,9 +153,27 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
                   <td className="truncate px-2 font-mono text-sm text-ink-600">{r.item?.batchNo || ''}</td>
                   <td className="px-2 font-mono text-sm text-ink-600">{r.item?.expiry || ''}</td>
                   <td className={`p-0 ${st.shortBy && !blockOverIssue ? '[&_input]:font-semibold [&_input]:text-warn' : ''}`}>{r.item ? numInput(i, 'qty', r.qty, st.qtyInvalid || (!!st.shortBy && blockOverIssue)) : null}</td>
-                  <td className="px-2 text-sm text-ink-600">{r.item?.unit}</td>
+                  <td className="p-0 text-sm text-ink-600">
+                    {r.item && (r.item.altUnits?.length ?? 0) > 0 ? (
+                      <select
+                        data-row={i}
+                        data-col="unit"
+                        value={r.unit || r.item.unit}
+                        aria-label={t('grid.aria.unit', { n: i + 1 })}
+                        onChange={(e) => patch(i, { unit: e.target.value === r.item!.unit ? '' : e.target.value })}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); focusCell(i, 'rate') } }}
+                        className={`${cell} cursor-pointer font-medium text-ink-900`}
+                      >
+                        {unitsOf(r.item).map((u) => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    ) : <span className="px-2">{r.item?.unit}</span>}
+                  </td>
                   <td className="num px-2 text-ink-600">{r.item ? formatAmount(r.item.mrp) : ''}</td>
-                  <td className="p-0">{r.item ? numInput(i, 'rate', r.rate, st.rateInvalid) : null}</td>
+                  <td className="relative p-0">
+                    {r.item ? numInput(i, 'rate', r.rate, st.rateInvalid) : null}
+                    {/* the rate is always per the item's own unit, so when the line is sold in another unit say so */}
+                    {r.item && (sellingUnit(r.item, r.unit)?.per ?? 1) !== 1 ? <span className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-ink-400">/{r.item.unit}</span> : null}
+                  </td>
                   <td className="p-0">{r.item ? numInput(i, 'disc', r.disc, st.discInvalid) : null}</td>
                   {showGst && <td className={`num px-2 ${taxApplicable ? 'text-ink-600' : 'text-ink-400'}`}>{r.item ? (taxApplicable ? `${r.item.gstPercent}%` : '-') : ''}</td>}
                   <td className="num px-2 font-medium">{calc ? formatAmount(calc.total) : ''}</td>

@@ -71,14 +71,25 @@
       "required": "Required",
       "amount": "Enter a valid amount",
       "gst": "Pick 0, 5, 12, 18 or 28",
-      "zeroOrMore": "Enter 0 or more"
+      "zeroOrMore": "Enter 0 or more",
+      "altMany": "You can add up to {{n}} other units",
+      "altPick": "Choose a unit",
+      "altSame": "{{unit}} is already used for this item",
+      "altPer": "Enter how many {{unit}} make one of the item's own unit"
     },
     "warn": {
       "aboveMrp": "Issue rate is higher than MRP.",
       "loss": "Issue rate is below purchase rate (selling at a loss)."
     },
     "addedOffline": "Added {{name}} on this device. It will be sent when you are back online.",
-    "updatedOffline": "Updated {{name}} on this device. It will be sent when you are back online."
+    "updatedOffline": "Updated {{name}} on this device. It will be sent when you are back online.",
+    "altAdd": "Also sold in another unit",
+    "altTitle": "Also sold in",
+    "altHint": "Choose units this item can be sold in on a bill. Stock is always counted in {{unit}}, so keep it in the smallest unit you sell (for example GM, not KG, if you sell by the gram).",
+    "altPer": "How many",
+    "altUnit": "Unit",
+    "altRemove": "Remove this unit",
+    "altAnother": "Add another unit"
   },
   "adjust": {
     "title": "Adjust stock",
@@ -92,7 +103,8 @@
     "errCount": "Enter a count of 0 or more",
     "errSame": "Count matches current stock. Nothing to adjust.",
     "done": "Stock of {{name}} set to {{qty}} {{unit}}",
-    "failed": "Could not adjust stock"
+    "failed": "Could not adjust stock",
+    "countIn": "Count in"
   },
   "movements": {
     "title": "Stock movement",

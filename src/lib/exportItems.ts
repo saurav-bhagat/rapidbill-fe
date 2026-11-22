@@ -6,7 +6,7 @@ import { download } from './download'
 /** Header names are the ones the Phase 5 importer will recognise, so export -> import round-trips. */
 export function itemsToRows(items: Item[]): Record<string, string | number>[] {
   return items.map((i) => ({
-    'Item Code': i.code, 'Item Name': i.name, Category: i.category, HSN: i.hsn, Unit: i.unit, 'Batch No': i.batchNo,
+    'Item Code': i.code, 'Item Name': i.name, Category: i.category, HSN: i.hsn, Unit: i.unit, 'Also Sold In': i.altUnits?.[0]?.unit ?? '', Conversion: i.altUnits?.[0]?.per ?? '', 'Batch No': i.batchNo,
     Expiry: i.expiry, MRP: toRupees(i.mrp), 'Purchase Rate': toRupees(i.purchaseRate), 'Issue Rate': toRupees(i.issueRate),
     'GST %': i.gstPercent, 'Current Stock': i.currentStock, 'Low Stock Alert': i.lowStockThreshold,
   }))

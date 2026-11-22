@@ -16,7 +16,13 @@
   },
   "planName": {
     "Y1": "Mobile + Web · 1 Year",
-    "Y3": "Mobile + Web · 3 Years"
+    "Y3": "Mobile + Web · 3 Years",
+    "MOBILE_Y1": "Mobile · 1 Year",
+    "MOBILE_Y3": "Mobile · 3 Years",
+    "DESKTOP_Y1": "Web · 1 Year",
+    "DESKTOP_Y3": "Web · 3 Years",
+    "BOTH_Y1": "Mobile + Web · 1 Year",
+    "BOTH_Y3": "Mobile + Web · 3 Years"
   },
   "banner": {
     "trialSoon_one": "Your free trial ends in {{count}} day. Choose a plan to keep billing without a break.",
@@ -27,7 +33,11 @@
     "planSoon_other": "Your plan ends in {{count}} days. Renew now so billing never stops.",
     "choose": "Choose a plan",
     "renew": "Renew",
-    "dismiss": "Hide for today"
+    "dismiss": "Hide for today",
+    "platformWeb": "Your plan covers the mobile app only. You can look at everything here, but new bills and changes need a plan that includes computers.",
+    "platformApp": "Your plan covers computers only. You can look at everything in the app, but new bills and changes need a plan that includes the mobile app.",
+    "upgrade": "Upgrade plan",
+    "cantOpen": "Could not open the website. Try again."
   },
   "status": {
     "TRIAL": "Free trial",
@@ -52,12 +62,27 @@
     "validFrom": "Started",
     "validUntil": "Valid until",
     "daysLeft": "Days left",
-    "extendNote": "Buying another plan adds its time after your current end date. No days are lost."
+    "extendNote": "Buying another plan adds its time after your current end date. No days are lost.",
+    "platformBlocked": "Your {{plan}} plan covers {{covers}} until {{date}}. A plan bought separately starts after that date. To use {{blocked}} now, upgrade below and pay only the difference.",
+    "platformCovers": {
+      "MOBILE": "the mobile app only",
+      "DESKTOP": "computers only"
+    },
+    "platformBlockedOn": {
+      "MOBILE": "computers",
+      "DESKTOP": "the mobile app"
+    }
   },
   "plan": {
     "name": {
       "Y1": "1 Year",
-      "Y3": "3 Years"
+      "Y3": "3 Years",
+      "MOBILE_Y1": "Mobile · 1 Year",
+      "MOBILE_Y3": "Mobile · 3 Years",
+      "DESKTOP_Y1": "Web · 1 Year",
+      "DESKTOP_Y3": "Web · 3 Years",
+      "BOTH_Y1": "1 Year",
+      "BOTH_Y3": "3 Years"
     },
     "bestValue": "Best value",
     "off": "{{percent}}% OFF",
@@ -69,7 +94,8 @@
     "extend": "Add {{plan}}",
     "pay": "Pay {{amount}} securely",
     "includes": "Everything included",
-    "bothDevices": "Mobile + Web"
+    "bothDevices": "Mobile + Web",
+    "businessesUpTo": "Up to {{n}} businesses on one plan"
   },
   "highlights": {
     "title": "Why shops choose RapidBill",
@@ -128,7 +154,10 @@
       "support": "Customer support (call and WhatsApp)",
       "updates": "Regular updates",
       "keepBilling": "Keep billing after 15 days",
-      "earlyBirdPrice": "Early Bird price"
+      "earlyBirdPrice": "Early Bird price",
+      "platformApp": "Mobile app (Android and iPhone)",
+      "platformWeb": "Web app on a computer",
+      "businesses": "Businesses you can run"
     }
   },
   "history": {
@@ -138,7 +167,12 @@
     "plan": "Plan",
     "amount": "Amount",
     "validity": "Valid",
-    "reference": "Reference"
+    "reference": "Reference",
+    "invoice": "Invoice",
+    "download": "Download invoice",
+    "upgrade": "Upgrade",
+    "invoiceFailed": "Could not download the invoice. Please try again.",
+    "business": "Bought in"
   },
   "pay": {
     "opening": "Opening secure payment…",
@@ -160,5 +194,39 @@
   },
   "toast": {
     "loadFailed": "Could not load plans. Please try again."
+  },
+  "upgrade": {
+    "title": "Upgrade to Mobile + Web",
+    "body": "Use the mobile app and computers with one plan. You pay only the difference for the {{days}} days left, and your end date stays {{date}}.",
+    "maths": "New plan for the days left {{price}} minus credit for your current plan {{credit}}.",
+    "pay": "Upgrade now – pay {{amount}}",
+    "success": "Upgraded. Your plan now covers the mobile app and computers."
+  },
+  "platform": {
+    "MOBILE": {
+      "title": "Mobile",
+      "sub": "For the phone",
+      "where": "Mobile app (Android and iPhone). The website opens view-only."
+    },
+    "DESKTOP": {
+      "title": "Desktop",
+      "sub": "For a computer",
+      "where": "Web app on computers, in any browser. The mobile app opens view-only."
+    },
+    "BOTH": {
+      "title": "Desktop + Mobile",
+      "sub": "Phone and computer",
+      "where": "Mobile app and web app on computers, both fully working."
+    }
+  },
+  "term": {
+    "label": "Plan length",
+    "1": "1 year",
+    "3": "3 years",
+    "save": "Save up to {{percent}}%"
+  },
+  "staff": {
+    "title": "This plan belongs to the owner",
+    "body": "The plan is managed by {{owner}}. If it ends, ask them to renew it."
   }
 }

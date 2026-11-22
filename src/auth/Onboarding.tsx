@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { errorText } from '@/lib/errors'
 import { checkGstin, STATES } from '@/lib/gst'
-import { services } from '@/services'
+import { BUSINESS_TYPES, services, type BusinessType } from '@/services'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
 import { useAuth } from './session'
@@ -10,9 +10,10 @@ import { useAuth } from './session'
 /** Step 2 of creating an account: where the business is. Everything but the state is optional, and the whole step can be skipped. */
 export function Onboarding() {
   const { t } = useTranslation('auth')
+  const { t: tType } = useTranslation('settings')
   const finish = useAuth((s) => s.finishOnboarding)
   const business = useAuth((s) => s.workspace?.name)
-  const [v, setV] = useState({ address: '', stateCode: '', gstin: '', phone: '', noGst: false })
+  const [v, setV] = useState<{ address: string; stateCode: string; gstin: string; phone: string; noGst: boolean; businessType: BusinessType | '' }>({ businessType: '', address: '', stateCode: '', gstin: '', phone: '', noGst: false })
   const [errs, setErrs] = useState<{ stateCode?: string; gstin?: string }>({})
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -31,7 +32,7 @@ export function Onboarding() {
     if (Object.keys(bad).length) return
     setBusy(true)
     try {
-      await services.settings.save({ address: v.address.trim(), stateCode: v.stateCode, phone: v.phone.trim(), ...(v.noGst ? { gstEnabled: false } : gstin ? { gstin } : {}) })
+      await services.settings.save({ businessType: v.businessType, address: v.address.trim(), stateCode: v.stateCode, phone: v.phone.trim(), ...(v.noGst ? { gstEnabled: false } : gstin ? { gstin } : {}) })
       finish()
     } catch (err) { setFormError(errorText(t, err)); setBusy(false) }
   }
@@ -43,7 +44,13 @@ export function Onboarding() {
         <h1 className="mt-1 text-2xl font-bold">{t('onboarding.title')}</h1>
         <p className="mb-5 mt-1 text-base text-ink-600">{t('onboarding.sub', { name: business })}</p>
         <form onSubmit={submit} className="space-y-4" noValidate>
-          <Field label={t('onboarding.address')}><Textarea name="address" rows={2} value={v.address} onChange={(e) => set({ address: e.target.value })} maxLength={300} autoFocus /></Field>
+          <Field label={t('onboarding.type')}>
+            <Select name="businessType" value={v.businessType} onChange={(e) => set({ businessType: e.target.value as BusinessType | '' })}>
+              <option value="">{tType('business.typeSelect')}</option>
+              {BUSINESS_TYPES.map((k) => <option key={k} value={k}>{tType(`businessTypes.${k}`)}</option>)}
+            </Select>
+          </Field>
+          <Field label={t('onboarding.address')}><Textarea name="address" rows={2} value={v.address} onChange={(e) => set({ address: e.target.value })} maxLength={300} /></Field>
           <Field label={t('onboarding.state')} error={errs.stateCode}>
             <Select name="stateCode" value={v.stateCode} onChange={(e) => set({ stateCode: e.target.value })}>
               <option value="">{t('onboarding.statePlaceholder')}</option>

@@ -1,10 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { loadLocale } from '@/i18n'
 import { openMirror } from '@/offline/db'
 import { useSync } from '@/offline/state'
 import { startLicenseRefresh, useLicenseStore } from '@/license/store'
 import { startNotices } from '@/offline/notices'
+import { startBackgroundSender } from '@/offline/bgSender'
+import { useDevices } from '@/offline/devices'
 import { attachMirror, hasSyncedBefore, startBackgroundSync, syncNow } from '@/offline/sync'
 import { Button } from '@/components/ui/Button'
 import { SupportLine } from '@/components/SupportLine'
@@ -15,17 +17,29 @@ import { usePath } from '@/landing/nav'
 import { AuthScreen } from './AuthScreen'
 import { Onboarding } from './Onboarding'
 import { useAuth } from './session'
+import { TabGuard } from './TabGuard'
+import { SwitchingScreen } from '@/businesses/SwitchingScreen'
+import { useBusinesses } from '@/businesses/store'
+import './switchBusiness'
 
 type Phase = 'opening' | 'downloading' | 'needsInternet' | 'storageBlocked' | 'ready'
 
 /** Without a backend the app is single-user and local, so there is nothing to sign in to. */
+/** The gate, plus the transition screen that covers the change while another business opens. */
 export function AuthGate({ children }: { children: ReactNode }) {
+  return <><GateInner>{children}</GateInner><SwitchingScreen /></>
+}
+
+function GateInner({ children }: { children: ReactNode }) {
   const { t } = useTranslation('auth')
   const status = useAuth((s) => s.status)
   const onboarding = useAuth((s) => s.onboarding)
   const workspaceId = useAuth((s) => s.workspace?.id)
   const init = useAuth((s) => s.init)
-  const [phase, setPhase] = useState<Phase>('opening')
+  const [rawPhase, setPhase] = useState<Phase>('opening')
+  // which business the 'ready' phase belongs to: after a switch the new business is not ready until its own copy is open
+  const [readyFor, setReadyFor] = useState<string>()
+  const phase: Phase = rawPhase === 'ready' && readyFor !== workspaceId ? 'opening' : rawPhase
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => { if (apiEnabled) void init() }, [init])
@@ -33,7 +47,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
   // Once signed in: open this account's copy on the device, download it the first time, then keep it fresh.
   useEffect(() => {
     if (!apiEnabled) return
-    if (status !== 'in' || !workspaceId) { setPhase('opening'); return }
+    setPhase('opening')
+    if (status !== 'in' || !workspaceId) return
     let live = true
     let stop: (() => void) | undefined
     ;(async () => {
@@ -43,7 +58,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       if (!(await hasSyncedBefore(mirror))) {
         setPhase('downloading')
         await syncNow()
-        if (!(await hasSyncedBefore(mirror))) { if (live) setPhase('needsInternet'); return }
+        if (!(await hasSyncedBefore(mirror))) { useBusinesses.setState({ switching: undefined }); if (live) setPhase('needsInternet'); return }
       } else {
         void syncNow() // already have a copy: show it now and refresh in the background
       }
@@ -51,12 +66,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
       const s = await services.settings.get().catch(() => undefined)
       if (s) await loadLocale(s.printLanguage).catch(() => undefined)
       if (!live) return
+      useDevices.getState().put(workspaceId, { name: useAuth.getState().workspace?.name ?? '' }) // this business now has a copy on this device
       const stopNotices = startNotices()
+      const stopSender = startBackgroundSender()
       const stopSync = startBackgroundSync()
       useLicenseStore.getState().hydrate(workspaceId) // what we knew last time, even with no connection
       const stopLicense = startLicenseRefresh()
-      stop = () => { stopSync(); stopNotices(); stopLicense() }
+      stop = () => { stopSync(); stopNotices(); stopLicense(); stopSender() }
+      setReadyFor(workspaceId)
       setPhase('ready')
+      useBusinesses.setState({ switching: undefined }) // the new business is open: take the transition screen away
     })()
     return () => { live = false; stop?.() }
   }, [status, workspaceId, attempt])
@@ -87,5 +106,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
     )
   }
   if (onboarding) return <Onboarding />
-  return <>{children}</>
+  // keyed by business: every screen, form and draft of the previous business is discarded on a switch
+  return <><TabGuard /><Fragment key={workspaceId}>{children}</Fragment></>
 }

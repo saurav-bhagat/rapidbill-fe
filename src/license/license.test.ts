@@ -93,3 +93,19 @@ describe('in browser-only mode', () => {
     expect(canWriteNow()).toBe(true)
   })
 })
+
+describe('a plan for the phone app only', () => {
+  it('lets the web app look but not change, and says so', async () => {
+    const { effective } = await import('./store')
+    const mobileOnly = view({ status: 'ACTIVE', planId: 'MOBILE_Y1', platforms: ['app'], platform: 'MOBILE' })
+    expect(effective(mobileOnly, 0, NOW)).toMatchObject({ status: 'ACTIVE', canWrite: false, platformBlocked: true })
+  })
+  it('does not block when the plan covers computers, on the trial, or when the answer is older and says nothing', async () => {
+    const { effective } = await import('./store')
+    for (const v of [view({ platforms: ['web'] }), view({ platforms: ['app', 'web'] }), view()]) expect(effective(v, 0, NOW)).toMatchObject({ canWrite: true, platformBlocked: false })
+  })
+  it('an ended plan is just ended, not a platform problem', async () => {
+    const { effective } = await import('./store')
+    expect(effective(view({ platforms: ['app'] }), 0, NOW + 30 * DAY)).toMatchObject({ status: 'EXPIRED', canWrite: false, platformBlocked: false })
+  })
+})

@@ -57,8 +57,8 @@ export function buildDashboard(vouchers: Voucher[], items: Item[], today: string
     if (v.date >= monthStart && v.date <= today) {
       add(m, v)
       for (const l of v.lines) {
-        const cur = top.get(l.itemId) ?? { itemId: l.itemId, name: l.name, code: l.code, unit: l.unit, qty: 0, amount: 0 }
-        cur.qty = roundQty(cur.qty + l.qty)
+        const cur = top.get(l.itemId) ?? { itemId: l.itemId, name: l.name, code: l.code, unit: l.baseUnit ?? l.unit, qty: 0, amount: 0 }
+        cur.qty = roundQty(cur.qty + (l.stockQty ?? l.qty))
         cur.amount += l.total
         top.set(l.itemId, cur)
       }

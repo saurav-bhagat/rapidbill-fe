@@ -1,8 +1,10 @@
-import { api } from '@/services/http/client'
+import { api, apiBlob } from '@/services/http/client'
 import { AppError } from '@/services/errors'
 
 export interface PlanView {
   id: string
+  platform: 'MOBILE' | 'DESKTOP' | 'BOTH'
+  recommended?: boolean
   years: number
   price: number
   listPrice: number | null
@@ -23,7 +25,8 @@ export interface PlansView {
   plans: PlanView[]
   features: FeatureRow[]
 }
-export interface PaymentRow { id: string; planId: string; amount: number; listPrice: number; paidAt: string; licenseFrom: string; licenseTo: string; reference: string }
+export interface PaymentRow { id: string; businessId: string; planId: string; amount: number; listPrice: number; paidAt: string; licenseFrom: string; licenseTo: string; reference: string; kind: 'PURCHASE' | 'UPGRADE'; hasInvoice: boolean; invoiceNumber: string | null }
+export interface UpgradeQuote { paymentId: string; fromPlanId: string; toPlanId: string; remainingDays: number; credit: number; price: number; amount: number; endsAt: string }
 
 export interface Order { orderId: string; provider: 'razorpay' | 'test'; keyId?: string; amount: number; currency: 'INR'; planId: string; testPayment?: { paymentId: string; signature: string } }
 export interface PaidProof { orderId: string; paymentId: string; signature: string }
@@ -47,7 +50,21 @@ function loadCheckout(): Promise<void> {
   return loading
 }
 
-export const createOrder = (planId: string) => api<Order>('/billing/orders', { method: 'POST', body: { planId }, timeoutMs: 20_000 })
+export const createOrder = (planId: string, upgrade = false) => api<Order>('/billing/orders', { method: 'POST', body: upgrade ? { planId, upgrade: true } : { planId }, timeoutMs: 20_000 })
+export const fetchQuote = () => api<UpgradeQuote>('/billing/quote')
+
+/** Save the GST invoice (PDF) of one payment. */
+export async function downloadInvoice(paymentId: string, number: string): Promise<void> {
+  const blob = await apiBlob(`/billing/payments/${encodeURIComponent(paymentId)}/invoice`, { timeoutMs: 30_000 })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${number.replace(/\//g, '-')}.pdf`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
 export const verifyPayment = (proof: PaidProof) => api('/billing/verify', { method: 'POST', body: proof, timeoutMs: 20_000 })
 
 /**

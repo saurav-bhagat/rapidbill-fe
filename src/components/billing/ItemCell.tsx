@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react'
 import { useTranslation, Trans } from 'react-i18next'
 import { rankItems, type Row } from '@/lib/billing'
-import { formatAmount, formatQty } from '@/lib/format'
+import { formatAmount } from '@/lib/format'
+import { stockText } from '@/lib/units'
 import { matchesQuery } from '@/lib/search'
 import type { Item } from '@/services'
 
@@ -142,7 +143,7 @@ export function ItemCell({ row, rowIndex, items, onQuery, onPick, onClear, onAdv
                 <span className="break-words font-medium leading-snug" title={i.name}>{i.name}</span>
                 <span className="font-mono text-sm text-ink-600">{i.code}</span>
                 <span className="truncate font-mono text-sm text-ink-600">{i.batchNo || '-'}</span>
-                <span className={`num font-medium ${stockClass(i)}`}>{formatQty(i.currentStock)} {i.unit}</span>
+                <span className={`num font-medium ${stockClass(i)}`}>{stockText(i, i.currentStock)}</span>
                 <span className="num text-ink-600">{formatAmount(i.mrp)}</span>
                 <span className="num">{formatAmount(i.issueRate)}</span>
                 {showGst && <span className="num text-ink-600">{i.gstPercent}%</span>}

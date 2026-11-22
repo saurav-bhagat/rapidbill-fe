@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { BillingAs } from '@/businesses/BillingAs'
 import { useTranslation, Trans } from 'react-i18next'
 import { useBlocker, useNavigate, useSearchParams } from 'react-router-dom'
-import { blankRow, billableRows, parseBillDiscount, parseDisc, parseQty, parseRate, repriceRows, rowStatus, rupeesText, usageByItem, type Row } from '@/lib/billing'
+import { lineStockQty, sellingUnit } from '@/lib/units'
+import { blankRow, billableRows, parseBillDiscount, parseDisc, parseQty, parseRate, repriceRows, rowStatus, rowStockQty, rupeesText, usageByItem, type Row } from '@/lib/billing'
 import { calcVoucher, type CalcLine } from '@/lib/calc'
 import { formatAmount, formatINR, todayISO } from '@/lib/format'
 import { stateName } from '@/lib/gst'
@@ -9,7 +11,7 @@ import { useHotkey } from '@/lib/hotkeys'
 import { useLicense } from '@/license/store'
 import { isWaiting } from '@/lib/saved'
 import { useAsync } from '@/lib/useAsync'
-import { BillingError, services, type Item, type PaymentStatus, type Party, type Voucher, type VoucherMode } from '@/services'
+import { BillingError, services, type Item, type PaymentStatus, type Party, type Unit, type Voucher, type VoucherMode } from '@/services'
 import { toast } from '@/store/toast'
 import { errorText } from '@/lib/errors'
 import { BillingGrid, type GridHandle } from '@/components/billing/BillingGrid'
@@ -40,7 +42,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     // while editing, the old version's quantities are about to be put back, so they count as available
     if (!editId || !source) return rawItems
     const back = new Map<string, number>()
-    source.lines.forEach((l) => back.set(l.itemId, (back.get(l.itemId) ?? 0) + l.qty))
+    source.lines.forEach((l) => back.set(l.itemId, (back.get(l.itemId) ?? 0) + lineStockQty(l)))
     return rawItems.map((i) => (back.has(i.id) ? { ...i, currentStock: i.currentStock + back.get(i.id)! } : i))
   }, [rawItems, source, editId])
   const { data: parties = [], reload: reloadParties } = useAsync(() => services.parties.list())
@@ -111,7 +113,10 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     const missing = source.lines.filter((l) => !items.some((i) => i.id === l.itemId)).length
     const filled: Row[] = source.lines.flatMap((l) => {
       const item = items.find((i) => i.id === l.itemId)
-      return item ? [{ ...blankRow(), item, qty: String(l.qty), rate: rupeesText(l.rate), disc: l.discPct ? String(l.discPct) : '', rateTouched: true }] : []
+      if (!item) return []
+      // sold in another unit: keep it while the item still lists that unit, otherwise show the quantity in the item's own unit
+      const kept = (l.per ?? 1) !== 1 && sellingUnit(item, l.unit)
+      return [{ ...blankRow(), item, qty: String(kept ? l.qty : lineStockQty(l)), rate: rupeesText(l.rate), disc: l.discPct ? String(l.discPct) : '', rateTouched: true, unit: kept ? l.unit : '' }]
     })
     const bdText = source.billDiscount ? (source.billDiscount.type === 'PCT' ? `${source.billDiscount.value}%` : rupeesText(source.billDiscount.value)) : ''
     setRows([...filled, blankRow()])
@@ -121,7 +126,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     setRoundOff(source.totals.roundOff !== 0 ? true : settings.roundOffDefault)
     if (editId) { setDate(source.date); setNumber(source.number); setNumberTouched(true) }
     else { setDate(todayISO()); setNumberTouched(false) }
-    const over = filled.filter((r) => r.item && parseQty(r.qty)! > r.item.currentStock).length
+    const over = filled.filter((r) => r.item && rowStockQty(r)! > r.item.currentStock).length
     if (missing) showFlash(t('flash.skipped', { count: missing }))
     else if (over) showFlash(t('flash.exceedCurrent', { count: over }))
   }, [sourceId, source, settings, rawItems.length, items, parties, editId, showFlash, t])
@@ -135,7 +140,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const bd = parseBillDiscount(billDisc)
   const calc = useMemo(
     () => calcVoucher({
-      lines: billable.map((r) => ({ qty: parseQty(r.qty)!, rate: parseRate(r.rate) ?? 0, discPct: parseDisc(r.disc) ?? 0, gstPct: r.item.gstPercent })),
+      lines: billable.map((r) => ({ qty: rowStockQty(r)!, rate: parseRate(r.rate) ?? 0, discPct: parseDisc(r.disc) ?? 0, gstPct: r.item.gstPercent })),
       taxApplicable: effTax, sellerState: settings?.stateCode ?? '', partyState: party?.stateCode ?? null,
       billDiscount: bd && bd !== 'invalid' ? bd : undefined, roundOff,
     }),
@@ -147,7 +152,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     return rows.map((r) => byKey.get(r.key))
   }, [rows, billable, calc])
 
-  const signature = JSON.stringify([rows.map((r) => [r.item?.id, r.qty, r.rate, r.disc]), partyId, remarks, billDisc, payment, mode, taxYes, basis, date, number, roundOff])
+  const signature = JSON.stringify([rows.map((r) => [r.item?.id, r.qty, r.unit, r.rate, r.disc]), partyId, remarks, billDisc, payment, mode, taxYes, basis, date, number, roundOff])
   // in edit mode the voucher is only "dirty" once it differs from what was loaded
   // runs in the render *after* the form was filled, so the signature already reflects the loaded voucher
   useEffect(() => { if (editId && hydrated && !baseline) setBaseline(signature) }, [editId, hydrated, signature, baseline])
@@ -209,7 +214,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     try {
       const payload = {
         number: numberTouched ? number : undefined, date, mode, taxApplicable: effTax, rateBasis: basis, partyId, remarks,
-        lines: billable.map((r) => ({ itemId: r.item.id, qty: parseQty(r.qty)!, rate: parseRate(r.rate)!, discPct: parseDisc(r.disc)! })),
+        lines: billable.map((r) => ({ itemId: r.item.id, qty: parseQty(r.qty)!, rate: parseRate(r.rate)!, discPct: parseDisc(r.disc)!, ...(r.unit ? { unit: r.unit as Unit } : {}) })),
         billDiscount: bd, roundOff, payment,
       }
       const v = editId ? await services.billing.update(editId, payload) : await services.billing.save(payload)
@@ -271,6 +276,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
             : <Trans t={t} i18nKey="banner.copied" values={{ number: source.number }} components={{ num: <span className="font-mono font-medium" /> }} />}
         </div>
       )}
+      <BillingAs />
       {/* ---- header */}
       <section className="shrink-0 rounded-lg border border-line bg-surface px-3 py-2">
         <div className="flex flex-wrap items-end gap-x-3 gap-y-2">

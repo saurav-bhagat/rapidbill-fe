@@ -8,9 +8,10 @@ import { checkGstin, STATES } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
 import { invoiceFieldsOf } from '@/lib/invoiceFields'
 import { useAsync } from '@/lib/useAsync'
-import { clearAllData, resetDemoData, services, type InvoiceFieldKey, type Settings } from '@/services'
+import { BUSINESS_TYPES, clearAllData, resetDemoData, services, type InvoiceFieldKey, type Settings } from '@/services'
 import { LocalDataUpload } from '@/auth/LocalDataUpload'
 import { DeviceData } from '@/components/settings/DeviceData'
+import { DeleteAccount } from '@/components/settings/DeleteAccount'
 import { apiEnabled } from '@/services/http/client'
 import { toast } from '@/store/toast'
 import { Button } from '@/components/ui/Button'
@@ -24,7 +25,7 @@ type Errors = Partial<Record<keyof Settings, string>>
 type Tab = 'general' | 'profile' | 'invoice'
 const PROFILE_KEYS = ['companyName', 'address', 'phone', 'email', 'pan', 'gstin', 'stateCode', 'bankName', 'bankAccount', 'bankIfsc', 'upiId']
 const FIELD_GROUPS: { title: string; keys: InvoiceFieldKey[] }[] = [
-  { title: 'columns', keys: ['hsn', 'batchExpiry', 'mrp', 'unit', 'discount'] },
+  { title: 'columns', keys: ['hsn', 'batchExpiry', 'mrp', 'unit', 'baseQty', 'discount'] },
   { title: 'header', keys: ['companyPhone', 'companyEmail', 'companyPan', 'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode'] },
   { title: 'summary', keys: ['hsnSummary', 'amountInWords'] },
   { title: 'footer', keys: ['bank', 'upi', 'terms', 'signature'] },
@@ -171,6 +172,14 @@ export function SettingsPage() {
       {tab === 'profile' && <>
       <Section title={t('business.title')} hint={t('business.hint')}>
         <div className="col-span-2">{txt('companyName', t('business.companyName'))}</div>
+        <div className="col-span-2">
+          <Field label={t('business.type')} hint={t('business.typeHint')}>
+            <Select name="businessType" value={d.businessType ?? ''} onChange={(e) => set('businessType', e.target.value as Settings['businessType'])}>
+              <option value="">{t('business.typeSelect')}</option>
+              {BUSINESS_TYPES.map((k) => <option key={k} value={k}>{t(`businessTypes.${k}`)}</option>)}
+            </Select>
+          </Field>
+        </div>
         <div className="col-span-2"><Field label={t('business.address')}><Textarea name="address" rows={2} value={d.address} onChange={(e) => set('address', e.target.value)} /></Field></div>
         {txt('phone', t('business.phone'))}
         {txt('email', t('business.email'))}
@@ -219,6 +228,8 @@ export function SettingsPage() {
         <Button onClick={() => { setD(saved); setErrors({}) }} disabled={!dirty}>{t('footer.discard')}</Button>
         <Button variant="primary" hotkey="mod+s" onClick={save} disabled={!dirty || saving}>{t('footer.save')}</Button>
       </div>
+
+      {apiEnabled && <DeleteAccount />}
 
       <TypedConfirm open={danger === 'reset'} word="RESET" title={t('data.resetTitle')} confirmLabel={t('data.resetConfirm')} onCancel={() => setDanger(undefined)} askPassword={apiEnabled} onConfirm={async (pw) => { try { await resetDemoData(pw) } catch (e) { throw new Error(errorText(t, e)) } setFlash('resetDone'); window.location.reload() }}>
         {t('data.resetBody')}

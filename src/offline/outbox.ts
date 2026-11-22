@@ -7,6 +7,8 @@ import type { Item, Meta, Party, Voucher } from '@/services/types'
 import { formatVoucherNo } from '@/lib/voucherNo'
 import type { Mirror } from './db'
 import { noticeRefused } from './notices'
+import type { AsBusiness } from '@/services/http/client'
+import { useDevices } from './devices'
 import { notifyOthers, setSync, useSync } from './state'
 
 type VoucherPayload = VoucherInput & { id: string; clientCreatedAt: string }
@@ -46,13 +48,18 @@ export async function refreshOutboxState(m: Mirror, tellOtherTabs = true) {
   const all = await listOutbox(m)
   const waiting = all.filter((e) => e.status === 'pending')
   const failedNow = all.filter((e) => e.status === 'failed')
-  const grew = failedNow.filter((e) => !useSync.getState().failedIds.includes(e.id)).length
-  if (tellOtherTabs) noticeRefused(grew) // something the server turned down: tell the person once
-  setSync({
-    pendingIds: waiting.map((e) => e.id), failedIds: all.filter((e) => e.status === 'failed').map((e) => e.id),
-    oldestWaiting: waiting.reduce<string | null>((o, e) => (o === null || e.createdAt < o ? e.createdAt : o), null),
-  })
-  if (tellOtherTabs) notifyOthers('outbox')
+  // what this device holds for this business, for the switcher and the sign-out warning
+  useDevices.getState().put(m.id, { pending: waiting.length, failed: failedNow.length })
+  // The counters on screen are about the business that is open; a copy opened only to send its bills in the background must not change them.
+  if (!m.background) {
+    const grew = failedNow.filter((e) => !useSync.getState().failedIds.includes(e.id)).length
+    if (tellOtherTabs) noticeRefused(grew) // something the server turned down: tell the person once
+    setSync({
+      pendingIds: waiting.map((e) => e.id), failedIds: all.filter((e) => e.status === 'failed').map((e) => e.id),
+      oldestWaiting: waiting.reduce<string | null>((o, e) => (o === null || e.createdAt < o ? e.createdAt : o), null),
+    })
+    if (tellOtherTabs) notifyOthers('outbox')
+  }
   return all
 }
 
@@ -145,12 +152,16 @@ export function saveLocally(m: Mirror, owner: BillingOwner, input: VoucherInput 
 const TEMPORARY: ErrorKey[] = ['networkError', 'serverError', 'rateLimited', 'sessionExpired', 'authRequired']
 
 export const FLUSH_LOCK = 'rapidbill-outbox-flush'
+/** One send lock per business: the open business and the background sender never send the same business's queue at once, but different businesses do not wait for each other. */
+export const flushLock = (m: Mirror) => `${FLUSH_LOCK}:${m.id}`
 
 /** Is what the server holds for this bill different from what this device wants it to be? */
 function differs(saved: Voucher | undefined, want: VoucherPayload): boolean {
   if (!saved || !Array.isArray(saved.lines)) return false // a reply we cannot read: assume it is the same
-  const lines = (ls: { itemId: string; qty: number; rate: number; discPct: number }[]) => JSON.stringify(ls.map((l) => [l.itemId, l.qty, l.rate, l.discPct]))
-  return lines(saved.lines) !== lines(want.lines)
+  const lines = (ls: { itemId: string; qty: number; rate: number; discPct: number; unit?: string }[]) => JSON.stringify(ls.map((l) => [l.itemId, l.qty, l.rate, l.discPct, l.unit ?? '']))
+  // a saved line is in an alternate unit only when it converts (per is not 1); in its own unit the payload leaves `unit` out
+  const savedLines = saved.lines.map((l) => ({ ...l, unit: (l.per ?? 1) !== 1 ? l.unit : undefined }))
+  return lines(savedLines) !== lines(want.lines)
     || saved.partyId !== want.partyId || saved.payment !== want.payment || saved.date !== want.date
     || (saved.remarks ?? '') !== (want.remarks ?? '') || JSON.stringify(saved.billDiscount ?? null) !== JSON.stringify(want.billDiscount ?? null)
 }
@@ -163,23 +174,23 @@ const pickFields = (o: object, keys: readonly string[]) => Object.fromEntries(ke
 const sameFields = (a: object, b: object, keys: readonly string[]) => keys.every((k) => (a as Record<string, unknown>)[k] === (b as Record<string, unknown>)[k])
 
 /** Send one waiting entry. Throws on any failure; the caller decides if it is temporary or a refusal. */
-async function send(e: OutboxEntry): Promise<void> {
+async function send(e: OutboxEntry, as?: AsBusiness): Promise<void> {
   if (e.kind === 'item') {
-    const saved = await api<Item>('/items', { method: 'POST', body: e.payload, timeoutMs: 20_000 })
+    const saved = await api<Item>('/items', { method: 'POST', body: e.payload, timeoutMs: 20_000, as })
     // The server may already have an older copy (an earlier send whose reply was lost, before it was edited here): send the newer fields as an edit.
-    if (saved && typeof saved.code === 'string' && !sameFields(saved, e.payload, ITEM_FIELDS)) await api<Item>(`/items/${e.id}`, { method: 'PATCH', body: pickFields(e.payload, ITEM_FIELDS), timeoutMs: 20_000 })
+    if (saved && typeof saved.code === 'string' && !sameFields(saved, e.payload, ITEM_FIELDS)) await api<Item>(`/items/${e.id}`, { method: 'PATCH', body: pickFields(e.payload, ITEM_FIELDS), timeoutMs: 20_000, as })
     return
   }
   if (e.kind === 'party') {
-    const saved = await api<Party>('/parties', { method: 'POST', body: e.payload, timeoutMs: 20_000 })
-    if (saved && typeof saved.name === 'string' && !sameFields(saved, e.payload, PARTY_FIELDS)) await api<Party>(`/parties/${e.id}`, { method: 'PATCH', body: pickFields(e.payload, PARTY_FIELDS), timeoutMs: 20_000 })
+    const saved = await api<Party>('/parties', { method: 'POST', body: e.payload, timeoutMs: 20_000, as })
+    if (saved && typeof saved.name === 'string' && !sameFields(saved, e.payload, PARTY_FIELDS)) await api<Party>(`/parties/${e.id}`, { method: 'PATCH', body: pickFields(e.payload, PARTY_FIELDS), timeoutMs: 20_000, as })
     return
   }
-  const saved = await api<Voucher>('/vouchers', { method: 'POST', body: e.payload, timeoutMs: 20_000 })
+  const saved = await api<Voucher>('/vouchers', { method: 'POST', body: e.payload, timeoutMs: 20_000, as })
   // Same idea for a bill: an older copy is replaced by sending the newer one as an edit.
-  if (differs(saved, e.payload)) await api<Voucher>(`/vouchers/${e.id}`, { method: 'PUT', body: e.payload, timeoutMs: 20_000 })
+  if (differs(saved, e.payload)) await api<Voucher>(`/vouchers/${e.id}`, { method: 'PUT', body: e.payload, timeoutMs: 20_000, as })
   if (e.cancel) {
-    try { await api<Voucher>(`/vouchers/${e.id}/cancel`, { method: 'POST', timeoutMs: 20_000 }) } catch (err) {
+    try { await api<Voucher>(`/vouchers/${e.id}/cancel`, { method: 'POST', timeoutMs: 20_000, as }) } catch (err) {
       if (!(err instanceof AppError && err.key === 'alreadyCancelled')) throw err // already cancelled counts as done
     }
   }
@@ -189,7 +200,7 @@ async function send(e: OutboxEntry): Promise<void> {
  * Send waiting entries, oldest first. Stops at the first sign the server is unreachable. One the server refuses is parked for a person.
  * The send lock is taken one entry at a time, so changing a waiting bill never has to wait for the whole queue.
  */
-export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachable: boolean; why?: ErrorKey }> {
+export async function flushOutbox(m: Mirror, as?: AsBusiness): Promise<{ sent: number; unreachable: boolean; why?: ErrorKey }> {
   let sent = 0
   let unreachable = false
   let why: ErrorKey | undefined
@@ -197,12 +208,12 @@ export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachabl
     // Always the oldest waiting entry as it stands now: an edit may have moved one to the back of the queue since we last looked.
     const next = (await listOutbox(m)).find((x) => x.status === 'pending')
     if (!next) break
-    const outcome = await exclusive(FLUSH_LOCK, async (): Promise<'done' | 'stop' | 'again'> => {
+    const outcome = await exclusive(flushLock(m), async (): Promise<'done' | 'stop' | 'again'> => {
       const all = await listOutbox(m)
       const e = all.find((x) => x.status === 'pending')
       if (!e || e.id !== next.id) return 'again' // changed while we waited for the lock
       try {
-        await send(e)
+        await send(e, as)
         await m.batch([{ store: 'outbox', remove: [e.id] }])
         sent++
         return 'done'
@@ -223,7 +234,7 @@ export async function flushOutbox(m: Mirror): Promise<{ sent: number; unreachabl
  * replaced, so the server only ever sees the final version. Returns undefined when the bill is not waiting (it is already on the server).
  */
 export function editWaiting(m: Mirror, owner: BillingOwner, id: string, input: VoucherInput): Promise<Voucher | undefined> {
-  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+  return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = await m.get<OutboxEntry>('outbox', id)
     if (!e || !isVoucherEntry(e)) return undefined
     if (e.cancel) throw new AppError('cancelledNoEdit')
@@ -251,7 +262,7 @@ export function editWaiting(m: Mirror, owner: BillingOwner, id: string, input: V
 
 /** Cancel a bill that has not reached the server yet: stock and credit come back here, and the bill is sent and then cancelled there. */
 export function cancelWaiting(m: Mirror, owner: BillingOwner, id: string): Promise<Voucher | undefined> {
-  return exclusive(FLUSH_LOCK, () => exclusive('rapidbill-local-write', async () => {
+  return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = await m.get<OutboxEntry>('outbox', id)
     if (!e || !isVoucherEntry(e)) return undefined
     if (e.status === 'failed') throw new AppError('billNeedsAttention')

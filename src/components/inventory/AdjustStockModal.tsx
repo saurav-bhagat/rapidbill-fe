@@ -8,7 +8,8 @@ import { services, type Item } from '@/services'
 import { toast } from '@/store/toast'
 import { useHotkey } from '@/lib/hotkeys'
 import { Button } from '../ui/Button'
-import { Field, Input } from '../ui/Field'
+import { Field, Input, Select } from '../ui/Field'
+import { sellingUnit, unitsOf } from '@/lib/units'
 import { Modal } from '../ui/Modal'
 
 interface Props { open: boolean; item?: Item; onClose: () => void; onSaved: () => void }
@@ -17,16 +18,25 @@ interface Props { open: boolean; item?: Item; onClose: () => void; onSaved: () =
 export function AdjustStockModal({ open, item, onClose, onSaved }: Props) {
   const { t } = useTranslation('inventory')
   const [count, setCount] = useState('')
+  /** The unit the physical count is typed in: the item's own unit, or one it is also sold in. */
+  const [unit, setUnit] = useState('')
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
   const countRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (open && item) { setCount(String(item.currentStock)); setNote(''); setError(''); setTimeout(() => countRef.current?.select(), 0) }
+    if (open && item) { setUnit(item.unit); setCount(String(item.currentStock)); setNote(''); setError(''); setTimeout(() => countRef.current?.select(), 0) }
   }, [open, item])
 
-  const next = count.trim() === '' ? NaN : Number(count)
-  const delta = item && Number.isFinite(next) ? roundQty(next - item.currentStock) : 0
+  const per = item ? sellingUnit(item, unit)?.per ?? 1 : 1
+  const typed = count.trim() === '' ? NaN : Number(count)
+  const next = typed / per // the counted stock in the item's own unit
+  const delta = item && Number.isFinite(next) ? roundQty(next - item.currentStock) : 0 // always in the item's own unit
+  const changeUnit = (u: string) => {
+    if (!item) return
+    const p = sellingUnit(item, u)?.per ?? 1
+    setUnit(u); setCount(String(roundQty(item.currentStock * p))); setError('')
+  }
 
   const submit = async (e?: FormEvent) => {
     e?.preventDefault()
@@ -54,14 +64,19 @@ export function AdjustStockModal({ open, item, onClose, onSaved }: Props) {
       {item && (
         <form onSubmit={submit} onKeyDown={enterAsTab} className="space-y-3">
           <p className="text-base"><span className="font-medium">{item.name}</span> <span className="font-mono text-ink-400">{item.code}</span></p>
+          {(item.altUnits?.length ?? 0) > 0 && (
+            <Field label={t('adjust.countIn')}>
+              <Select value={unit} onChange={(e) => changeUnit(e.target.value)}>{unitsOf(item).map((u) => <option key={u}>{u}</option>)}</Select>
+            </Field>
+          )}
           <div className="grid grid-cols-3 gap-3">
-            <div><div className="text-sm text-ink-400">{t('adjust.inSystem')}</div><div className="num !text-left text-lg">{formatQty(item.currentStock)}</div></div>
-            <Field label={t('adjust.physical', { unit: item.unit })} error={error}>
+            <div><div className="text-sm text-ink-400">{t('adjust.inSystem')}</div><div className="num !text-left text-lg">{formatQty(roundQty(item.currentStock * per))}</div></div>
+            <Field label={t('adjust.physical', { unit })} error={error}>
               <Input ref={countRef} value={count} onChange={(e) => { setCount(e.target.value); setError('') }} inputMode="decimal" className="num" autoFocus />
             </Field>
             <div>
               <div className="text-sm text-ink-400">{t('adjust.difference')}</div>
-              <div className={`num !text-left text-lg ${delta > 0 ? 'text-ok' : delta < 0 ? 'text-danger' : 'text-ink-400'}`}>{delta > 0 ? '+' : ''}{formatQty(delta)}</div>
+              <div className={`num !text-left text-lg ${delta > 0 ? 'text-ok' : delta < 0 ? 'text-danger' : 'text-ink-400'}`}>{delta > 0 ? '+' : ''}{formatQty(roundQty(delta * per))}</div>
             </div>
           </div>
           <Field label={t('adjust.reason')}><Input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('adjust.reasonPlaceholder')} /></Field>

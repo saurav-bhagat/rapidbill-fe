@@ -34,7 +34,7 @@ export async function uploadLocalData(): Promise<LocalCounts> {
   const active = ordered.filter((v) => v.status === 'ACTIVE')
 
   const issued = new Map<string, number>()
-  for (const v of active) for (const l of v.lines) issued.set(l.itemId, (issued.get(l.itemId) ?? 0) + l.qty)
+  for (const v of active) for (const l of v.lines) issued.set(l.itemId, (issued.get(l.itemId) ?? 0) + (l.stockQty ?? l.qty))
   const owed = new Map<string, number>()
   for (const v of active) if (v.payment === 'CREDIT' && v.partyId) owed.set(v.partyId, (owed.get(v.partyId) ?? 0) + v.totals.grandTotal)
 
@@ -59,7 +59,7 @@ export async function uploadLocalData(): Promise<LocalCounts> {
     }
 
     for (const v of ordered) {
-      const lines = v.lines.map((l) => ({ itemId: itemId.get(l.itemId), qty: l.qty, rate: l.rate, discPct: l.discPct }))
+      const lines = v.lines.map((l) => ({ itemId: itemId.get(l.itemId), qty: l.qty, rate: l.rate, discPct: l.discPct, ...((l.per ?? 1) !== 1 ? { unit: l.unit } : {}) }))
       const made = await api<Voucher>('/vouchers', {
         method: 'POST',
         body: {

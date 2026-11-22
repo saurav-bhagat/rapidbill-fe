@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { useLicense } from '@/license/store'
 import { useSync } from '@/offline/state'
 import { errorText } from '@/lib/errors'
-import { formatAmount, formatINR, formatQty } from '@/lib/format'
+import { formatAmount, formatINR } from '@/lib/format'
+import { stockText } from '@/lib/units'
 import { exportItems } from '@/lib/exportItems'
 import { useHotkey } from '@/lib/hotkeys'
 import { matchesQuery } from '@/lib/search'
@@ -100,7 +101,7 @@ export function Inventory() {
       cell: (i) => (
         <span className="inline-flex items-center justify-end gap-2">
           {stockLevel(i) !== 'ok' && <StockBadge item={i} />}
-          <span className={stockLevel(i) === 'out' ? 'text-danger' : stockLevel(i) === 'low' ? 'text-warn' : ''}>{formatQty(i.currentStock)} {i.unit}</span>
+          <span className={stockLevel(i) === 'out' ? 'text-danger' : stockLevel(i) === 'low' ? 'text-warn' : ''}>{stockText(i, i.currentStock)}</span>
         </span>
       ),
     },
