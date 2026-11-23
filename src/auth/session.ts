@@ -45,7 +45,7 @@ interface AuthState {
   adopt(s: Session): void
   /** Offline switch to a business that has a copy on this device (the server is told later). */
   adoptLocal(w: SessionWorkspace): void
-  signup(v: { email: string; password: string; name: string; businessName: string }): Promise<void>
+  signup(v: { email: string; password: string; name: string; businessName: string; referralCode?: string }): Promise<void>
   logout(): Promise<void>
   /** Delete the account for good (the server checks the password), then forget everything on this device. */
   deleteAccount(password: string): Promise<void>

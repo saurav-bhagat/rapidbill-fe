@@ -10,11 +10,13 @@ import { toast } from './store/toast'
 import { registerServiceWorker } from './offline/register'
 import { Toasts } from './components/ui/Toasts'
 import { installGlobalErrorHandlers } from './lib/notify'
+import { captureRef } from './earn/refLink'
 import { initTextScale } from './lib/textScale'
 import { bootstrap, services } from './services'
 import { apiEnabled } from './services/http/client'
 
 initTextScale()
+captureRef() // a referral code in the link is kept until the person signs up
 installGlobalErrorHandlers()
 registerServiceWorker()
 bootstrap()

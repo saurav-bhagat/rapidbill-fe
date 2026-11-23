@@ -20,6 +20,7 @@ function GlobalHotkeys() {
   useHotkey('alt+r', () => navigate('/issues'))
   useHotkey('alt+i', () => navigate('/inventory'))
   useHotkey('alt+p', () => navigate('/parties'))
+  useHotkey('alt+e', () => { if (apiEnabled) navigate('/earn') }) // the page sends staff back home
   useHotkey('alt+s', () => navigate('/settings'))
   useHotkey('alt+shift+b', () => navigate('/businesses'))
   useHotkey('shift+/', () => setShortcutsOpen(true), { allowInInput: false })

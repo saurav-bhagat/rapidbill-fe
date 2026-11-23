@@ -85,5 +85,7 @@
   "invoiceNotFound": "We could not find this invoice.",
   "openOnceOnline": "This business has not been opened on this device yet. Open it once while online.",
   "resetCodeInvalid": "That code is not right, or it has expired. Ask for a new one.",
-  "mailUnavailable": "Email is not available yet. Please contact support."
+  "mailUnavailable": "Email is not available yet. Please contact support.",
+  "referralCodeUnknown": "We could not find this referral code. Check it, or leave it empty.",
+  "creditsNotOnUpgrade": "Credits can be used on a new plan or a renewal, not on an upgrade."
 }

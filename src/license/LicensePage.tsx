@@ -9,8 +9,9 @@ import { errorText } from '@/lib/errors'
 import { SUPPORT_PHONE_DISPLAY, supportTel, supportWhatsApp } from '@/lib/support'
 import { useAsync } from '@/lib/useAsync'
 import { useSync } from '@/offline/state'
-import { Download, ArrowUpCircle } from 'lucide-react'
-import { Navigate } from 'react-router-dom'
+import { Download, ArrowUpCircle, Gift } from 'lucide-react'
+import { Link, Navigate } from 'react-router-dom'
+import { formatINR } from '@/lib/format'
 import { api, apiEnabled } from '@/services/http/client'
 import { AppError } from '@/services/errors'
 import { toast } from '@/store/toast'
@@ -48,6 +49,8 @@ function LicenseContent() {
   const [asUpgrade, setAsUpgrade] = useState(false)
   const businesses = useBusinesses((s) => s.list)
   const [years, setYears] = useState<1 | 3>(1)
+  // referral credits pay a new plan or a renewal (not an upgrade); on by default when there are any
+  const [useCredits, setUseCredits] = useState(true)
 
   useEffect(() => { void useLicenseStore.getState().refresh() }, [])
 
@@ -55,7 +58,7 @@ function LicenseContent() {
     try {
       await verifyPayment(proof)
       await useLicenseStore.getState().refresh()
-      reloadHistory(); reloadQuote()
+      reloadHistory(); reloadQuote(); reload()
       setPending(undefined)
       const end = useLicenseStore.getState().license?.endsAt
       toast.success(asUpgrade ? t('upgrade.success') : t('pay.success', { date: end ? longDate(end) : '' }))
@@ -70,14 +73,22 @@ function LicenseContent() {
         if (useLicenseStore.getState().license?.status === 'ACTIVE') { reloadHistory(); setPending(undefined); return }
       }
     }
-  }, [reloadHistory, reloadQuote, asUpgrade, t])
+  }, [reloadHistory, reloadQuote, reload, asUpgrade, t])
 
   const buy = async (plan: PlanView) => {
     if (!user) return
     setBusy(plan.id)
     setAsUpgrade(false)
     try {
-      const order = await createOrder(plan.id)
+      const order = await createOrder(plan.id, false, useCredits && (plans?.credits?.available ?? 0) > 0)
+      if (order.free) {
+        // the credits paid for everything: the plan is already added, there is no payment window
+        await useLicenseStore.getState().refresh()
+        reloadHistory(); reloadQuote(); reload()
+        const end = useLicenseStore.getState().license?.endsAt
+        toast.success(t('pay.paidWithCredits', { date: end ? longDate(end) : '' }))
+        return
+      }
       if (order.provider === 'test') { setTest(order); return }
       const proof = await payWithRazorpay(order, { name: user.name, email: user.email }, `${t(`plan.name.${plan.id}`)} · ${t('plan.bothDevices')}`)
       if (proof) await confirm(proof)
@@ -113,10 +124,13 @@ function LicenseContent() {
   const maxOff = Math.max(0, ...plans.plans.map((p) => p.discountPercent))
   const cards = cardsFor(plans.plans, years)
   const canPay = plans.paymentsEnabled && online
+  const creditsAvailable = plans.credits?.available ?? 0
+  const creditsOn = useCredits && creditsAvailable > 0
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-10">
       <CurrentLicense plans={plans} />
+      <ReferBanner credits={creditsAvailable} />
       {quote && <UpgradeCard quote={quote} busy={upgrading} disabled={!canPay || !!busy || upgrading} onUpgrade={() => void upgrade(quote)} />}
 
       {/* Early Bird banner */}
@@ -145,8 +159,9 @@ function LicenseContent() {
 
       {/* Plan cards */}
       <TermToggle years={years} onChange={setYears} saves={threeYearSavingPercent(plans.plans, 'BOTH')} />
+      {creditsAvailable > 0 && <CreditsToggle available={creditsAvailable} on={useCredits} onChange={setUseCredits} />}
       <div className="grid items-stretch gap-5 md:grid-cols-3">
-        {cards.map((p) => <PlanCard key={p.id} plan={p} plans={plans} active={lic?.status === 'ACTIVE'} busy={busy === p.id} disabled={!canPay || !!busy} onBuy={() => void buy(p)} />)}
+        {cards.map((p) => <PlanCard key={p.id} plan={p} plans={plans} credits={creditsOn} active={lic?.status === 'ACTIVE'} busy={busy === p.id} disabled={!canPay || !!busy} onBuy={() => void buy(p)} />)}
       </div>
 
       {/* Highlights */}
@@ -176,7 +191,7 @@ function LicenseContent() {
                 {history.data.map((h) => (
                   <tr key={h.id} className="h-9 border-b border-line last:border-b-0">
                     <td className="px-3">{longDate(h.paidAt)}</td><td className="px-3">{t(`planName.${h.planId}`, { defaultValue: h.planId })}{h.kind === 'UPGRADE' && <span className="ml-2 rounded bg-primary-soft px-1.5 py-0.5 text-xs font-medium text-primary">{t('history.upgrade')}</span>}</td>
-                    <td className="px-3 text-right font-medium">{rupees(h.amount)}</td><td className="px-3 text-ink-600">{longDate(h.licenseFrom)} → {longDate(h.licenseTo)}</td>
+                    <td className="px-3 text-right font-medium">{(h.creditApplied ?? 0) > 0 ? formatINR(h.amount) : rupees(h.amount)}{(h.creditApplied ?? 0) > 0 && <div className="text-xs font-normal text-ok">{t('history.credits', { amount: formatINR(h.creditApplied!) })}</div>}</td><td className="px-3 text-ink-600">{longDate(h.licenseFrom)} → {longDate(h.licenseTo)}</td>
                     <td className="px-3 font-mono text-sm text-ink-600">{h.reference}</td>
                     <td className="px-3 text-ink-600">{businesses.find((b) => b.id === h.businessId)?.name ?? '–'}</td>
                     <td className="px-3">{h.hasInvoice && h.invoiceNumber ? <InvoiceButton id={h.id} number={h.invoiceNumber} /> : <span className="text-ink-400">–</span>}</td>
@@ -195,7 +210,7 @@ function LicenseContent() {
 
       {test && (
         <Modal open onClose={() => setTest(undefined)} title={t('pay.testTitle')} width="420px"
-          footer={<><Button onClick={() => setTest(undefined)}>{t('pay.cancel')}</Button><Button variant="primary" onClick={() => { const o = test; setTest(undefined); if (o.testPayment) void confirm({ orderId: o.orderId, ...o.testPayment }) }}>{t('pay.testPay', { amount: rupees(test.amount) })}</Button></>}>
+          footer={<><Button onClick={() => setTest(undefined)}>{t('pay.cancel')}</Button><Button variant="primary" onClick={() => { const o = test; setTest(undefined); if (o.testPayment) void confirm({ orderId: o.orderId, ...o.testPayment }) }}>{t('pay.testPay', { amount: test.amount % 100 === 0 ? rupees(test.amount) : formatINR(test.amount) })}</Button></>}>
           <p className="text-ink-600">{t('pay.testBody')}</p>
         </Modal>
       )}
@@ -238,6 +253,37 @@ function CurrentLicense({ plans }: { plans: PlansView }) {
         </div>
       </div>
     </section>
+  )
+}
+
+/** "Use my credits": ticked by default when the person has some. */
+function CreditsToggle({ available, on, onChange }: { available: number; on: boolean; onChange: (v: boolean) => void }) {
+  const { t } = useTranslation('license')
+  return (
+    <label className="mx-auto flex max-w-xl cursor-pointer items-start gap-3 rounded-xl border border-ok/30 bg-ok-soft px-4 py-3">
+      <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-5 w-5 accent-[rgb(var(--ok))]" />
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-baseline gap-x-2 font-semibold">{t('credits.title')}<span className="text-ok">{t('credits.available', { amount: formatINR(available) })}</span></span>
+        <span className="block text-sm text-ink-600">{t('credits.note')}</span>
+      </span>
+    </label>
+  )
+}
+
+/** A nudge for someone with a running plan: they can earn by telling other shopkeepers. */
+function ReferBanner({ credits }: { credits: number }) {
+  const { t } = useTranslation('license')
+  const lic = useLicense()
+  if (lic?.status !== 'ACTIVE') return null
+  return (
+    <Link to="/earn" className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/25 bg-primary-soft px-5 py-3 hover:border-primary/50">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white"><Gift size={20} /></span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold">{t('refer.title', { percent: 10 })}</span>
+        <span className="block text-sm text-ink-600">{credits > 0 ? t('refer.bodyCredits', { amount: formatINR(credits) }) : t('refer.body')}</span>
+      </span>
+      <span className="text-sm font-semibold text-primary">{t('refer.cta')} →</span>
+    </Link>
   )
 }
 
@@ -285,10 +331,12 @@ function TermToggle({ years, onChange, saves }: { years: 1 | 3; onChange: (y: 1 
   )
 }
 
-function PlanCard({ plan, plans, active, busy, disabled, onBuy }: { plan: PlanView; plans: PlansView; active: boolean; busy: boolean; disabled: boolean; onBuy: () => void }) {
+function PlanCard({ plan, plans, credits, active, busy, disabled, onBuy }: { plan: PlanView; plans: PlansView; credits: boolean; active: boolean; busy: boolean; disabled: boolean; onBuy: () => void }) {
   const { t } = useTranslation('license')
   const best = plan.highlight === 'BEST_VALUE'
   const name = t(`plan.name.${plan.id}`)
+  const credit = credits ? plan.creditApplied ?? 0 : 0
+  const payNow = credits ? plan.payNow ?? plan.price : plan.price
   return (
     <article className={`relative flex flex-col rounded-xl border bg-surface p-6 ${best ? 'border-primary shadow-float ring-2 ring-primary' : 'border-line'}`}>
       {best && <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-sm font-semibold text-white">{t('plan.bestValue')}</span>}
@@ -305,6 +353,12 @@ function PlanCard({ plan, plans, active, busy, disabled, onBuy }: { plan: PlanVi
         {plan.listPrice && <span className="text-lg text-ink-400 line-through" aria-label={`${t('plan.was')} ${rupees(plan.listPrice)}`}>{rupees(plan.listPrice)}</span>}
       </div>
       <p className="mt-1 text-sm text-ink-600">{plan.years > 1 ? `${t('plan.perYear', { price: rupees(plan.perYear) })} · ` : ''}{t('plan.perMonth', { price: rupees(plan.perMonth) })}</p>
+      {credit > 0 && (
+        <div className="mt-3 rounded-lg bg-ok-soft px-3 py-2 text-sm">
+          <div className="flex justify-between text-ink-600"><span>{t('credits.discount')}</span><span className="font-medium text-ok">− {formatINR(credit)}</span></div>
+          <div className="mt-0.5 flex justify-between font-semibold"><span>{t('credits.payNow')}</span><span>{formatINR(payNow)}</span></div>
+        </div>
+      )}
       {plan.savesVsYearly > 0 && <p className="mt-2 text-sm font-medium text-ok">{t('plan.saves', { amount: rupees(plan.savesVsYearly), years: plan.years })}</p>}
 
       <ul className="mt-5 flex-1 space-y-2" aria-label={t('plan.includes')}>
@@ -314,9 +368,9 @@ function PlanCard({ plan, plans, active, busy, disabled, onBuy }: { plan: PlanVi
       </ul>
 
       <Button variant={best ? 'primary' : 'secondary'} className="mt-6 h-9 w-full justify-center text-base" disabled={disabled} onClick={onBuy}>
-        {busy ? t('pay.opening') : active ? t('plan.extend', { plan: name }) : t('plan.buy', { plan: name })}
+        {busy ? t('pay.opening') : credit > 0 && payNow === 0 ? t('plan.renewWithCredits') : active ? t('plan.extend', { plan: name }) : t('plan.buy', { plan: name })}
       </Button>
-      {!busy && !disabled && <p className="mt-2 text-center text-xs text-ink-400">{t('plan.pay', { amount: rupees(plan.price) })}</p>}
+      {!busy && !disabled && payNow > 0 && <p className="mt-2 text-center text-xs text-ink-400">{t('plan.pay', { amount: credit > 0 ? formatINR(payNow) : rupees(plan.price) })}</p>}
       {plans.taxInclusive && <p className="mt-1 text-center text-xs text-ink-400">{t('offer.taxes')}</p>}
     </article>
   )

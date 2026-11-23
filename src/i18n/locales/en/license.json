@@ -95,7 +95,9 @@
     "pay": "Pay {{amount}} securely",
     "includes": "Everything included",
     "bothDevices": "Mobile + Web",
-    "businessesUpTo": "Up to {{n}} businesses on one plan"
+    "businessesUpTo": "Up to {{n}} businesses on one plan",
+    "renewWithCredits": "Renew with credits",
+    "buyWithCredits": "Pay {{amount}} now"
   },
   "highlights": {
     "title": "Why shops choose RapidBill",
@@ -172,7 +174,8 @@
     "download": "Download invoice",
     "upgrade": "Upgrade",
     "invoiceFailed": "Could not download the invoice. Please try again.",
-    "business": "Bought in"
+    "business": "Bought in",
+    "credits": "+ {{amount}} credits"
   },
   "pay": {
     "opening": "Opening secure payment…",
@@ -186,7 +189,8 @@
     "unavailable": "Online payment is not available yet. Please call or WhatsApp us to buy a plan.",
     "contact": "Call {{phone}}",
     "failed": "Payment was not completed. You have not been charged.",
-    "scriptFailed": "Could not open the payment window. Check your connection and try again."
+    "scriptFailed": "Could not open the payment window. Check your connection and try again.",
+    "paidWithCredits": "Done. Your credits paid for the plan, and it is active until {{date}}."
   },
   "footer": {
     "help": "Questions before you buy? Call or WhatsApp",
@@ -228,5 +232,18 @@
   "staff": {
     "title": "This plan belongs to the owner",
     "body": "The plan is managed by {{owner}}. If it ends, ask them to renew it."
+  },
+  "credits": {
+    "title": "Use my referral credits",
+    "available": "{{amount}} available",
+    "note": "Credits are taken off the price of a new plan or a renewal. They cannot be used on an upgrade.",
+    "discount": "Referral credits",
+    "payNow": "Pay now"
+  },
+  "refer": {
+    "title": "Refer a friend, earn {{percent}}%",
+    "body": "Share your code with a fellow shopkeeper. You earn credits every time they pay or renew.",
+    "bodyCredits": "You have {{amount}} in credits. Share your code to earn more.",
+    "cta": "Open Earn"
   }
 }

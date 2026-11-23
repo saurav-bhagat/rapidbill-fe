@@ -42,6 +42,7 @@
     "billEscape": "Close an open picker, otherwise discard voucher (asks first)",
     "switchMenu": "Open the business switcher",
     "switchNth": "Open the 1st to 5th business",
-    "manageBusinesses": "Manage businesses"
+    "manageBusinesses": "Manage businesses",
+    "navEarn": "Earn with RapidBill (referrals)"
   }
 }

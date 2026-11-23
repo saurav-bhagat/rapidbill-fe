@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router-dom'
 import { ManageBusinesses } from '@/businesses/ManageBusinesses'
+import { EarnPage } from './earn/EarnPage'
 import { AppShell } from './components/layout/AppShell'
 import { LicensePage } from './license/LicensePage'
 import { Home } from './pages/Home'
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
       { path: '/issues', element: <Issues /> },
       { path: '/inventory', element: <Inventory /> },
       { path: '/parties', element: <Parties /> },
+      { path: '/earn', element: <EarnPage /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '/license', element: <LicensePage /> },
       { path: '/businesses', element: <ManageBusinesses /> },

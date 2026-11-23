@@ -13,6 +13,9 @@ export interface PlanView {
   perMonth: number
   savesVsYearly: number
   highlight: 'BEST_VALUE' | null
+  /** What the person's referral credits would pay of this plan, and what is left to pay in cash (paise). Only for an owner. */
+  creditApplied?: number
+  payNow?: number
 }
 export interface FeatureRow { key: string; trial: boolean | string; plans: Record<string, boolean | string> }
 export interface PlansView {
@@ -24,11 +27,13 @@ export interface PlansView {
   support: { phone: string; phoneDisplay: string }
   plans: PlanView[]
   features: FeatureRow[]
+  /** Referral credits the person can use now (paise). */
+  credits?: { available: number }
 }
-export interface PaymentRow { id: string; businessId: string; planId: string; amount: number; listPrice: number; paidAt: string; licenseFrom: string; licenseTo: string; reference: string; kind: 'PURCHASE' | 'UPGRADE'; hasInvoice: boolean; invoiceNumber: string | null }
+export interface PaymentRow { id: string; businessId: string; planId: string; amount: number; creditApplied?: number; planPrice?: number; listPrice: number; paidAt: string; licenseFrom: string; licenseTo: string; reference: string; kind: 'PURCHASE' | 'UPGRADE'; hasInvoice: boolean; invoiceNumber: string | null }
 export interface UpgradeQuote { paymentId: string; fromPlanId: string; toPlanId: string; remainingDays: number; credit: number; price: number; amount: number; endsAt: string }
 
-export interface Order { orderId: string; provider: 'razorpay' | 'test'; keyId?: string; amount: number; currency: 'INR'; planId: string; testPayment?: { paymentId: string; signature: string } }
+export interface Order { orderId: string; provider: 'razorpay' | 'test' | 'credits'; /** Credits paid everything: the plan is already added and there is nothing to pay. */ free?: boolean; creditApplied?: number; keyId?: string; amount: number; currency: 'INR'; planId: string; testPayment?: { paymentId: string; signature: string } }
 export interface PaidProof { orderId: string; paymentId: string; signature: string }
 
 interface RazorpayResponse { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }
@@ -50,7 +55,7 @@ function loadCheckout(): Promise<void> {
   return loading
 }
 
-export const createOrder = (planId: string, upgrade = false) => api<Order>('/billing/orders', { method: 'POST', body: upgrade ? { planId, upgrade: true } : { planId }, timeoutMs: 20_000 })
+export const createOrder = (planId: string, upgrade = false, useCredits = false) => api<Order>('/billing/orders', { method: 'POST', body: { planId, ...(upgrade && { upgrade: true }), ...(useCredits && { useCredits: true }) }, timeoutMs: 20_000 })
 export const fetchQuote = () => api<UpgradeQuote>('/billing/quote')
 
 /** Save the GST invoice (PDF) of one payment. */

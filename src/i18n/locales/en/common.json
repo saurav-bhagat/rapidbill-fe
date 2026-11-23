@@ -60,6 +60,10 @@
     "settings": {
       "label": "Settings",
       "title": "Business & Print Settings"
+    },
+    "earn": {
+      "label": "Earn",
+      "title": "Refer & Earn"
     }
   },
   "layout": {

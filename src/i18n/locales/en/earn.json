@@ -1,0 +1,93 @@
+{
+  "title": "Earn with RapidBill",
+  "sub": "Tell fellow shopkeepers about RapidBill. Earn {{percent}}% every time they pay.",
+  "credits": {
+    "label": "Your credits",
+    "available": "available for your next renewal",
+    "use": "Use on renewal",
+    "onHold": "{{amount}} is kept aside for a payment in progress.",
+    "note": "Credits are not cash. They pay for your own plan or renewal, and they never expire."
+  },
+  "code": {
+    "label": "Your referral code",
+    "copy": "Copy code",
+    "copied": "Copied",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "whatsapp": "Share on WhatsApp",
+    "share": "More ways to share",
+    "message": "Message your friend will get",
+    "messageHint": "You can change the message before you share it.",
+    "copyFailed": "Could not copy. Please select the text and copy it."
+  },
+  "shareText": "Hi! I use RapidBill for GST billing and stock in my shop. It works even without internet. Try it free for 15 days with my code {{code}}: {{link}}",
+  "stats": {
+    "signedUp": "Signed up",
+    "paid": "Paid",
+    "earned": "Total earned"
+  },
+  "how": {
+    "title": "How it works",
+    "s1": {
+      "t": "Share your code",
+      "d": "Send it to a fellow shopkeeper."
+    },
+    "s2": {
+      "t": "They buy a plan",
+      "d": "They sign up with your code and pay for any plan."
+    },
+    "s3": {
+      "t": "You earn {{percent}}%",
+      "d": "You get {{percent}}% of their plan fee as credits. And you earn again every time they renew."
+    }
+  },
+  "people": {
+    "title": "People you referred",
+    "filter": {
+      "all": "All",
+      "paid": "Paid",
+      "unpaid": "Not paid yet"
+    },
+    "signedUp": "Signed up",
+    "paid": "Paid",
+    "waiting": "Waiting for their plan",
+    "joined": "Joined {{date}}",
+    "payments_one": "{{count}} payment",
+    "payments_other": "{{count}} payments",
+    "earnedFrom": "You earned {{amount}}",
+    "details": "Details",
+    "hide": "Hide",
+    "fee": "Plan fee without GST",
+    "reward": "Your {{percent}}%",
+    "noReward": "No reward",
+    "more": "Show more",
+    "emptyTitle": "No one has signed up with your code yet",
+    "emptyBody": "Share your code with a fellow shopkeeper. For example, if a friend buys Mobile + Web for {{price}}, you earn {{reward}}. When they renew next year, you earn again.",
+    "emptyFilter": "No one here yet."
+  },
+  "history": {
+    "title": "Credit history",
+    "earn": "{{name}} paid for a plan",
+    "reversal": "Credit taken back: {{name}}",
+    "spend": "Used to pay for {{plan}}",
+    "empty": "Your credits will show here.",
+    "more": "Show more"
+  },
+  "locked": {
+    "title": "Buy a plan to start earning",
+    "body": "Once you are on a paid plan, you get your own referral code. Share it with fellow business owners and earn {{percent}}% of their plan fee, again every time they renew.",
+    "cta": "See plans",
+    "codeHidden": "Your code will appear here once you buy a plan.",
+    "sample": "Example",
+    "sampleName": "Ravi Kumar",
+    "sampleBusiness": "Ravi Hardware",
+    "endedTitle": "Renew your plan to keep earning",
+    "endedBody": "Your plan has ended, so your code is hidden and new rewards are paused. Your credits are safe. Use them when you renew.",
+    "endedCta": "Renew plan"
+  },
+  "toast": {
+    "nothing": "Nothing to share yet."
+  },
+  "newReward": "🎉 You earned {{amount}} since you last looked. Keep sharing!",
+  "navDot": "New earnings"
+}

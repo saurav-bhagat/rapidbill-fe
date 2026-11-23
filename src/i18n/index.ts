@@ -6,7 +6,7 @@ export const LANGS: { code: Lang; label: string; short: string }[] = [
   { code: 'en', label: 'English', short: 'EN' },
   { code: 'hi', label: 'हिन्दी', short: 'हिं' },
 ]
-export const NAMESPACES = ['common', 'shortcuts', 'home', 'billing', 'register', 'inventory', 'import', 'parties', 'settings', 'invoice', 'errors', 'auth', 'partyImport', 'license', 'business'] as const
+export const NAMESPACES = ['common', 'shortcuts', 'home', 'billing', 'register', 'inventory', 'import', 'parties', 'settings', 'invoice', 'errors', 'auth', 'partyImport', 'license', 'business', 'earn'] as const
 export type Namespace = (typeof NAMESPACES)[number]
 
 const STORAGE_KEY = 'rapidbill:ui-lang'
