@@ -136,7 +136,8 @@
       "upi": "UPI ID",
       "terms": "Terms and conditions",
       "signature": "Signature line",
-      "baseQty": "Also show the quantity in the item's own unit, e.g. 900 GM (0.9 KG)"
+      "baseQty": "Also show the quantity in the item's own unit, e.g. 900 GM (0.9 KG)",
+      "taxable": "Taxable amount (before tax)"
     },
     "termsLabel": "Terms and conditions text",
     "termsHint": "Leave empty to print the standard line.",

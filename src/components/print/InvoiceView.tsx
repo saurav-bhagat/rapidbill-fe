@@ -1,22 +1,23 @@
 import type React from 'react'
 import { useMemo } from 'react'
 import i18n from '@/i18n'
-import { docTitleKey, hsnSummary, isInterState } from '@/lib/invoice'
+import { docTitleKey, isInterState } from '@/lib/invoice'
 import { invoiceFieldsOf } from '@/lib/invoiceFields'
+import { layoutColumns } from '@/lib/invoiceLayout'
 import { formatAmount, formatDate, formatQty } from '@/lib/format'
 import { stateName } from '@/lib/gst'
 import { amountInWords } from '@/lib/words'
 import type { Settings, Voucher } from '@/services'
 
 type Line = Voucher['lines'][number]
-interface Col { key: string; w?: number; head: string; right?: boolean; mono?: boolean; cell: (l: Line, i: number) => React.ReactNode }
+interface Col { key: string; head: string; right?: boolean; mono?: boolean; grow?: boolean; wrap?: boolean; cell: (l: Line, i: number) => React.ReactNode }
 
 export type Paper = 'A4' | 'A5'
 
 interface Props { voucher: Voucher; settings: Settings; paper: Paper; /** true = fixed-size sheet for on-screen preview */ sheet?: boolean }
 
-const th = 'border border-neutral-400 px-1 py-0.5 text-left font-semibold'
-const td = 'border border-neutral-300 px-1 py-0.5 align-top'
+const th = 'border border-neutral-400 px-1 py-0.5 text-left font-semibold [overflow-wrap:anywhere]'
+const td = 'border border-neutral-300 px-1 py-0.5 align-top [overflow-wrap:anywhere]'
 const n = 'text-right tabular-nums font-mono'
 
 /**
@@ -28,7 +29,6 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
   const t = useMemo(() => i18n.getFixedT(lang, 'invoice'), [lang])
   const taxed = v.taxApplicable
   const inter = isInterState(v, s.stateCode)
-  const hsn = taxed ? hsnSummary(v, s.stateCode) : []
   const pos = v.partyStateCode ?? s.stateCode
   const discount = v.totals.lineDiscount + v.totals.billDiscount
   const a4 = paper === 'A4'
@@ -36,20 +36,24 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
   // a line sold in another unit can also show what it took from stock: 900 GM (0.9 KG)
   const both = (l: Voucher['lines'][number]) => f.baseQty && (l.per ?? 1) !== 1
   const own = (l: Voucher['lines'][number]) => `${formatQty(l.stockQty ?? l.qty)} ${l.baseUnit ?? ''}`.trim()
+  // with the unit column off, the unit goes with the quantity (12 PCS) so the bill never loses it
+  const qtyText = (l: Line) => (f.unit ? formatQty(l.qty) : `${formatQty(l.qty)} ${l.unit}${both(l) ? ` (${own(l)})` : ''}`)
   const cols: Col[] = ([
-    { key: 'sno', w: 4, head: t('cols.sno'), cell: (_l, i) => i + 1 },
-    { key: 'desc', head: t('cols.description'), cell: (l) => l.name },
-    f.hsn && { key: 'hsn', w: 9, head: t('cols.hsn'), mono: true, cell: (l) => l.hsn },
-    f.batchExpiry && { key: 'batch', w: 12, head: t('cols.batchExp'), mono: true, cell: (l) => `${l.batchNo}${l.expiry ? ` / ${l.expiry}` : ''}` },
-    { key: 'qty', w: 7, head: t('cols.qty'), right: true, cell: (l) => (both(l) && !f.unit ? `${formatQty(l.qty)} (${own(l)})` : formatQty(l.qty)) },
-    f.unit && { key: 'unit', w: f.baseQty ? 12 : 6, head: t('cols.unit'), cell: (l) => (both(l) ? `${l.unit} (${own(l)})` : l.unit) },
-    f.mrp && { key: 'mrp', w: 8, head: t('cols.mrp'), right: true, cell: (l) => formatAmount(l.mrp) },
-    { key: 'rate', w: 8, head: t('cols.rate'), right: true, cell: (l) => ((l.per ?? 1) !== 1 ? `${formatAmount(l.rate)}/${l.baseUnit ?? ''}` : formatAmount(l.rate)) },
-    f.discount && { key: 'disc', w: 6, head: t('cols.disc'), right: true, cell: (l) => (l.discPct ? l.discPct : '-') },
-    { key: 'taxable', w: 10, head: taxed ? t('cols.taxable') : t('cols.amount'), right: true, cell: (l) => formatAmount(l.taxable) },
-    taxed && { key: 'gst', w: 6, head: t('cols.gst'), right: true, cell: (l) => `${l.gstPct}%` },
-    { key: 'total', w: 10, head: t('cols.total'), right: true, cell: (l) => formatAmount(l.total) },
+    { key: 'sno', head: t('cols.sno'), cell: (_l, i) => i + 1 },
+    { key: 'desc', head: t('cols.description'), grow: true, cell: (l) => l.name },
+    f.hsn && { key: 'hsn', head: t('cols.hsn'), mono: true, cell: (l) => l.hsn },
+    f.batchExpiry && { key: 'batch', head: t('cols.batchExp'), mono: true, wrap: true, cell: (l) => `${l.batchNo}${l.expiry ? ` / ${l.expiry}` : ''}` },
+    { key: 'qty', head: t('cols.qty'), right: true, cell: (l) => qtyText(l) },
+    f.unit && { key: 'unit', head: t('cols.unit'), wrap: true, cell: (l) => (both(l) ? `${l.unit} (${own(l)})` : l.unit) },
+    f.mrp && { key: 'mrp', head: t('cols.mrp'), right: true, cell: (l) => formatAmount(l.mrp) },
+    { key: 'rate', head: t('cols.rate'), right: true, cell: (l) => ((l.per ?? 1) !== 1 ? `${formatAmount(l.rate)}/${l.baseUnit ?? ''}` : formatAmount(l.rate)) },
+    f.discount && v.lines.some((l) => l.discPct) && { key: 'disc', head: t('cols.disc'), right: true, cell: (l) => (l.discPct ? l.discPct : '-') },
+    f.taxable && { key: 'taxable', head: taxed ? t('cols.taxable') : t('cols.amount'), right: true, cell: (l) => formatAmount(l.taxable) },
+    taxed && { key: 'gst', head: t('cols.gst'), right: true, cell: (l) => `${l.gstPct}%` },
+    { key: 'total', head: t('cols.total'), right: true, cell: (l) => formatAmount(l.total) },
   ] as (Col | false)[]).filter((c): c is Col => !!c)
+  // numbers and codes get the width they need, the description takes the rest and wraps (see invoiceLayout)
+  const layout = layoutColumns(cols.map((c) => ({ head: c.head, grow: c.grow, wrap: c.wrap, cells: v.lines.map((l, i) => String(c.cell(l, i) ?? '')) })), paper)
   const showPhone = f.companyPhone && s.phone
   const showEmail = f.companyEmail && s.email
   const showPan = f.companyPan && s.pan
@@ -96,15 +100,15 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
         </dl>
       </section>
 
-      <table className="mt-2 w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-        <colgroup>{cols.map((c) => <col key={c.key} style={c.w ? { width: `${c.w}%` } : undefined} />)}</colgroup>
+      <table className="mt-2 w-full border-collapse" style={{ tableLayout: 'fixed', fontSize: layout.font }}>
+        <colgroup>{cols.map((c, i) => <col key={c.key} style={{ width: `${layout.widths[i].toFixed(2)}%` }} />)}</colgroup>
         <thead>
           <tr className="bg-neutral-100">{cols.map((c) => <th key={c.key} className={`${th} ${c.right ? 'text-right' : ''}`}>{c.head}</th>)}</tr>
         </thead>
         <tbody>
           {v.lines.map((l, i) => (
             <tr key={i} style={{ breakInside: 'avoid' }}>
-              {cols.map((c) => <td key={c.key} className={`${td} ${c.right ? n : c.mono ? 'font-mono' : ''}`}>{c.cell(l, i)}</td>)}
+              {cols.map((c) => <td key={c.key} className={`${td} ${c.right ? n : c.mono ? 'font-mono' : ''} ${c.grow || c.wrap || layout.tight ? '' : 'whitespace-nowrap [overflow-wrap:normal]'}`}>{c.cell(l, i)}</td>)}
             </tr>
           ))}
         </tbody>
@@ -112,29 +116,6 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
 
       <div className="mt-2 grid grid-cols-[1fr_auto] gap-4" style={{ breakInside: 'avoid' }}>
         <div>
-          {taxed && f.hsnSummary && hsn.length > 0 && (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-neutral-100">
-                  <th className={th} rowSpan={2}>{t('cols.hsn')}</th><th className={`${th} text-right`} rowSpan={2}>{t('hsn.taxable')}</th>
-                  {inter ? <th className={`${th} text-center`} colSpan={2}>{t('hsn.igst')}</th> : <><th className={`${th} text-center`} colSpan={2}>{t('hsn.cgst')}</th><th className={`${th} text-center`} colSpan={2}>{t('hsn.sgst')}</th></>}
-                  <th className={`${th} text-right`} rowSpan={2}>{t('hsn.totalTax')}</th>
-                </tr>
-                <tr className="bg-neutral-100">
-                  {inter ? <><th className={`${th} text-right`}>{t('hsn.rate')}</th><th className={`${th} text-right`}>{t('hsn.amt')}</th></> : <><th className={`${th} text-right`}>{t('hsn.rate')}</th><th className={`${th} text-right`}>{t('hsn.amt')}</th><th className={`${th} text-right`}>{t('hsn.rate')}</th><th className={`${th} text-right`}>{t('hsn.amt')}</th></>}
-                </tr>
-              </thead>
-              <tbody>
-                {hsn.map((h) => (
-                  <tr key={h.hsn + h.gstPct}>
-                    <td className={`${td} font-mono`}>{h.hsn}</td><td className={`${td} ${n}`}>{formatAmount(h.taxable)}</td>
-                    {inter ? <><td className={`${td} ${n}`}>{h.gstPct}%</td><td className={`${td} ${n}`}>{formatAmount(h.igst)}</td></> : <><td className={`${td} ${n}`}>{h.gstPct / 2}%</td><td className={`${td} ${n}`}>{formatAmount(h.cgst)}</td><td className={`${td} ${n}`}>{h.gstPct / 2}%</td><td className={`${td} ${n}`}>{formatAmount(h.sgst)}</td></>}
-                    <td className={`${td} ${n}`}>{formatAmount(h.tax)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
           {f.amountInWords && <div className="mt-2"><span className="text-neutral-500">{t('amountInWords')}</span><span className="font-semibold">{amountInWords(v.totals.grandTotal, lang)}</span></div>}
         </div>
         <table className="border-collapse self-start" style={{ minWidth: a4 ? '62mm' : '48mm' }}>

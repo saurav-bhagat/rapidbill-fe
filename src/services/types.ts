@@ -166,9 +166,11 @@ export type BusinessType = (typeof BUSINESS_TYPES)[number]
 
 export const INVOICE_FIELD_KEYS = [
   'hsn', 'batchExpiry', 'mrp', 'unit', 'discount', 'hsnSummary', 'amountInWords', 'bank', 'upi', 'terms', 'signature',
-  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan', 'baseQty',
+  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan', 'baseQty', 'taxable',
 ] as const
 export type InvoiceFieldKey = (typeof INVOICE_FIELD_KEYS)[number]
+/** Columns that are not printed unless the business turns them on, so the description keeps the room. */
+export const INVOICE_FIELDS_OFF_BY_DEFAULT: readonly InvoiceFieldKey[] = ['hsn', 'batchExpiry', 'unit', 'taxable']
 
 /** Async service contracts. The localStorage implementations below can be swapped for an HTTP client. */
 export interface Repo<T extends Meta> {
