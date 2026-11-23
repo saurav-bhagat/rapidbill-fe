@@ -1,0 +1,44 @@
+[
+ {
+  "id": "MOBILE",
+  "name": "Mobile",
+  "for": "For the phone",
+  "y1": {
+   "price": 799,
+   "was": 1139
+  },
+  "y3": {
+   "price": 1799,
+   "was": 3329
+  },
+  "where": "Mobile app for Android and iPhone. On a computer it opens view-only."
+ },
+ {
+  "id": "DESKTOP",
+  "name": "Desktop",
+  "for": "For a computer",
+  "y1": {
+   "price": 999,
+   "was": 1429
+  },
+  "y3": {
+   "price": 2299,
+   "was": 4259
+  },
+  "where": "Web app in any browser on a computer. The mobile app opens view-only."
+ },
+ {
+  "id": "BOTH",
+  "name": "Desktop + Mobile",
+  "for": "Phone and computer",
+  "y1": {
+   "price": 1599,
+   "was": 2279
+  },
+  "y3": {
+   "price": 3399,
+   "was": 6289
+  },
+  "where": "Mobile app and web app, both fully working."
+ }
+]

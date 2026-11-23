@@ -3,6 +3,8 @@ import { ArrowRight, BadgeCheck, Boxes, ChevronDown, Clock, FileSpreadsheet, Fil
 import { SUPPORT_PHONE_DISPLAY, supportTel, supportWhatsApp } from '@/lib/support'
 import { go } from './nav'
 import { BillMock, DashboardMock, PhoneMock, StockMock } from './mocks'
+import faqData from './faq.json'
+import plansData from './plans.json'
 
 const start = () => go('/signup')
 const login = () => go('/login')
@@ -166,6 +168,21 @@ const FEATURES = [
   { i: FileSpreadsheet, t: 'Reports and backup', d: 'See today’s sales and monthly tax at a glance. Download your data any time. It is always yours.' },
 ]
 
+function Answer() {
+  const points = ['Make a GST bill in seconds: type a few letters, press Enter', 'Works offline, and syncs by itself when the internet is back', 'Stock goes down on every bill, so you know what to reorder', 'Bill from your phone, tablet or computer with one account', 'Print in English or Hindi, and get help on call or WhatsApp']
+  return (
+    <section className="bg-white py-14 md:py-20">
+      <div className="mx-auto max-w-4xl px-5">
+        <h2 className="text-[clamp(1.6rem,3vw,2.3rem)] font-extrabold leading-tight tracking-tight">RapidBill is the easiest and best billing software for small business and shops in India</h2>
+        <p className="mt-4 text-lg leading-relaxed text-ink-600">RapidBill is GST billing and stock software made for shopkeepers, traders and small businesses: grocery, pharmacy, electrical, hardware, furniture and more. It is the easiest way to make bills, keep stock and know who owes you, with nothing to learn and no per-bill charges. Try it free for 15 days.</p>
+        <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+          {points.map((x) => <li key={x} className="flex items-start gap-3 text-[16px]"><Check size={18} className="mt-1 shrink-0 text-ok" strokeWidth={3} />{x}</li>)}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
 function Features() {
   return (
     <section id="features" className="scroll-mt-16 bg-paper py-20 md:py-28">
@@ -230,31 +247,38 @@ function How() {
 }
 
 function Pricing() {
-  const inc = ['Mobile and web, one account', 'Unlimited bills, items and parties', 'Works offline', 'Stock tracking and reports', 'Customer support on call and WhatsApp', 'All new updates, free']
-  const plans = [
-    { name: '1 Year', price: '1,299', was: '1,850', off: '30%', per: '₹1,299 a year', pop: false },
-    { name: '3 Years', price: '3,000', was: '5,550', off: '46%', per: 'Just ₹1,000 a year', pop: true },
-  ]
+  const inc = ['Unlimited bills, items and parties', 'Works offline', 'GST invoices and stock tracking', 'Hindi and English', 'Support on call and WhatsApp', 'All new updates, free']
+  const off = (y: { price: number; was: number }) => Math.round((1 - y.price / y.was) * 100)
+  const money = (n: number) => `₹${n.toLocaleString('en-IN')}`
   return (
     <section id="pricing" className="scroll-mt-16 bg-paper py-20 md:py-28">
-      <div className="mx-auto max-w-5xl px-5">
-        <Title kicker="Pricing" title="One simple price. No surprises." sub="Try everything free for 15 days. Pay only if you like it." />
+      <div className="mx-auto max-w-6xl px-5">
+        <Title kicker="Pricing" title="Simple prices. No per-bill charges." sub="Try everything free for 15 days. Pay only if you like it." />
         <div className="mb-8 flex justify-center"><span className="rounded-full bg-offer px-5 py-2 text-sm font-bold text-white shadow-md">Early Bird offer: save up to 46% today</span></div>
-        <div className="grid gap-6 md:grid-cols-2">
-          {plans.map((p) => (
-            <div key={p.name} className={`relative rounded-3xl bg-white p-8 ${p.pop ? 'border-2 border-primary shadow-[0_30px_60px_-25px_rgb(53_86_216/0.6)]' : 'border border-line shadow-card'}`}>
-              {p.pop && <span className="absolute -top-3.5 left-8 rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">Best value</span>}
-              <div className="text-xl font-bold">{p.name}</div>
-              <div className="mt-4 flex items-end gap-3">
-                <span className="text-5xl font-extrabold tracking-tight">₹{p.price}</span>
-                <span className="mb-1.5 text-lg text-ink-400 line-through">₹{p.was}</span>
-                <span className="mb-2 rounded-md bg-ok-soft px-2 py-0.5 text-sm font-bold text-ok">{p.off} off</span>
+        <div className="grid gap-6 md:grid-cols-3">
+          {plansData.map((p) => {
+            const pop = p.id === 'BOTH'
+            return (
+              <div key={p.id} className={`relative rounded-3xl bg-white p-7 ${pop ? 'border-2 border-primary shadow-[0_30px_60px_-25px_rgb(53_86_216/0.6)]' : 'border border-line shadow-card'}`}>
+                {pop && <span className="absolute -top-3.5 left-7 rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wide text-white">Best value</span>}
+                <div className="text-xl font-bold">{p.name}</div>
+                <div className="text-[15px] text-ink-600">{p.for}</div>
+                <div className="mt-5 flex items-end gap-2">
+                  <span className="text-4xl font-extrabold tracking-tight">{money(p.y1.price)}</span>
+                  <span className="mb-1 text-ink-600">a year</span>
+                  <span className="mb-1.5 text-base text-ink-400 line-through">{money(p.y1.was)}</span>
+                </div>
+                <div className="mt-3 rounded-xl bg-primary-soft/60 px-4 py-3 text-[15px]">
+                  <span className="font-bold">3 years: {money(p.y3.price)}</span>
+                  <span className="text-ink-600"> · about {money(Math.round(p.y3.price / 3))} a year · {off(p.y3)}% off</span>
+                </div>
+                <div className="mt-2 text-sm text-ink-600">Taxes included</div>
+                <p className="mt-3 text-[15px] text-ink-600">{p.where}</p>
+                <ul className="my-6 space-y-2.5">{inc.map((x) => <li key={x} className="flex items-center gap-3 text-[15px]"><Check size={17} className="shrink-0 text-ok" strokeWidth={3} />{x}</li>)}</ul>
+                <button onClick={start} className={`h-12 w-full rounded-xl text-base font-bold transition ${pop ? 'bg-primary text-white hover:bg-primary-hover' : 'border border-primary text-primary hover:bg-primary-soft'}`}>Start 15-day free trial</button>
               </div>
-              <div className="mt-1 text-[15px] text-ink-600">{p.per} · taxes included</div>
-              <ul className="my-7 space-y-3">{inc.map((x) => <li key={x} className="flex items-center gap-3 text-[16px]"><Check size={18} className="shrink-0 text-ok" strokeWidth={3} />{x}</li>)}</ul>
-              <button onClick={start} className={`h-12 w-full rounded-xl text-base font-bold transition ${p.pop ? 'bg-primary text-white hover:bg-primary-hover' : 'border border-primary text-primary hover:bg-primary-soft'}`}>Start 15-day free trial</button>
-            </div>
-          ))}
+            )
+          })}
         </div>
         <p className="mt-6 text-center text-[15px] text-ink-600">You pay from inside the app, after your free trial. No card needed to start.</p>
       </div>
@@ -262,31 +286,19 @@ function Pricing() {
   )
 }
 
-const FAQ = [
-  ['Is RapidBill really free to start?', 'Yes. You get 15 days free with everything unlocked. You do not need a card. After that, you can choose a plan, or just keep viewing and downloading your data.'],
-  ['Do I need internet to make bills?', 'No. RapidBill keeps working without internet. Your bills are saved on your device and sent to the cloud automatically when the internet is back.'],
-  ['Can I use it on my phone?', 'Yes. Open RapidBill in your phone browser and add it to your home screen. The same account works on your phone, tablet and computer.'],
-  ['Does it make GST invoices?', 'Yes. You can make tax invoices with CGST, SGST or IGST worked out for you, and print them. Please check your tax rules with your accountant.'],
-  ['I use Excel or paper today. Can I bring my data?', 'Yes. You can bring your customer and supplier list from an Excel or CSV file in one go. Our team will help you if you get stuck.'],
-  ['Is my data safe? Who owns it?', 'Your data is yours. It is stored safely and backed up, and you can download all of it any time.'],
-  ['What happens when my plan ends?', 'You can still see, print and download all your bills. To make new bills, just renew your plan.'],
-  ['Who do I call if I need help?', `Call or WhatsApp us on ${SUPPORT_PHONE_DISPLAY}. A real person will help you.`],
-]
-
 function Faq() {
-  const [open, setOpen] = useState<number | null>(0)
   return (
     <section id="faq" className="scroll-mt-16 bg-white py-20 md:py-28">
       <div className="mx-auto max-w-3xl px-5">
-        <Title kicker="FAQ" title="Questions? We have answers" />
+        <Title kicker="FAQ" title="Questions about RapidBill, answered" sub="Straight answers about billing, GST, stock, offline use and price." />
         <div className="space-y-3">
-          {FAQ.map(([q, a], i) => (
-            <div key={q} className={`rounded-2xl border transition ${open === i ? 'border-primary/40 bg-primary-soft/40' : 'border-line bg-white'}`}>
-              <button onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i} className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-lg font-semibold">
-                {q}<ChevronDown size={22} className={`shrink-0 text-primary transition ${open === i ? 'rotate-180' : ''}`} />
-              </button>
-              {open === i && <p className="px-6 pb-6 text-[16px] leading-relaxed text-ink-600">{a}</p>}
-            </div>
+          {faqData.map((f, i) => (
+            <details key={f.q} open={i === 0} className="group rounded-2xl border border-line bg-white open:border-primary/40 open:bg-primary-soft/40">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-left text-lg font-semibold [&::-webkit-details-marker]:hidden">
+                <h3 className="text-lg font-semibold">{f.q}</h3><ChevronDown size={22} className="shrink-0 text-primary transition group-open:rotate-180" />
+              </summary>
+              <p className="px-6 pb-6 text-[16px] leading-relaxed text-ink-600">{f.a}</p>
+            </details>
           ))}
         </div>
       </div>
@@ -352,7 +364,7 @@ function Footer() {
 export function Landing() {
   return (
     <div className="h-full overflow-y-auto scroll-smooth bg-white text-ink-900">
-      <Header /><Hero /><Proof /><Offline /><PaperVsApp /><Features /><Showcase /><How /><Pricing /><Faq /><Contact /><FinalCta /><Footer />
+      <Header /><Hero /><Answer /><Proof /><Offline /><PaperVsApp /><Features /><Showcase /><How /><Pricing /><Faq /><Contact /><FinalCta /><Footer />
     </div>
   )
 }

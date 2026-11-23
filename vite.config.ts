@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { defineConfig, type Plugin } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { seoHtml } from './scripts/seoHtml'
 
 /** After the build, list every file in dist and write dist/sw.js so the app can be stored for offline use. */
 function serviceWorker(): Plugin {
@@ -34,7 +35,7 @@ function serviceWorker(): Plugin {
 // A server that hosts the app at the domain root (e.g. Caddy on EC2) builds with VITE_BASE=/.
 export default defineConfig(({ command }) => ({
   base: process.env.VITE_BASE ?? (command === 'build' ? '/rapidbill-fe/' : '/'),
-  plugins: [react(), serviceWorker()],
+  plugins: [react(), seoHtml(), serviceWorker()],
   resolve: { alias: { '@': new URL('./src', import.meta.url).pathname } },
   server: { port: 5173 },
   test: { environment: 'node', include: ['src/**/*.test.ts'] },
