@@ -13,7 +13,8 @@
     "taxMonth": "Tax collected this month",
     "stockValue": "Stock value (at cost)",
     "itemCount_one": "{{count}} items",
-    "itemCount_other": "{{count}} items"
+    "itemCount_other": "{{count}} items",
+    "afterReturns": "after {{amount}} of returns"
   },
   "trend": {
     "title": "Billing trend",
@@ -52,5 +53,11 @@
     "title": "Finish your business profile.",
     "body": "Add your address and state so your invoices and tax are correct.",
     "cta": "Add now"
+  },
+  "owed": {
+    "title": "To receive",
+    "viewAll": "All parties",
+    "from_one": "from {{count}} party",
+    "from_other": "from {{count}} parties"
   }
 }

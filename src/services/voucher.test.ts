@@ -25,7 +25,7 @@ describe('billing.save', () => {
     const { a, svc, para, surf } = await setup()
     const before = para.currentStock
     const v = await svc.save(base({ lines: [{ itemId: para.id, qty: 10, rate: para.issueRate, discPct: 0 }, { itemId: surf.id, qty: 2, rate: surf.issueRate, discPct: 10 }] }))
-    expect(v.number).toBe('SI-2026-0004')
+    expect(v.number).toBe('SI-2627-0004')
     const after = (await a.read<Item>('items')).find((i) => i.id === para.id)!
     expect(after.currentStock).toBe(before - 10)
     const led = (await a.read<StockLedgerEntry>('ledger')).filter((e) => e.voucherId === v.id)
@@ -80,7 +80,7 @@ describe('billing.save', () => {
   it('rejects duplicate typed numbers, empty vouchers and bad lines', async () => {
     const { svc, para } = await setup()
     const line = [{ itemId: para.id, qty: 1, rate: 100, discPct: 0 }]
-    await expect(svc.save(base({ number: 'si-2026-0001', lines: line }))).rejects.toMatchObject({ code: 'DUPLICATE_NUMBER' })
+    await expect(svc.save(base({ number: 'si-2627-0001', lines: line }))).rejects.toMatchObject({ code: 'DUPLICATE_NUMBER' })
     await expect(svc.save(base({ lines: [] }))).rejects.toBeInstanceOf(BillingError)
     await expect(svc.save(base({ lines: [{ ...line[0], qty: 0 }] }))).rejects.toMatchObject({ code: 'VALIDATION' })
     await expect(svc.save(base({ lines: [{ ...line[0], discPct: 101 }] }))).rejects.toMatchObject({ code: 'VALIDATION' })
@@ -98,8 +98,9 @@ describe('billing.save', () => {
 
   it('nextNumber follows the series and the date year', async () => {
     const { svc } = await setup()
-    expect(await svc.nextNumber('2026-11-19')).toBe('SI-2026-0004')
-    expect(await svc.nextNumber('2027-01-02')).toBe('SI-2027-0001')
+    expect(await svc.nextNumber('2026-11-19')).toBe('SI-2627-0004')
+    expect(await svc.nextNumber('2027-03-31')).toBe('SI-2627-0004') // still the 2026-27 year
+    expect(await svc.nextNumber('2027-04-01')).toBe('SI-2728-0001') // new financial year starts at 1
   })
 })
 
@@ -152,7 +153,7 @@ describe('billing.cancel / update', () => {
     const { svc, para } = await setup()
     const line = [{ itemId: para.id, qty: 1, rate: 100, discPct: 0 }]
     const v = await svc.save(base({ lines: line }))
-    await expect(svc.update(v.id, base({ number: 'SI-2026-0001', lines: line }))).rejects.toMatchObject({ code: 'DUPLICATE_NUMBER' })
+    await expect(svc.update(v.id, base({ number: 'SI-2627-0001', lines: line }))).rejects.toMatchObject({ code: 'DUPLICATE_NUMBER' })
     await svc.cancel(v.id)
     await expect(svc.update(v.id, base({ number: v.number, lines: line }))).rejects.toMatchObject({ code: 'VALIDATION' })
   })
@@ -256,5 +257,66 @@ describe('selling in another unit', () => {
   it('refuses a unit the item is not sold in', async () => {
     const { svc, rice } = await riceSetup()
     await expect(svc.save(base({ lines: [{ itemId: rice.id, qty: 1, unit: 'LTR', rate: 10000, discPct: 0 }] }))).rejects.toMatchObject({ key: 'lineUnit' })
+  })
+})
+
+
+describe('part payment on a credit bill (the device copy follows the server rules)', () => {
+  const line = (it: Item) => ({ itemId: it.id, qty: 1, rate: 10000, discPct: 0 })
+  it('adds only the unpaid rest to the party balance and remembers what was paid', async () => {
+    const { a, svc, para, parties } = await setup()
+    const p = parties[0]!
+    const before = p.balance
+    const v = await svc.save(base({ partyId: p.id, payment: 'CREDIT', lines: [line(para)], paidAmount: 5000, paidMode: 'UPI' }))
+    expect(v).toMatchObject({ paidAmount: 5000, paidMode: 'UPI' })
+    expect((await a.read<Party>('parties')).find((x) => x.id === p.id)!.balance).toBe(before + v.totals.grandTotal - 5000)
+  })
+  it('cancel and edit take back exactly what was added', async () => {
+    const { a, svc, para, parties } = await setup()
+    const p = parties[0]!
+    const bal = async () => (await a.read<Party>('parties')).find((x) => x.id === p.id)!.balance
+    const before = p.balance
+    const v = await svc.save(base({ partyId: p.id, payment: 'CREDIT', lines: [line(para)], paidAmount: 5000, paidMode: 'CASH' }))
+    const e = await svc.update(v.id, base({ partyId: p.id, payment: 'CREDIT', lines: [line(para)], paidAmount: 8000, paidMode: 'CASH' }))
+    expect(await bal()).toBe(before + e.totals.grandTotal - 8000)
+    await svc.update(v.id, base({ partyId: p.id, payment: 'PAID_CASH', lines: [line(para)] }))
+    expect(await bal()).toBe(before)
+    const again = await svc.save(base({ partyId: p.id, payment: 'CREDIT', lines: [line(para)], paidAmount: 5000, paidMode: 'CASH' }))
+    await svc.cancel(again.id)
+    expect(await bal()).toBe(before)
+  })
+  it('refuses nonsense with the same keys as the server', async () => {
+    const { svc, para, parties } = await setup()
+    const p = parties[0]!
+    const credit = (over: Partial<VoucherInput>) => svc.save(base({ partyId: p.id, payment: 'CREDIT', lines: [line(para)], ...over }))
+    await expect(credit({ paidAmount: 100000, paidMode: 'CASH' })).rejects.toMatchObject({ key: 'paidTooHigh' })
+    await expect(credit({ paidAmount: 5000 })).rejects.toMatchObject({ key: 'paidModeNeeded' })
+    await expect(svc.save(base({ lines: [line(para)], paidAmount: 5000, paidMode: 'CASH' }))).rejects.toMatchObject({ key: 'paidOnlyOnCredit' })
+    const v = await credit({ paidAmount: 0, paidMode: 'CASH' })
+    expect(v.paidAmount).toBeUndefined()
+  })
+})
+
+describe('editing a saved bill keeps what it was billed with (same rule as the server)', () => {
+  const change = async (a: StorageAdapter, id: string, over: Partial<Item>) => a.write('items', (await a.read<Item>('items')).map((i) => (i.id === id ? { ...i, ...over } : i)))
+  it('a remarks edit keeps the old GST rate, HSN and name; a new line of the item uses it as it is now', async () => {
+    const { a, svc, para } = await setup()
+    const v = await svc.save(base({ lines: [{ itemId: para.id, qty: 2, rate: 10000, discPct: 0 }] }))
+    await change(a, para.id, { gstPercent: 18, hsn: '30049011', name: 'Paracetamol 650mg' })
+    const e = await svc.update(v.id, base({ number: v.number, remarks: 'fixed', lines: [{ itemId: para.id, qty: 2, rate: 10000, discPct: 0 }] }))
+    expect(e.totals).toEqual(v.totals)
+    expect(e.lines[0]).toMatchObject({ gstPct: v.lines[0].gstPct, hsn: v.lines[0].hsn, name: v.lines[0].name })
+    const e2 = await svc.update(v.id, base({ number: v.number, lines: [{ itemId: para.id, qty: 2, rate: 10000, discPct: 0 }, { itemId: para.id, qty: 1, rate: 10000, discPct: 0 }] }))
+    expect(e2.lines.map((l) => l.gstPct)).toEqual([v.lines[0].gstPct, 18])
+  })
+  it("the same party keeps the bill's saved name and its IGST split after the party or shop changed", async () => {
+    const { a, svc, para, parties } = await setup()
+    const away = parties.find((p) => p.stateCode && p.stateCode !== '29')!
+    const v = await svc.save(base({ partyId: away.id, lines: [{ itemId: para.id, qty: 1, rate: 10000, discPct: 0 }] }))
+    expect(v.totals.igst).toBeGreaterThan(0)
+    await a.write('parties', (await a.read<Party>('parties')).map((p) => (p.id === away.id ? { ...p, name: 'Renamed', stateCode: '29' } : p)))
+    const e = await svc.update(v.id, base({ number: v.number, partyId: away.id, lines: [{ itemId: para.id, qty: 1, rate: 10000, discPct: 0 }] }))
+    expect(e.partyName).toBe(v.partyName)
+    expect(e.totals).toEqual(v.totals)
   })
 })

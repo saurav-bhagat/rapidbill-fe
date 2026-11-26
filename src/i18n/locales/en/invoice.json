@@ -57,7 +57,10 @@
     "cgst": "CGST",
     "sgst": "SGST",
     "roundOff": "Round off",
-    "grandTotal": "Grand total"
+    "grandTotal": "Grand total",
+    "paid": "Received now",
+    "balanceDue": "Balance due",
+    "dueToday": "Due today"
   },
   "bankUpi": "Bank / UPI details",
   "account": "A/c",
@@ -65,5 +68,59 @@
   "upi": "UPI",
   "terms": "Goods once issued will not be taken back without prior approval. E & O.E.",
   "for": "For",
-  "signatory": "Authorised signatory"
+  "signatory": "Authorised signatory",
+  "scanToPay": "Scan to pay {{amount}}",
+  "cn": {
+    "creditNote": "CREDIT NOTE",
+    "salesReturn": "SALES RETURN",
+    "issuedTo": "Issued to",
+    "number": "Credit note no.",
+    "numberReturn": "Return no.",
+    "pending": "Given when sent",
+    "date": "Date",
+    "against": "Against bill",
+    "reason": "Reason",
+    "settlement": "Settled",
+    "settle": {
+      "ADJUST": "Taken off the balance",
+      "CASH": "Paid back in cash",
+      "UPI": "Paid back on UPI",
+      "BANK": "Paid back to the bank"
+    },
+    "total": "Total credit"
+  },
+  "st": {
+    "title": "Statement of account",
+    "to": "Statement for",
+    "period": "Period",
+    "range": "{{from}} to {{to}}",
+    "upTo": "Up to {{to}}",
+    "opening": "Opening balance",
+    "billed": "Billed",
+    "received": "Paid or returned",
+    "closing": "Balance due",
+    "advance": "Paid in advance",
+    "date": "Date",
+    "details": "Details",
+    "debit": "Billed",
+    "credit": "Paid / returned",
+    "balance": "Balance",
+    "empty": "Nothing in this period.",
+    "partPaid": "Bill total {{total}}, {{paid}} received when the bill was made",
+    "made": "Made on {{date}}",
+    "type": {
+      "OPENING": "Opening balance",
+      "BILL": "Credit bill",
+      "BILL_CANCEL": "Bill cancelled",
+      "BILL_EDIT_REVERSE": "Bill changed (old amount taken back)",
+      "RECEIPT": "Payment received",
+      "RECEIPT_CANCEL": "Payment cancelled",
+      "ADJUST": "Balance corrected",
+      "RETURN": "Goods returned",
+      "RETURN_CANCEL": "Return cancelled"
+    },
+    "forward": "Brought forward",
+    "paidBack": "{{paid}} paid when the bill was made was given back",
+    "paidKept": "{{paid}} paid when the bill was made kept as an advance"
+  }
 }

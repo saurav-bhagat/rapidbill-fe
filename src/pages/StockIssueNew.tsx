@@ -5,14 +5,16 @@ import { useTranslation, Trans } from 'react-i18next'
 import { useBlocker, useNavigate, useSearchParams } from 'react-router-dom'
 import { lineStockQty, sellingUnit } from '@/lib/units'
 import { blankRow, billableRows, parseBillDiscount, parseDisc, parseQty, parseRate, repriceRows, rowStatus, rowStockQty, rupeesText, usageByItem, type Row } from '@/lib/billing'
-import { calcVoucher, type CalcLine } from '@/lib/calc'
+import { calcVoucher, chargedInterState, matchSavedLines, type CalcLine } from '@/lib/calc'
+import { counterQrAmount } from '@/lib/qr'
+import { UpiQrModal } from '@/components/billing/UpiQrModal'
 import { formatAmount, formatINR, todayISO } from '@/lib/format'
 import { stateName } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
 import { useLicense } from '@/license/store'
 import { isWaiting } from '@/lib/saved'
 import { useAsync } from '@/lib/useAsync'
-import { BillingError, services, type Item, type PaymentStatus, type Party, type Unit, type Voucher, type VoucherMode } from '@/services'
+import { BillingError, services, type Item, type PaymentStatus, type Party, type ReceiptMode, type Unit, type Voucher, type VoucherMode } from '@/services'
 import { toast } from '@/store/toast'
 import { errorText } from '@/lib/errors'
 import { BillingGrid, type GridHandle } from '@/components/billing/BillingGrid'
@@ -25,6 +27,8 @@ import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
 import { Badge } from '@/components/ui/Badge'
 import { LoadFailed } from '@/components/ui/LoadFailed'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { billWarnings } from '@/lib/compliance'
+import { invoiceFieldsOf } from '@/lib/invoiceFields'
 import { Segmented } from '@/components/ui/Segmented'
 
 const input = 'h-8 rounded border border-line bg-surface px-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -64,6 +68,9 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const [billDisc, setBillDisc] = useState('')
   const [roundOff, setRoundOff] = useState(true)
   const [payment, setPayment] = useState<PaymentStatus>('PAID_CASH')
+  // credit bills: what was received when the bill was made (rupees as typed) and how
+  const [paidNow, setPaidNow] = useState('')
+  const [paidMode, setPaidMode] = useState<ReceiptMode>('CASH')
   const [active, setActive] = useState(0)
   const [flash, setFlash] = useState('')
   const [saving, setSaving] = useState(false)
@@ -71,6 +78,8 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const [quickAdd, setQuickAdd] = useState<{ open: boolean; name: string; row: number }>({ open: false, name: '', row: 0 })
   const [partyDrawer, setPartyDrawer] = useState<{ open: boolean }>({ open: false })
   const [confirmDiscard, setConfirmDiscard] = useState(false)
+  // reminders about a GST bill, shown once before saving (the kind of save waits behind them)
+  const [warnKind, setWarnKind] = useState<'print' | 'new'>()
   const [baseline, setBaseline] = useState('')
   const [hydrated, setHydrated] = useState(false)
   const hydratedFor = useRef<string | undefined>(undefined)
@@ -79,6 +88,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const grid = useRef<GridHandle>(null)
   const partyInput = useRef<HTMLInputElement>(null)
   const billDiscInput = useRef<HTMLInputElement>(null)
+  const paidInput = useRef<HTMLInputElement>(null)
   const dateInput = useRef<HTMLInputElement>(null)
   const flashTimer = useRef<number>(0)
   const savingRef = useRef(false)
@@ -124,7 +134,10 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     setMode(source.mode); setTaxYes(source.taxApplicable); setBasis(source.rateBasis)
     setPartyId(source.partyId && parties.some((p) => p.id === source.partyId) ? source.partyId : null)
     setRemarks(source.remarks); setBillDisc(bdText); setPayment(source.payment)
-    setRoundOff(source.totals.roundOff !== 0 ? true : settings.roundOffDefault)
+    // a copy is a new sale: what was received on the old bill is not received again
+    setPaidNow(editId && source.paidAmount ? rupeesText(source.paidAmount) : ''); setPaidMode((editId && source.paidMode) || 'CASH')
+    // an edit keeps the saved bill's rounding (a bill saved without it must not get rounded); a copy follows the shop default
+    setRoundOff(source.totals.roundOff !== 0 ? true : editId ? false : settings.roundOffDefault)
     if (editId) { setDate(source.date); setNumber(source.number); setNumberTouched(true) }
     else { setDate(todayISO()); setNumberTouched(false) }
     const over = filled.filter((r) => r.item && rowStockQty(r)! > r.item.currentStock).length
@@ -139,21 +152,36 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   // ---- totals: one pure function drives the grid, the footer and the saved snapshot
   const billable = useMemo(() => billableRows(rows), [rows])
   const bd = parseBillDiscount(billDisc)
-  const calc = useMemo(
-    () => calcVoucher({
-      lines: billable.map((r) => ({ qty: rowStockQty(r)!, rate: parseRate(r.rate) ?? 0, discPct: parseDisc(r.disc) ?? 0, gstPct: r.item.gstPercent })),
-      taxApplicable: effTax, sellerState: settings?.stateCode ?? '', partyState: party?.stateCode ?? null,
+  // Editing: lines from the saved bill keep the GST rate they were billed at, and the same party keeps the tax split it was charged
+  // (the server applies the same rule when saving, so these totals are the saved totals).
+  const keep = editId ? source : undefined
+  const sameParty = !!keep && (keep.partyId ?? null) === (partyId ?? null)
+  const calc = useMemo(() => {
+    const savedOf = matchSavedLines(billable.map((r) => r.item.id), keep?.lines)
+    return calcVoucher({
+      lines: billable.map((r, i) => ({ qty: rowStockQty(r)!, rate: parseRate(r.rate) ?? 0, discPct: parseDisc(r.disc) ?? 0, gstPct: savedOf[i]?.gstPct ?? r.item.gstPercent })),
+      taxApplicable: effTax, sellerState: settings?.stateCode ?? '', partyState: sameParty ? keep!.partyStateCode : party?.stateCode ?? null,
+      ...(sameParty && { interState: chargedInterState(keep!.totals) }),
       billDiscount: bd && bd !== 'invalid' ? bd : undefined, roundOff,
-    }),
-    [billable, effTax, settings?.stateCode, party?.stateCode, bd, roundOff],
-  )
+    })
+  }, [billable, keep, sameParty, effTax, settings?.stateCode, party?.stateCode, bd, roundOff])
+  // credit bills: what was received now, in paise ('invalid' when the text is not an amount)
+  const paid: number | 'invalid' = payment === 'CREDIT' && paidNow.trim() ? (parseRate(paidNow) ?? 'invalid') : 0
+  // paying by UPI now: the amount for the QR shown at the counter
+  const qrAmount = counterQrAmount(payment, calc.grandTotal, paid === 'invalid' ? 0 : paid, paidMode)
+  const [showQr, setShowQr] = useState(false)
+  const warnings = useMemo(() => billWarnings({
+    gstEnabled: gstOn, taxApplicable: effTax, sellerGstin: settings?.gstin ?? '', hsnColumnOn: settings ? invoiceFieldsOf(settings).hsn : true,
+    party: party ? { name: party.name, gstin: party.gstin, address: party.address } : null,
+    lines: billable.map((r) => ({ name: r.item.name, hsn: r.item.hsn })), grandTotal: calc.grandTotal,
+  }), [gstOn, effTax, settings, party, billable, calc.grandTotal])
   const lineCalc = useMemo(() => {
     const byKey = new Map<string, CalcLine>()
     billable.forEach((r, n) => byKey.set(r.key, calc.lines[n]))
     return rows.map((r) => byKey.get(r.key))
   }, [rows, billable, calc])
 
-  const signature = JSON.stringify([rows.map((r) => [r.item?.id, r.qty, r.unit, r.rate, r.disc]), partyId, remarks, billDisc, payment, mode, taxYes, basis, date, number, roundOff])
+  const signature = JSON.stringify([rows.map((r) => [r.item?.id, r.qty, r.unit, r.rate, r.disc]), partyId, remarks, billDisc, payment, paidNow, paidMode, mode, taxYes, basis, date, number, roundOff])
   // in edit mode the voucher is only "dirty" once it differs from what was loaded
   // runs in the render *after* the form was filled, so the signature already reflects the loaded voucher
   useEffect(() => { if (editId && hydrated && !baseline) setBaseline(signature) }, [editId, hydrated, signature, baseline])
@@ -172,7 +200,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   }, [dirty])
 
   const resetForm = useCallback((focus = true) => {
-    setRows([blankRow()]); setPartyId(null); setRemarks(''); setBillDisc(''); setNumberTouched(false)
+    setRows([blankRow()]); setPartyId(null); setRemarks(''); setBillDisc(''); setNumberTouched(false); setPaidNow(''); setPaidMode('CASH')
     setDate(todayISO()); setActive(0); setFlash('')
     setPayment(mode === 'CHALLAN' ? 'INTERNAL' : 'PAID_CASH')
     refreshNumber(todayISO()) // the effect below won't re-run when the date didn't change, so refresh explicitly
@@ -199,7 +227,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   }
 
   // ---- save
-  const save = async (kind: 'print' | 'new') => {
+  const save = async (kind: 'print' | 'new', warned = false) => {
     if (savingRef.current) return
     const bad = rows.findIndex((r) => r.item && parseQty(r.qty) === null)
     if (bad >= 0) { showFlash(t('flash.rowQty', { n: bad + 1 })); return grid.current?.focusCell(bad, 'qty') }
@@ -210,6 +238,10 @@ export function StockIssueNew({ editId }: { editId?: string }) {
     if (badDisc) { showFlash(t('flash.badDisc')); return grid.current?.focusCell(rows.indexOf(badDisc), 'disc') }
     if (bd === 'invalid') { showFlash(t('flash.badBillDisc')); return billDiscInput.current?.focus() }
     if (payment === 'CREDIT' && !partyId) { showFlash(t('flash.creditParty')); return partyInput.current?.focus() }
+    if (paid === 'invalid') { showFlash(t('flash.badPaid')); return paidInput.current?.focus() }
+    if (paid > 0 && paid >= calc.grandTotal) { showFlash(t('flash.paidTooHigh')); return paidInput.current?.focus() }
+
+    if (!warned && warnings.length > 0) return setWarnKind(kind)
 
     savingRef.current = true
     setSaving(true)
@@ -218,6 +250,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         number: numberTouched ? number : undefined, date, mode, taxApplicable: effTax, rateBasis: basis, partyId, remarks,
         lines: billable.map((r) => ({ itemId: r.item.id, qty: parseQty(r.qty)!, rate: parseRate(r.rate)!, discPct: parseDisc(r.disc)!, ...(r.unit ? { unit: r.unit as Unit } : {}) })),
         billDiscount: bd, roundOff, payment,
+        ...(payment === 'CREDIT' && paid > 0 && { paidAmount: paid, paidMode }),
       }
       const v = editId ? await services.billing.update(editId, payload) : await services.billing.save(payload)
       reloadItems(); reloadParties()
@@ -276,6 +309,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
           {editId
             ? <Trans t={t} i18nKey="banner.editing" values={{ number: source.number }} components={{ num: <span className="font-mono font-medium" /> }} />
             : <Trans t={t} i18nKey="banner.copied" values={{ number: source.number }} components={{ num: <span className="font-mono font-medium" /> }} />}
+          {editId && source.date.slice(0, 7) < todayISO().slice(0, 7) && <div className="mt-1 font-medium">{t('banner.earlierMonth')}</div>}
         </div>
       )}
       <BillingAs />
@@ -385,7 +419,15 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         roundOff={roundOff}
         onRoundOff={setRoundOff}
         payment={payment}
-        onPayment={setPayment}
+        onPayment={(p) => { setPayment(p); if (p !== 'CREDIT') setPaidNow('') }}
+        paidNow={paidNow}
+        onPaidNow={setPaidNow}
+        paidMode={paidMode}
+        onPaidMode={setPaidMode}
+        paidInvalid={paid === 'invalid'}
+        due={Math.max(0, calc.grandTotal - (paid === 'invalid' ? 0 : paid))}
+        paidInputRef={paidInput}
+        onShowQr={qrAmount > 0 ? () => setShowQr(true) : undefined}
         saving={saving || !canWrite}
         onSavePrint={() => save('print')}
         onSaveNew={() => save('new')}
@@ -394,6 +436,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
       </div>
 
       {/* ---- overlays */}
+      <UpiQrModal open={showQr && qrAmount > 0} amount={qrAmount} upiId={settings?.upiId ?? ''} shop={settings?.companyName ?? ''} onClose={() => setShowQr(false)} />
       <ItemFormDrawer
         open={quickAdd.open}
         initialName={quickAdd.name}
@@ -421,6 +464,10 @@ export function StockIssueNew({ editId }: { editId?: string }) {
         closeLabel={editId ? t('print.backToRegister') : t('print.newVoucher')}
         onClose={() => { setSaved(undefined); if (editId) navigate('/issues'); else setTimeout(() => partyInput.current?.focus(), 0) }}
       />
+      <ConfirmDialog open={!!warnKind} title={t('warn.title')} confirmLabel={t('warn.saveAnyway')} onConfirm={() => { const k = warnKind; setWarnKind(undefined); if (k) void save(k, true) }} onCancel={() => setWarnKind(undefined)}>
+        <ul className="list-disc space-y-2 pl-5">{warnings.map((w) => <li key={w.key}>{t(`warn.${w.key}`, { ...w.params, count: Number(w.params?.count ?? 1) })}</li>)}</ul>
+        <p className="mt-3 text-sm text-ink-400">{t('warn.note')}</p>
+      </ConfirmDialog>
       <ConfirmDialog
         open={confirmDiscard}
         title={editId ? t('discard.titleEdit') : t('discard.titleNew')}

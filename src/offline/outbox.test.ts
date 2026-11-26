@@ -51,12 +51,12 @@ async function setup(opts: { numbering?: Record<string, number> } = {}) {
 
 describe('saving a bill on this device', () => {
   it('takes the number on from the highest the server told us about, even with no recent bills', async () => {
-    const t = await setup({ numbering: { 'SI-2026': 41 } })
+    const t = await setup({ numbering: { 'SI-2627': 41 } })
     const v = await t.saveLocally(t.m, t.owner, bill([['a', 2]]))
-    expect(v.number).toBe('SI-2026-0042')
+    expect(v.number).toBe('SI-2627-0042')
     const v2 = await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
-    expect(v2.number).toBe('SI-2026-0043')
-    expect(await t.localNextNumber(t.m, t.owner, day)).toBe('SI-2026-0044')
+    expect(v2.number).toBe('SI-2627-0043')
+    expect(await t.localNextNumber(t.m, t.owner, day)).toBe('SI-2627-0044')
   })
 
   it('saves the bill, its stock change, the party credit and its queue entry together', async () => {
@@ -96,7 +96,7 @@ describe('saving a bill on this device', () => {
 
 describe('sending waiting bills', () => {
   it('sends them oldest first with the id, number and time chosen here, and clears each once the server has it', async () => {
-    const t = await setup({ numbering: { 'SI-2026': 9 } })
+    const t = await setup({ numbering: { 'SI-2627': 9 } })
     const v1 = await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
     const v2 = await t.saveLocally(t.m, t.owner, bill([['a', 1]]))
     handler = () => ({})
@@ -140,7 +140,7 @@ describe('sending waiting bills', () => {
   })
 
   it('a parked bill can be sent again, renumbered, or discarded (stock and credit given back)', async () => {
-    const t = await setup({ numbering: { 'SI-2026': 5 } })
+    const t = await setup({ numbering: { 'SI-2627': 5 } })
     const v = await t.saveLocally(t.m, t.owner, bill([['a', 4]], { partyId: 'p1', payment: 'CREDIT' }))
     handler = () => new t.AppError('duplicateNumber', { number: v.number })
     await t.flushOutbox(t.m)
@@ -148,11 +148,11 @@ describe('sending waiting bills', () => {
     expect((await t.listOutbox(t.m))[0]).toMatchObject({ status: 'pending' })
 
     await t.flushOutbox(t.m) // refused again
-    await t.m.setMeta('numbering', { 'SI-2026': 20 }) // the server's count moved on
+    await t.m.setMeta('numbering', { 'SI-2627': 20 }) // the server's count moved on
     await t.renumberEntry(t.m, t.owner, v.id)
     const e = (await t.listOutbox(t.m))[0]!
-    expect(e).toMatchObject({ status: 'pending', number: 'SI-2026-0021', payload: { number: 'SI-2026-0021' } })
-    expect((await t.m.get<Voucher>('vouchers', v.id))!.number).toBe('SI-2026-0021')
+    expect(e).toMatchObject({ status: 'pending', number: 'SI-2627-0021', payload: { number: 'SI-2627-0021' } })
+    expect((await t.m.get<Voucher>('vouchers', v.id))!.number).toBe('SI-2627-0021')
 
     await t.discardEntry(t.m, t.owner, v.id)
     expect(await t.listOutbox(t.m)).toHaveLength(0)
@@ -264,15 +264,15 @@ describe('billing service', () => {
   it('online with nothing waiting: saves on the server with an id chosen here, and nothing is queued', async () => {
     const t = await setup()
     t.setSync({ online: true })
-    handler = (path, o) => (path === '/vouchers' ? { ...o.body, number: 'SI-2026-0001', totals: { grandTotal: 1 } } : emptyFeed)
+    handler = (path, o) => (path === '/vouchers' ? { ...o.body, number: 'SI-2627-0001', totals: { grandTotal: 1 } } : emptyFeed)
     const v = await (await owner()).save(bill([['a', 1]]))
-    expect(v.number).toBe('SI-2026-0001')
+    expect(v.number).toBe('SI-2627-0001')
     expect(sent[0]!.body).toMatchObject({ id: expect.any(String), clientCreatedAt: expect.any(String) })
     expect(await t.listOutbox(t.m)).toHaveLength(0)
   })
 
   it('cannot reach the server: the bill is made on this device with the same id, and sent later (even if the first try actually got through)', async () => {
-    const t = await setup({ numbering: { 'SI-2026': 7 } })
+    const t = await setup({ numbering: { 'SI-2627': 7 } })
     t.setSync({ online: true })
     let call = 0
     handler = (path) => (path === '/vouchers' && call++ === 0 ? t.net() : path === '/vouchers' ? {} : emptyFeed)
@@ -280,28 +280,28 @@ describe('billing service', () => {
     const v = await (await owner()).save(input)
     await t.syncNow() // the background send that follows the save
     expect(v.id).toBe(input.id)
-    expect(v.number).toBe('SI-2026-0008')
+    expect(v.number).toBe('SI-2627-0008')
     expect(sent.filter((s) => s.path === '/vouchers')[0]!.body!.id).toBe(sent.filter((s) => s.path === '/vouchers')[1]!.body!.id) // same id both times: the server saves it once
     expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(8)
   })
 
   it('while bills are waiting, new ones go through the same queue so numbers and order stay right', async () => {
-    const t = await setup({ numbering: { 'SI-2026': 0 } })
+    const t = await setup({ numbering: { 'SI-2627': 0 } })
     t.setSync({ online: false })
     handler = (p) => (p === '/vouchers' ? t.net() : emptyFeed)
     const svc = await owner()
     const a = await svc.save(bill([['a', 1]]))
     t.setSync({ online: true }) // connection flickers back before the queue is sent
     const b = await svc.save(bill([['a', 1]]))
-    expect([a.number, b.number]).toEqual(['SI-2026-0001', 'SI-2026-0002'])
-    expect(await svc.nextNumber(day)).toBe('SI-2026-0003')
-    expect((await t.listOutbox(t.m)).map((e) => e.number)).toEqual(['SI-2026-0001', 'SI-2026-0002'])
+    expect([a.number, b.number]).toEqual(['SI-2627-0001', 'SI-2627-0002'])
+    expect(await svc.nextNumber(day)).toBe('SI-2627-0003')
+    expect((await t.listOutbox(t.m)).map((e) => e.number)).toEqual(['SI-2627-0001', 'SI-2627-0002'])
   })
 
   it('a refusal from the server while online is shown to the user, not queued', async () => {
     const t = await setup()
     t.setSync({ online: true })
-    handler = (p) => (p === '/vouchers' ? new t.AppError('duplicateNumber', { number: 'SI-2026-0001' }) : emptyFeed)
+    handler = (p) => (p === '/vouchers' ? new t.AppError('duplicateNumber', { number: 'SI-2627-0001' }) : emptyFeed)
     await expect((await owner()).save(bill([['a', 1]]))).rejects.toMatchObject({ key: 'duplicateNumber' })
     expect(await t.listOutbox(t.m)).toHaveLength(0)
   })
@@ -323,19 +323,19 @@ describe('changing a bill that has not been sent yet', () => {
   const offline = (t: Awaited<ReturnType<typeof setup>>) => { t.setSync({ online: false }); handler = (p) => (p === '/vouchers' ? t.net() : emptyFeed) }
 
   it('editing redoes stock and credit and replaces the queued copy, keeping its number and id', async () => {
-    const t = await setup({ numbering: { 'SI-2026': 11 } })
+    const t = await setup({ numbering: { 'SI-2627': 11 } })
     offline(t)
     const b = await svc()
     const v = await b.save(bill([['a', 3]], { partyId: 'p1', payment: 'CREDIT' }))
     expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(7)
     const edited = await b.update(v.id, bill([['a', 5], ['b', 1]], { partyId: 'p1', payment: 'CREDIT', remarks: 'fixed' }))
-    expect(edited).toMatchObject({ id: v.id, number: 'SI-2026-0012', remarks: 'fixed' })
+    expect(edited).toMatchObject({ id: v.id, number: 'SI-2627-0012', remarks: 'fixed' })
     expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(5)
     expect((await t.m.get<Item>('items', 'b'))!.currentStock).toBe(-1)
     expect((await t.m.get<Party>('parties', 'p1'))!.balance).toBe(edited.totals.grandTotal)
     const q = await t.listOutbox(t.m)
     expect(q).toHaveLength(1)
-    expect(q[0]!.payload).toMatchObject({ id: v.id, number: 'SI-2026-0012', remarks: 'fixed' })
+    expect(q[0]!.payload).toMatchObject({ id: v.id, number: 'SI-2627-0012', remarks: 'fixed' })
     const pay = q[0]!.payload as { lines: unknown[]; clientCreatedAt: string }
     expect(pay.lines).toHaveLength(2)
     expect(pay.clientCreatedAt).toBe(v.clientCreatedAt)
@@ -358,20 +358,34 @@ describe('changing a bill that has not been sent yet', () => {
   })
 
   it('cancelling puts stock and credit back, keeps the number, and the server gets the bill and then its cancellation', async () => {
-    const t = await setup({ numbering: { 'SI-2026': 20 } })
+    const t = await setup({ numbering: { 'SI-2627': 20 } })
     offline(t)
     const b = await svc()
     const v = await b.save(bill([['a', 3]], { partyId: 'p1', payment: 'CREDIT' }))
     const c = await b.cancel(v.id)
-    expect(c).toMatchObject({ status: 'CANCELLED', number: 'SI-2026-0021' })
+    expect(c).toMatchObject({ status: 'CANCELLED', number: 'SI-2627-0021' })
     expect((await t.m.get<Item>('items', 'a'))!.currentStock).toBe(10)
     expect((await t.m.get<Party>('parties', 'p1'))!.balance).toBe(0)
-    expect(await b.nextNumber(day)).toBe('SI-2026-0022') // the cancelled number is never reused
+    expect(await b.nextNumber(day)).toBe('SI-2627-0022') // the cancelled number is never reused
     sent.length = 0
     handler = () => ({})
     await t.flushOutbox(t.m)
     expect(sent.map((s) => s.path)).toEqual(['/vouchers', `/vouchers/${v.id}/cancel`])
     expect(await t.listOutbox(t.m)).toHaveLength(0)
+  })
+
+  it('cancelling a waiting part-paid bill and keeping the money as an advance: the device and the server agree', async () => {
+    const t = await setup({ numbering: { 'SI-2627': 20 } })
+    offline(t)
+    const b = await svc()
+    const v = await b.save(bill([['a', 3]], { partyId: 'p1', payment: 'CREDIT', paidAmount: 100, paidMode: 'CASH' }))
+    await b.cancel(v.id, { keepPaid: true })
+    expect((await t.m.get<Party>('parties', 'p1'))!.balance).toBe(-100)
+    sent.length = 0
+    handler = () => ({})
+    await t.flushOutbox(t.m)
+    const c = sent.find((s) => s.path === `/vouchers/${v.id}/cancel`)
+    expect(c?.body).toEqual({ keepPaid: true })
   })
 
   it('a cancellation that cannot be sent yet keeps the bill queued, and an already-cancelled reply counts as done', async () => {
@@ -411,7 +425,7 @@ describe('changing a bill that has not been sent yet', () => {
   it('a bill that is already on the server is changed on the server, not on this device', async () => {
     const t = await setup()
     t.setSync({ online: true })
-    handler = (p, o) => (p === '/vouchers' ? { ...o.body, number: 'SI-2026-0001', totals: { grandTotal: 1 } } : { id: 'on-server', number: 'SI-2026-0001' })
+    handler = (p, o) => (p === '/vouchers' ? { ...o.body, number: 'SI-2627-0001', totals: { grandTotal: 1 } } : { id: 'on-server', number: 'SI-2627-0001' })
     const b = await svc()
     const v = await b.save(bill([['a', 1]])) // went straight to the server: nothing queued
     sent.length = 0
@@ -454,9 +468,9 @@ describe('Home and the recent window', () => {
     const t = await setup()
     t.setSync({ online: false })
     handler = () => t.net()
-    await t.m.putMany('vouchers', [{ id: 'v1', number: 'SI-2026-0001', date: day }, { id: 'v2', number: 'SI-2026-0002', date: day }])
+    await t.m.putMany('vouchers', [{ id: 'v1', number: 'SI-2627-0001', date: day }, { id: 'v2', number: 'SI-2627-0002', date: day }])
     const s = (await import('./mirrorServices')).createMirrorServices()
-    expect((await s.vouchers.recent!()).map((v) => v.number)).toEqual(['SI-2026-0002', 'SI-2026-0001'])
+    expect((await s.vouchers.recent!()).map((v) => v.number)).toEqual(['SI-2627-0002', 'SI-2627-0001'])
     expect(sent).toHaveLength(0)
   })
 

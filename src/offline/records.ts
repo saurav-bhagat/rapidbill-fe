@@ -5,7 +5,7 @@ import { api } from '@/services/http/client'
 import type { BillingOwner } from '@/services/voucher'
 import type { Item, Meta, Party, Voucher } from '@/services/types'
 import type { Mirror } from './db'
-import { exclusive, flushLock, isVoucherEntry, listOutbox, refreshOutboxState, type ItemEntry, type OutboxEntry, type PartyEntry, type VoucherEntry } from './outbox'
+import { exclusive, flushLock, isReceiptEntry, isVoucherEntry, listOutbox, refreshOutboxState, type ItemEntry, type OutboxEntry, type PartyEntry, type VoucherEntry } from './outbox'
 
 /**
  * Items and parties made on this device while there is no connection. Like a bill, each is saved in the device copy and queued in one
@@ -95,7 +95,8 @@ export function removeWaitingParty(m: Mirror, id: string): Promise<boolean> {
   return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = await m.get<OutboxEntry>('outbox', id)
     if (!e || e.kind !== 'party') return false
-    const using = billsUsing(await listOutbox(m), 'party', id).length
+    const queue = await listOutbox(m)
+    const using = billsUsing(queue, 'party', id).length + queue.filter(isReceiptEntry).filter((r) => r.payload.partyId === id).length
     if (using > 0) throw new AppError('partyInUse', { name: e.number, count: using })
     await m.batch([{ store: 'parties', remove: [id] }, { store: 'outbox', remove: [id] }])
     await refreshOutboxState(m)
@@ -133,6 +134,10 @@ export function useExisting(m: Mirror, entryId: string): Promise<void> {
       if (row) changedVouchers.push(e.kind === 'item'
         ? { ...row, lines: row.lines.map((l) => (l.itemId === entryId ? { ...l, itemId: found!.id } : l)) }
         : { ...row, partyId: found!.id, partyName: (found as Party).name })
+    }
+    // money waiting for the party that is being replaced goes to the existing one instead
+    if (e.kind === 'party') {
+      for (const r of all.filter(isReceiptEntry).filter((x) => x.payload.partyId === entryId)) changedEntries.push({ ...r, partyName: (found as Party).name, payload: { ...r.payload, partyId: found!.id } })
     }
     const queue = new Map(all.map((x) => [x.id, x]))
     for (const c of changedEntries) queue.set(c.id, c)
@@ -174,7 +179,8 @@ export function renameRecord(m: Mirror, entryId: string, value: string): Promise
 export function discardRecord(m: Mirror, id: string): Promise<void> {
   return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = settle((await m.get<OutboxEntry>('outbox', id))!)
-    const using = billsUsing(await listOutbox(m), e.kind, id).length
+    const queue = await listOutbox(m)
+    const using = billsUsing(queue, e.kind, id).length + (e.kind === 'party' ? queue.filter(isReceiptEntry).filter((r) => r.payload.partyId === id).length : 0)
     if (using > 0) throw new AppError('recordInUse', { count: using })
     await m.batch([{ store: e.kind === 'item' ? 'items' : 'parties', remove: [id] }, { store: 'outbox', remove: [id] }])
     await refreshOutboxState(m)

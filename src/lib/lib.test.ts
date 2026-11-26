@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { amountInWords, numberToWordsHI, numberToWordsIN } from './words'
 import { formatAmount, formatINR } from './format'
 import { parseRupees, toPaise } from './money'
-import { nextVoucherNo } from './voucherNo'
+import { financialYearOf, nextVoucherNo } from './voucherNo'
 import { calcVoucher } from './calc'
 
 describe('money', () => {
@@ -44,8 +44,16 @@ describe('amount in words', () => {
 
 describe('voucher number', () => {
   it('increments within the year series', () => {
-    expect(nextVoucherNo([], 'SI', 2026)).toBe('SI-2026-0001')
-    expect(nextVoucherNo(['SI-2026-0001', 'SI-2026-0009', 'SI-2025-0400'], 'SI', 2026)).toBe('SI-2026-0010')
+    expect(nextVoucherNo([], 'SI', '2627')).toBe('SI-2627-0001')
+    expect(nextVoucherNo(['SI-2627-0001', 'SI-2627-0009', 'SI-2526-0400', 'SI-2026-0500'], 'SI', '2627')).toBe('SI-2627-0010')
+  })
+  it('uses the financial year (April to March)', () => {
+    expect(financialYearOf('2026-11-19')).toBe('2627')
+    expect(financialYearOf('2027-03-31')).toBe('2627')
+    expect(financialYearOf('2027-04-01')).toBe('2728')
+    expect(financialYearOf('2026-04-01')).toBe('2627')
+    expect(financialYearOf('2026-03-31')).toBe('2526')
+    expect(financialYearOf('2099-12-31')).toBe('9900')
   })
 })
 

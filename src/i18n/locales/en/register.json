@@ -25,7 +25,8 @@
   },
   "status": {
     "active": "Active",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "returned": "Returned"
   },
   "columns": {
     "voucher": "Voucher",
@@ -42,7 +43,8 @@
     "viewPrint": "View / Print",
     "edit": "Edit",
     "duplicate": "Duplicate",
-    "cancelVoucher": "Cancel voucher"
+    "cancelVoucher": "Cancel voucher",
+    "returnItems": "Return items"
   },
   "summary": {
     "count_one": "{{count}} voucher",
@@ -55,14 +57,18 @@
     "none": "No vouchers yet. Press N to create the first one.",
     "filtered": "No vouchers match these filters."
   },
-  "hint": "↑ ↓ to move · Enter view & print · E edit · Ctrl D duplicate · C cancel · / search · N new",
+  "hint": "↑ ↓ to move · Enter view & print · E edit · Ctrl D duplicate · C cancel · T return items · / search · N new",
   "cancel": {
     "title": "Cancel this voucher?",
     "summary": "for {{party}}, ₹{{amount}}.",
-    "body_one": "The {{count}} item go back into stock. The record stays in the register, marked Cancelled.",
+    "body_one": "The {{count}} item goes back into stock. The record stays in the register, marked Cancelled.",
     "body_other": "The {{count}} items go back into stock. The record stays in the register, marked Cancelled.",
-    "bodyCredit_one": "The {{count}} item go back into stock and the amount is removed from the party balance. The record stays in the register, marked Cancelled.",
-    "bodyCredit_other": "The {{count}} items go back into stock and the amount is removed from the party balance. The record stays in the register, marked Cancelled."
+    "bodyCredit_one": "The {{count}} item goes back into stock and the amount is removed from the party balance. The record stays in the register, marked Cancelled.",
+    "bodyCredit_other": "The {{count}} items go back into stock and the amount is removed from the party balance. The record stays in the register, marked Cancelled.",
+    "filedWarn": "This bill is from an earlier month. If that month's GST is already filed, do not cancel it: make a return (credit note) instead, so this month's return shows it.",
+    "paidQuestion": "{{amount}} was paid when this bill was made. What happens to it?",
+    "paidBack": "I gave it back to the customer",
+    "paidKeep": "Keep it as an advance for {{party}} (their balance goes down)"
   },
   "toast": {
     "cancelledNoEdit": "Cancelled vouchers cannot be edited. Duplicate it instead.",
@@ -70,5 +76,53 @@
     "cancelled": "Cancelled {{number}}. Stock restored.",
     "cancelFailed": "Could not cancel",
     "cancelledOffline": "Cancelled {{number}} on this device. Stock restored. It will be sent when you are back online."
+  },
+  "partPaid": "{{label}} · {{paid}} paid",
+  "returns": {
+    "title": "Return items: {{number}}",
+    "intro": "Bill to {{party}} on {{date}} for {{amount}}. Type how many of each came back.",
+    "nothingLeft": "Everything on this bill has already come back.",
+    "item": "Item",
+    "sold": "Sold",
+    "left": "Can return",
+    "back": "Came back",
+    "backFor": "How many {{name}} came back",
+    "all": "Everything that is left",
+    "date": "Return date",
+    "reason": "Reason",
+    "reasonPlaceholder": "Damaged, wrong item, not needed…",
+    "settle": "Money",
+    "settleShort": {
+      "ADJUST": "Off the balance",
+      "CASH": "Cash back",
+      "UPI": "UPI back",
+      "BANK": "Bank back"
+    },
+    "settleHint": {
+      "ADJUST": "Taken off what the party owes. If it is more than they owe, it stays as an advance.",
+      "CASH": "You give the money back in cash. The party's balance does not change.",
+      "UPI": "You send the money back on UPI. The party's balance does not change.",
+      "BANK": "You send the money back to their bank. The party's balance does not change."
+    },
+    "taxable": "Taxable",
+    "tax": "Tax",
+    "total": "Credit",
+    "pick": "Type a quantity for the items that came back.",
+    "save": "Save return",
+    "close": "Close",
+    "made": "Returns on this bill",
+    "none": "No returns on this bill yet.",
+    "notSent": "Not sent yet",
+    "print": "Print",
+    "cancel": "Cancel return",
+    "cancelTitle": "Cancel this return?",
+    "cancelBody": "The goods go back out of stock. The {{amount}} you paid back is not taken back automatically.",
+    "cancelBodyAdjust": "The goods go back out of stock and {{amount}} goes back on the party's balance.",
+    "saved": "Return {{number}} saved: {{amount}}",
+    "savedOffline": "Return of {{amount}} saved on this device. It gets its number when you are back online.",
+    "cancelled": "Return {{number}} cancelled",
+    "printTitle": "Credit note {{number}}",
+    "waitingNote": "Saved on this device. The credit note number is given when it reaches the server; print after that for the final copy.",
+    "creditRefundWarn": "This bill is on credit. Paying money back leaves the whole bill on their balance, so they would get money back and still owe it. Usually choose Off the balance."
   }
 }

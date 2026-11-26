@@ -3,7 +3,8 @@
   "notFound": "That voucher no longer exists.",
   "banner": {
     "editing": "Editing <num>{{number}}</num>. Saving replaces it and re-applies stock; the old quantities are put back first.",
-    "copied": "New voucher copied from <num>{{number}}</num>. Quantities are checked against stock as it is now."
+    "copied": "New voucher copied from <num>{{number}}</num>. Quantities are checked against stock as it is now.",
+    "earlierMonth": "This bill is from an earlier month. If that month's GST return is already filed, change only remarks or details that do not change amounts, or make a credit note instead."
   },
   "header": {
     "voucherNo": "Voucher no.",
@@ -103,6 +104,14 @@
     "roundOffStat": "Round-off",
     "grandTotal": "Grand total (₹)",
     "payment": "Payment",
+    "receivedNow": "Received now",
+    "receivedHow": "How it was received",
+    "balanceDue": "Due",
+    "mode": {
+      "CASH": "Cash",
+      "UPI": "UPI",
+      "BANK": "Bank"
+    },
     "billDiscountPlaceholder": "5% or 250",
     "roundOff": "Round off",
     "discard": "Discard",
@@ -116,6 +125,8 @@
     "badDisc": "Discount must be between 0 and 100",
     "badBillDisc": "Bill discount: use 5% or an amount like 250",
     "creditParty": "Choose a party for a credit sale",
+    "badPaid": "Amount received now: enter an amount like 500",
+    "paidTooHigh": "Amount received must be less than the bill total. If it was paid in full, choose how it was paid instead of Credit",
     "skipped_one": "{{count}} item no longer in inventory were skipped",
     "skipped_other": "{{count}} items no longer in inventory were skipped",
     "exceedCurrent_one": "{{count}} line is above the recorded stock. You can still save.",
@@ -142,7 +153,14 @@
     "printPdf": "Print / Save as PDF",
     "saved": "Saved {{number}}. Stock and ledger are updated.",
     "backToRegister": "Back to register",
-    "newVoucher": "New voucher"
+    "newVoucher": "New voucher",
+    "waText": "Hello {{name}}, your bill {{number}} of {{amount}} from {{shop}} is ready. Thank you!",
+    "waDue": "Balance due: {{due}}.",
+    "waPay": "You can pay on UPI: {{upi}}",
+    "whatsapp": "WhatsApp",
+    "thermal80": "Receipt 80 mm",
+    "thermal58": "Receipt 58 mm",
+    "receiptHint": "Choose your receipt printer in the print dialog."
   },
   "discard": {
     "titleEdit": "Discard your changes?",
@@ -155,5 +173,25 @@
     "title": "Leave without saving?",
     "confirm": "Leave and discard",
     "body": "This voucher has unsaved items. Leaving now will discard them."
+  },
+  "warn": {
+    "title": "Check before saving",
+    "saveAnyway": "Save anyway",
+    "noSellerGstin": "Your own GSTIN is not set, so this tax invoice will not show it. Add it in Settings.",
+    "hsnMissing_one": "{{count}} item has no HSN code ({{names}}). A bill to a GST-registered business should show it.",
+    "hsnMissing_other": "{{count}} items have no HSN code ({{names}}). A bill to a GST-registered business should show it.",
+    "hsnShort_one": "{{names}} has an HSN code shorter than {{min}} digits. Bills to registered businesses usually need at least {{min}} digits (6 for larger businesses).",
+    "hsnShort_other": "{{names}} have HSN codes shorter than {{min}} digits. Bills to registered businesses usually need at least {{min}} digits (6 for larger businesses).",
+    "hsnHidden": "The HSN column is turned off for printing. A bill to a GST-registered business should show HSN. Turn it on in Settings, Invoice.",
+    "bigSaleNoParty": "A sale of ₹50,000 or more to an unregistered buyer should carry the buyer's name, address and state. Choose a party with those details.",
+    "bigSaleNoAddress": "A sale of ₹50,000 or more to an unregistered buyer should carry the buyer's address. {{name}} has no address saved.",
+    "note": "These are reminders, not rules we can check for you. Ask your accountant if unsure."
+  },
+  "upiQr": {
+    "show": "Show UPI QR",
+    "title": "Scan to pay",
+    "done": "Done",
+    "hint": "Ask the customer to scan with any UPI app. Check that the money reached you before you save the bill.",
+    "noUpi": "Add your UPI ID in Settings, Invoice details to show a QR here."
   }
 }

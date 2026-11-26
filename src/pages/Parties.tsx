@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useLicense } from '@/license/store'
 import { useSync } from '@/offline/state'
-import { Download, Plus, Upload } from 'lucide-react'
+import { Download, FileText, HandCoins, Plus, Upload } from 'lucide-react'
 import { formatINR } from '@/lib/format'
 import { stateName } from '@/lib/gst'
 import { errorText } from '@/lib/errors'
@@ -13,6 +13,8 @@ import { services, type Party, type PartyType } from '@/services'
 import { toast } from '@/store/toast'
 import { PartyFormDrawer } from '@/components/parties/PartyFormDrawer'
 import { PartyImportWizard } from '@/components/parties/PartyImportWizard'
+import { ReceivePaymentModal } from '@/components/parties/ReceivePaymentModal'
+import { StatementDrawer } from '@/components/parties/StatementDrawer'
 import { exportParties } from '@/lib/exportParties'
 import { Badge } from '@/components/ui/Badge'
 import { LoadFailed } from '@/components/ui/LoadFailed'
@@ -45,6 +47,9 @@ export function Parties() {
   const [selectedId, setSelectedId] = useState<string>()
   const [form, setForm] = useState<{ open: boolean; party?: Party }>({ open: false })
   const [toDelete, setToDelete] = useState<Party>()
+  // money received and the statement are for one party at a time; kept by id so they follow the list when it reloads
+  const [receiveId, setReceiveId] = useState<string>()
+  const [statementId, setStatementId] = useState<string>()
   const searchRef = useRef<HTMLInputElement>(null)
 
   const rows = useMemo(() => {
@@ -83,6 +88,8 @@ export function Parties() {
   useHotkey('/', () => searchRef.current?.focus())
   useHotkey('n', openNew)
   useHotkey('e', () => openEdit(selected))
+  useHotkey('r', () => { if (selected && canWrite) setReceiveId(selected.id) })
+  useHotkey('s', () => { if (selected) setStatementId(selected.id) })
 
   const columns: VColumn<Party>[] = [
     { key: 'name', header: t('columns.name'), sortable: true, cell: (p) => <span className="flex items-center gap-2"><span className="font-medium">{p.name}</span>{waiting.includes(p.id) && <Badge tone="warn">{tCommon('sync.notSynced')}</Badge>}{refused.includes(p.id) && <Badge tone="danger">{tCommon('sync.refused')}</Badge>}</span> },
@@ -103,6 +110,8 @@ export function Parties() {
           <option value="">{t('allTypes')}</option><option value="CUSTOMER">{t('typePlural.customer')}</option><option value="DEPARTMENT">{t('typePlural.department')}</option><option value="BRANCH">{t('typePlural.branch')}</option>
         </Select>
         <div className="ml-auto flex items-center gap-2">
+          <Button onClick={() => selected && setStatementId(selected.id)} icon={<FileText size={14} />} hotkey="s" disabled={!selected}>{t('page.statement')}</Button>
+          <Button onClick={() => selected && setReceiveId(selected.id)} icon={<HandCoins size={14} />} hotkey="r" disabled={!selected || !canWrite}>{t('page.receive')}</Button>
           <Button onClick={() => setImporting(true)} icon={<Upload size={14} />} hotkey="i" disabled={!canWrite}>{t('page.import')}</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => void doExport('xlsx')}>{t('page.exportXlsx')}</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => void doExport('csv')}>{t('page.exportCsv')}</Button>
@@ -125,6 +134,20 @@ export function Parties() {
       />
       <p className="text-sm text-ink-400">{t('hint')}</p>
 
+      <ReceivePaymentModal
+        open={!!receiveId}
+        party={parties.find((p) => p.id === receiveId)}
+        onClose={() => setReceiveId(undefined)}
+        onSaved={() => { setReceiveId(undefined); reload() }}
+      />
+      <StatementDrawer
+        open={!!statementId}
+        party={parties.find((p) => p.id === statementId)}
+        onClose={() => setStatementId(undefined)}
+        onReceive={() => statementId && canWrite && setReceiveId(statementId)}
+        onChanged={reload}
+        canWrite={canWrite}
+      />
       <PartyImportWizard open={importing} parties={parties} onClose={() => setImporting(false)} onDone={() => { setImporting(false); reload() }} />
       <PartyFormDrawer
         open={form.open}

@@ -24,6 +24,7 @@ Press `?` anywhere in the app for this list. **Ctrl** on Windows/Linux is **⌘ 
 | `Alt+R` | `⌥R` | Anywhere | Stock Issue Register |
 | `Alt+I` | `⌥I` | Anywhere | Inventory Master |
 | `Alt+P` | `⌥P` | Anywhere | Parties & Departments |
+| `Alt+G` | `⌥G` | Anywhere | GST reports for the accountant |
 | `Alt+E` | `⌥E` | Anywhere | Earn with RapidBill (referrals) |
 | `Alt+S` | `⌥S` | Anywhere | Settings |
 | `Alt+B` | `⌥B` | Anywhere | Open the business switcher |
@@ -57,9 +58,12 @@ Press `?` anywhere in the app for this list. **Ctrl** on Windows/Linux is **⌘ 
 | `E` | `E` | Lists and Settings (not while typing in a field) | Edit selected row (Inventory, Parties, Register) |
 | `A` | `A` | Lists and Settings (not while typing in a field) | Adjust stock of selected item (Inventory) |
 | `I` | `I` | Lists and Settings (not while typing in a field) | Import inventory from a file (Inventory) |
+| `R` | `R` | Lists and Settings (not while typing in a field) | Receive a payment from the selected party (Parties) |
+| `S` | `S` | Lists and Settings (not while typing in a field) | Statement of the selected party (Parties) |
 | `Del` | `Del` | Lists and Settings (not while typing in a field) | Delete selected party (Parties) |
 | `P` | `P` | Lists and Settings (not while typing in a field) | View / print selected voucher (Register) |
 | `C` | `C` | Lists and Settings (not while typing in a field) | Cancel selected voucher (Register) |
+| `T` | `T` | Lists and Settings (not while typing in a field) | Return items from the selected voucher: a credit note (Register) |
 | `Ctrl+D` | `⌘D` | Lists and Settings (not while typing in a field) | Duplicate selected voucher (Register) |
 | `Ctrl+S` | `⌘S` | Lists and Settings (not while typing in a field) | Save settings (Settings) |
 

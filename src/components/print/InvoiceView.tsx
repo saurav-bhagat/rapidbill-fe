@@ -1,11 +1,12 @@
 import type React from 'react'
-import { useMemo } from 'react'
+import { Fragment, useMemo } from 'react'
 import i18n from '@/i18n'
-import { docTitleKey, isInterState } from '@/lib/invoice'
+import { docTitleKey, dueOf, hsnSummary, isInterState } from '@/lib/invoice'
 import { invoiceFieldsOf } from '@/lib/invoiceFields'
 import { layoutColumns } from '@/lib/invoiceLayout'
 import { formatAmount, formatDate, formatQty } from '@/lib/format'
 import { stateName } from '@/lib/gst'
+import { billQrAmount, isUpiId, qrSvg, upiLink } from '@/lib/qr'
 import { amountInWords } from '@/lib/words'
 import type { Settings, Voucher } from '@/services'
 
@@ -14,7 +15,7 @@ interface Col { key: string; head: string; right?: boolean; mono?: boolean; grow
 
 export type Paper = 'A4' | 'A5'
 
-interface Props { voucher: Voucher; settings: Settings; paper: Paper; /** true = fixed-size sheet for on-screen preview */ sheet?: boolean }
+interface Props { voucher: Voucher; settings: Settings; paper: Paper; /** true = fixed-size sheet for on-screen preview */ sheet?: boolean; /** A reprint: what is still due on the bill today (see dueToday). Undefined = as at billing. */ dueNow?: number }
 
 const th = 'border border-neutral-400 px-1 py-0.5 text-left font-semibold [overflow-wrap:anywhere]'
 const td = 'border border-neutral-300 px-1 py-0.5 align-top [overflow-wrap:anywhere]'
@@ -24,7 +25,7 @@ const n = 'text-right tabular-nums font-mono'
  * GST invoice / stock issue challan. Black on white, no app theme, so it prints the same everywhere.
  * Its language is the business's print language (Settings), not the screen language, so a Hindi screen can still print English bills.
  */
-export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
+export function InvoiceView({ voucher: v, settings: s, paper, sheet, dueNow: dueLater }: Props) {
   const lang = s.printLanguage ?? 'en'
   const t = useMemo(() => i18n.getFixedT(lang, 'invoice'), [lang])
   const taxed = v.taxApplicable
@@ -54,6 +55,13 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
   ] as (Col | false)[]).filter((c): c is Col => !!c)
   // numbers and codes get the width they need, the description takes the rest and wraps (see invoiceLayout)
   const layout = layoutColumns(cols.map((c) => ({ head: c.head, grow: c.grow, wrap: c.wrap, cells: v.lines.map((l, i) => String(c.cell(l, i) ?? '')) })), paper)
+  // a QR code to pay what is still due: only on a credit bill that has something due, when the business turned it on and has a real UPI ID
+  const billed = dueOf(v)
+  const dueNow = dueLater ?? billed
+  const qrAmount = billQrAmount(v, dueNow)
+  const upiQr = f.upiQr && qrAmount > 0 && isUpiId(s.upiId ?? '') ? qrSvg(upiLink({ pa: s.upiId, pn: s.companyName, am: qrAmount, tn: v.number }), a4 ? 104 : 84) : ''
+  const hsnRows = taxed && f.hsnSummary ? hsnSummary(v, s.stateCode) : []
+  const hsnSum = (k: 'taxable' | 'cgst' | 'sgst' | 'igst' | 'tax') => hsnRows.reduce((a, r) => a + r[k], 0)
   const showPhone = f.companyPhone && s.phone
   const showEmail = f.companyEmail && s.email
   const showPan = f.companyPan && s.pan
@@ -114,6 +122,42 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
         </tbody>
       </table>
 
+      {hsnRows.length > 0 && (
+        <table className="mt-2 w-full border-collapse" style={{ breakInside: 'avoid', fontSize: a4 ? 10 : 8 }}>
+          <thead>
+            <tr className="bg-neutral-100">
+              <th rowSpan={2} className={th}>{t('cols.hsn')}</th>
+              <th rowSpan={2} className={`${th} text-right`}>{t('hsn.taxable')}</th>
+              {inter ? <th colSpan={2} className={`${th} text-center`}>{t('hsn.igst')}</th> : <><th colSpan={2} className={`${th} text-center`}>{t('hsn.cgst')}</th><th colSpan={2} className={`${th} text-center`}>{t('hsn.sgst')}</th></>}
+              <th rowSpan={2} className={`${th} text-right`}>{t('hsn.totalTax')}</th>
+            </tr>
+            <tr className="bg-neutral-100">
+              {(inter ? [0] : [0, 1]).map((i) => <Fragment key={i}><th className={`${th} text-right`}>{t('hsn.rate')}</th><th className={`${th} text-right`}>{t('hsn.amt')}</th></Fragment>)}
+            </tr>
+          </thead>
+          <tbody>
+            {hsnRows.map((r) => (
+              <tr key={`${r.hsn}|${r.gstPct}`}>
+                <td className={`${td} font-mono`}>{r.hsn}</td>
+                <td className={`${td} ${n}`}>{formatAmount(r.taxable)}</td>
+                {inter
+                  ? <><td className={`${td} ${n}`}>{r.gstPct}%</td><td className={`${td} ${n}`}>{formatAmount(r.igst)}</td></>
+                  : <><td className={`${td} ${n}`}>{r.gstPct / 2}%</td><td className={`${td} ${n}`}>{formatAmount(r.cgst)}</td><td className={`${td} ${n}`}>{r.gstPct / 2}%</td><td className={`${td} ${n}`}>{formatAmount(r.sgst)}</td></>}
+                <td className={`${td} ${n}`}>{formatAmount(r.tax)}</td>
+              </tr>
+            ))}
+            <tr className="font-semibold">
+              <td className={td}>{t('cols.total')}</td>
+              <td className={`${td} ${n}`}>{formatAmount(hsnSum('taxable'))}</td>
+              {inter
+                ? <><td className={td} /><td className={`${td} ${n}`}>{formatAmount(hsnSum('igst'))}</td></>
+                : <><td className={td} /><td className={`${td} ${n}`}>{formatAmount(hsnSum('cgst'))}</td><td className={td} /><td className={`${td} ${n}`}>{formatAmount(hsnSum('sgst'))}</td></>}
+              <td className={`${td} ${n}`}>{formatAmount(hsnSum('tax'))}</td>
+            </tr>
+          </tbody>
+        </table>
+      )}
+
       <div className="mt-2 grid grid-cols-[1fr_auto] gap-4" style={{ breakInside: 'avoid' }}>
         <div>
           {f.amountInWords && <div className="mt-2"><span className="text-neutral-500">{t('amountInWords')}</span><span className="font-semibold">{amountInWords(v.totals.grandTotal, lang)}</span></div>}
@@ -128,6 +172,13 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
               : <><tr><td className="py-px pr-4">{t('totals.cgst')}</td><td className={n}>{formatAmount(v.totals.cgst)}</td></tr><tr><td className="py-px pr-4">{t('totals.sgst')}</td><td className={n}>{formatAmount(v.totals.sgst)}</td></tr></>)}
             {v.totals.roundOff !== 0 && <tr><td className="py-px pr-4">{t('totals.roundOff')}</td><td className={n}>{v.totals.roundOff > 0 ? '+' : '-'}{formatAmount(Math.abs(v.totals.roundOff))}</td></tr>}
             <tr className="border-t-2 border-black font-bold" style={{ fontSize: a4 ? 14 : 11 }}><td className="pr-4 pt-1">{t('totals.grandTotal')}</td><td className={`${n} pt-1`}>₹{formatAmount(v.totals.grandTotal)}</td></tr>
+            {f.paymentDetails && v.payment === 'CREDIT' && (
+              <>
+                {(v.paidAmount ?? 0) > 0 && <tr><td className="py-px pr-4">{t('totals.paid')}</td><td className={n}>{formatAmount(v.paidAmount ?? 0)}</td></tr>}
+                <tr className="font-semibold"><td className="py-px pr-4">{t('totals.balanceDue')}</td><td className={n}>₹{formatAmount(billed)}</td></tr>
+                {dueNow !== billed && <tr className="font-semibold"><td className="py-px pr-4">{t('totals.dueToday')}</td><td className={n}>₹{formatAmount(dueNow)}</td></tr>}
+              </>
+            )}
           </tbody>
         </table>
       </div>
@@ -138,6 +189,12 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet }: Props) {
           {f.bank && s.bankName && <div>{s.bankName}</div>}
           {f.bank && s.bankAccount && <div>{t('account')} <span className="font-mono">{s.bankAccount}</span>{s.bankIfsc && <> · {t('ifsc')} <span className="font-mono">{s.bankIfsc}</span></>}</div>}
           {f.upi && s.upiId && <div>{t('upi')}: <span className="font-mono">{s.upiId}</span></div>}
+          {upiQr && (
+            <div className="mt-2 flex items-center gap-2" style={{ breakInside: 'avoid' }}>
+              <div dangerouslySetInnerHTML={{ __html: upiQr }} />
+              <div className="font-semibold">{t('scanToPay', { amount: `₹${formatAmount(qrAmount)}` })}</div>
+            </div>
+          )}
           {f.terms && <div className="mt-2 whitespace-pre-line text-neutral-500">{s.terms?.trim() || t('terms')}</div>}
         </div>
         <div className="flex flex-col items-end justify-between text-right">

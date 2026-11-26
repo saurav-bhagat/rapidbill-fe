@@ -66,7 +66,7 @@ export function BillMock() {
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(15,23,42,0.3)]">
       <div className="flex items-center justify-between border-b border-line px-5 py-3">
-        <div><div className="text-sm font-bold">Tax Invoice · SI-2026-0042</div><div className="text-xs text-ink-600">Apollo Pharmacy, Koramangala</div></div>
+        <div><div className="text-sm font-bold">Tax Invoice · SI-2627-0042</div><div className="text-xs text-ink-600">Apollo Pharmacy, Koramangala</div></div>
         <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary">GST ready</span>
       </div>
       <div className="grid grid-cols-[1fr_44px_64px_44px_80px] gap-x-2 bg-sunken px-5 py-2 text-[11px] font-semibold text-ink-600"><span>Item</span><span className="text-right">Qty</span><span className="text-right">Rate</span><span className="text-right">GST</span><span className="text-right">Amount</span></div>

@@ -127,7 +127,9 @@
       "ISSUE": "Stock issue",
       "CANCEL": "Issue cancelled",
       "EDIT_REVERSE": "Issue edited",
-      "ADJUST": "Adjustment"
+      "ADJUST": "Adjustment",
+      "RETURN": "Returned",
+      "RETURN_CANCEL": "Return cancelled"
     },
     "failed": "Could not load the stock history.",
     "retry": "Try again"

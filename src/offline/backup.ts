@@ -19,13 +19,14 @@ export interface Backup {
   entries: { entry: OutboxEntry; record: Voucher | Item | Party | null }[]
 }
 
-const storeOf = (e: OutboxEntry) => (e.kind === 'item' ? 'items' : e.kind === 'party' ? 'parties' : 'vouchers') as 'items' | 'parties' | 'vouchers'
+/** Where the device keeps the record a queue entry stands for. Money received has none: its only copy is the queue entry. */
+const storeOf = (e: OutboxEntry) => (e.kind === 'receipt' || e.kind === 'return' ? null : ((e.kind === 'item' ? 'items' : e.kind === 'party' ? 'parties' : 'vouchers') as 'items' | 'parties' | 'vouchers'))
 
 export async function buildBackup(m: Mirror, workspaceId: string): Promise<Backup> {
   const entries = await listOutbox(m)
   return {
     app: 'rapidbill', version: 1, madeAt: new Date().toISOString(), workspaceId,
-    entries: await Promise.all(entries.map(async (entry) => ({ entry, record: (await m.get<Voucher | Item | Party>(storeOf(entry), entry.id)) ?? null }))),
+    entries: await Promise.all(entries.map(async (entry) => { const store = storeOf(entry); return { entry, record: store ? (await m.get<Voucher | Item | Party>(store, entry.id)) ?? null : null } })),
   }
 }
 
@@ -40,6 +41,10 @@ export function backupToCsv(b: Backup): string {
       const v = record as Voucher | null
       rows.push(['Bill', entry.number, v?.date ?? entry.payload.date, entry.partyName, entry.payload.payment,
         (v?.lines ?? []).map((l) => `${l.name} x ${l.qty}`).join('; '), (entry.total / 100).toFixed(2), v?.status === 'CANCELLED' ? 'Cancelled' : status])
+    } else if (entry.kind === 'return') {
+      rows.push(['Return', entry.number, entry.payload.date, entry.partyName, entry.payload.settlement, entry.record.lines.map((l) => `${l.name} x ${l.qty}`).join('; '), (entry.total / 100).toFixed(2), status])
+    } else if (entry.kind === 'receipt') {
+      rows.push(['Receipt', '', entry.payload.date, entry.partyName, entry.payload.mode, entry.payload.note, (entry.total / 100).toFixed(2), status])
     } else if (entry.kind === 'item') {
       rows.push(['Item', entry.payload.code, '', entry.payload.name, '', `opening stock ${entry.payload.currentStock}`, '', status])
     } else {
@@ -55,6 +60,8 @@ const isEntry = (e: unknown): e is OutboxEntry => {
   if (x.payload.id !== x.id) return false
   if (x.kind === 'item') return typeof (x.payload as { code?: unknown }).code === 'string'
   if (x.kind === 'party') return typeof (x.payload as { name?: unknown }).name === 'string'
+  if (x.kind === 'return') { const r = x.payload as { invoiceId?: unknown; lines?: unknown; date?: unknown }; return typeof r.invoiceId === 'string' && Array.isArray(r.lines) && typeof r.date === 'string' && !!(x as { record?: unknown }).record }
+  if (x.kind === 'receipt') { const r = x.payload as { partyId?: unknown; amount?: unknown; date?: unknown }; return typeof r.partyId === 'string' && typeof r.amount === 'number' && typeof r.date === 'string' }
   const p = x.payload as { lines?: unknown; date?: unknown }
   return (x.kind === undefined || x.kind === 'voucher') && Array.isArray(p.lines) && typeof p.date === 'string'
 }
@@ -83,7 +90,8 @@ export async function restoreBackup(m: Mirror, workspaceId: string, b: Backup): 
   for (const { entry, record } of [...b.entries].sort((x, y) => x.entry.seq - y.entry.seq)) {
     if (have.has(entry.id)) continue
     puts.push({ ...entry, seq: last + ++restored, status: 'pending', error: undefined, attempts: 0 })
-    if (record) rows[storeOf(entry)].push(record)
+    const store = storeOf(entry)
+    if (record && store) rows[store].push(record)
   }
   if (puts.length) await m.batch([{ store: 'outbox', put: puts }, { store: 'vouchers', put: rows.vouchers }, { store: 'items', put: rows.items }, { store: 'parties', put: rows.parties }])
   await refreshOutboxState(m)

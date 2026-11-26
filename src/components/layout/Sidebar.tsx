@@ -32,7 +32,7 @@ export function Sidebar() {
     document.addEventListener('visibilitychange', visible)
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', visible) }
   }, [showEarn, userId])
-  const items = NAV.filter((n) => !n.ownerOnly || (apiEnabled && isOwner))
+  const items = NAV.filter((n) => (!n.ownerOnly || (apiEnabled && isOwner)) && (!n.accountOnly || apiEnabled))
   return (
     <aside className={`no-print flex h-full shrink-0 flex-col overflow-hidden border-r border-black/10 bg-nav text-white transition-[width] duration-150 ${c ? 'w-16' : 'w-60'}`}>
       <div className="flex h-14 items-center gap-3 border-b border-white/10 px-3.5">

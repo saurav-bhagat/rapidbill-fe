@@ -27,9 +27,9 @@ type Tab = 'general' | 'profile' | 'invoice'
 const PROFILE_KEYS = ['companyName', 'address', 'phone', 'email', 'pan', 'gstin', 'stateCode', 'bankName', 'bankAccount', 'bankIfsc', 'upiId']
 const FIELD_GROUPS: { title: string; keys: InvoiceFieldKey[] }[] = [
   { title: 'columns', keys: ['hsn', 'batchExpiry', 'mrp', 'unit', 'baseQty', 'discount', 'taxable'] },
-  { title: 'header', keys: ['companyPhone', 'companyEmail', 'companyPan', 'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode'] },
-  { title: 'summary', keys: ['amountInWords'] },
-  { title: 'footer', keys: ['bank', 'upi', 'terms', 'signature'] },
+  { title: 'header', keys: ['companyPhone', 'companyEmail', 'companyPan', 'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'paymentDetails'] },
+  { title: 'summary', keys: ['hsnSummary', 'amountInWords'] },
+  { title: 'footer', keys: ['bank', 'upi', 'upiQr', 'terms', 'signature'] },
 ]
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {

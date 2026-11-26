@@ -9,6 +9,8 @@ import { useHotkey } from '@/lib/hotkeys'
 import { voucherTypeLabel } from '@/lib/invoice'
 import { useAsync } from '@/lib/useAsync'
 import { services, type Item } from '@/services'
+import { apiEnabled } from '@/services/http/client'
+import { httpReturns } from '@/services/http/services'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Segmented } from '@/components/ui/Segmented'
@@ -77,6 +79,10 @@ export function Home() {
   const q1 = useAsync(() => (services.vouchers.recent ?? services.vouchers.list)())
   const q2 = useAsync(() => services.items.list())
   const q3 = useAsync(() => services.settings.get())
+  // who owes money: a nice-to-have, so a failure here never blocks the screen
+  const { data: parties } = useAsync(() => services.parties.list())
+  // goods that came back this month: only known online (returns are kept on the server); offline the figures are as billed
+  const { data: rets } = useAsync(() => (apiEnabled ? httpReturns.listRange(`${todayISO().slice(0, 7)}-01`, todayISO()).catch(() => undefined) : Promise.resolve(undefined)))
   const { data: vouchers } = q1
   const { data: items } = q2
   const { data: settings } = q3
@@ -89,6 +95,11 @@ export function Home() {
 
   const gstOn = settings.gstEnabled !== false
   const max = Math.max(1, ...d.series.map((p) => p.amount))
+  const back = (only?: string) => { const rs = (rets ?? []).filter((r) => !only || r.date === only); return { count: rs.length, amount: rs.reduce((s, r) => s + r.totals.grandTotal, 0), tax: rs.reduce((s, r) => s + r.totals.cgst + r.totals.sgst + r.totals.igst, 0) } }
+  const backMonth = back()
+  const backToday = back(todayISO())
+  const owing = (parties ?? []).filter((p) => p.balance > 0).sort((a, b) => b.balance - a.balance)
+  const owed = owing.reduce((s, p) => s + p.balance, 0)
   const attention = d.negativeStock.length + d.outOfStock.length + d.lowStock.length
 
   return (
@@ -110,11 +121,11 @@ export function Home() {
         </Link>
       )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Tile icon={IndianRupee} label={t('tile.todayBilling')} value={formatINR(d.today.amount)} sub={<Change now={d.today.amount} before={d.yesterday.amount} />} />
+        <Tile icon={IndianRupee} label={t('tile.todayBilling')} value={formatINR(d.today.amount - backToday.amount)} sub={backToday.count ? t('tile.afterReturns', { amount: formatINR(backToday.amount) }) : <Change now={d.today.amount} before={d.yesterday.amount} />} />
         <Tile icon={FileText} tone="green" label={t('tile.billsToday')} value={d.today.bills} sub={t('tile.unitsIssued', { qty: formatQty(d.today.qty) })} />
-        <Tile icon={CalendarDays} tone="violet" label={t('tile.thisMonth')} value={formatINR(d.month.amount)} sub={t('tile.monthSub', { count: d.month.bills, qty: formatQty(d.month.qty) })} />
+        <Tile icon={CalendarDays} tone="violet" label={t('tile.thisMonth')} value={formatINR(d.month.amount - backMonth.amount)} sub={backMonth.count ? t('tile.afterReturns', { amount: formatINR(backMonth.amount) }) : t('tile.monthSub', { count: d.month.bills, qty: formatQty(d.month.qty) })} />
         {gstOn
-          ? <Tile icon={Percent} tone="amber" label={t('tile.taxMonth')} value={formatINR(d.month.tax)} sub="CGST + SGST + IGST" />
+          ? <Tile icon={Percent} tone="amber" label={t('tile.taxMonth')} value={formatINR(d.month.tax - backMonth.tax)} sub={backMonth.count ? t('tile.afterReturns', { amount: formatINR(backMonth.tax) }) : 'CGST + SGST + IGST'} />
           : <Tile icon={Warehouse} label={t('tile.stockValue')} value={formatINR(d.stockValue)} sub={t('tile.itemCount', { count: d.itemCount })} />}
       </div>
 
@@ -156,6 +167,23 @@ export function Home() {
           {gstOn && <div className="border-t border-line px-5 py-3 text-sm text-ink-600">{t('attention.stockValueCost')} <span className="num font-medium">{formatINR(d.stockValue)}</span></div>}
         </Card>
       </div>
+
+      {owing.length > 0 && (
+        <Card title={t('owed.title')} right={<Link to="/parties" className="text-base font-medium text-primary hover:underline">{t('owed.viewAll')}</Link>}>
+          <div className="flex items-baseline gap-3 border-b border-line px-5 py-3">
+            <span className="num text-2xl font-bold">{formatINR(owed)}</span>
+            <span className="text-base text-ink-600">{t('owed.from', { count: owing.length })}</span>
+          </div>
+          <ul className="divide-y divide-line">
+            {owing.slice(0, 5).map((p) => (
+              <li key={p.id} className="flex h-11 items-center gap-3 px-5">
+                <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
+                <span className="num font-semibold">{formatINR(p.balance)}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Card title={t('top.title')} right={<span className="text-sm text-ink-600">{t('top.byValue')}</span>}>

@@ -72,7 +72,10 @@ export function PartyFormDrawer({ open, party, existing, defaultState = '', onCl
     setSaving(true)
     try {
       const data = { name, type: d.type, gstin: d.gstin, stateCode: d.stateCode, phone: d.phone.trim(), address: d.address.trim(), balance }
-      const saved = party ? await services.parties.update(party.id, data) : await services.parties.create(data)
+      // An edit sends the balance only when the person changed it: bills and payments move it in the meantime, and an old figure must never overwrite them.
+      const { balance: _b, ...rest } = data
+      void _b
+      const saved = party ? await services.parties.update(party.id, balance !== party.balance ? data : rest) : await services.parties.create(data)
       toast.success(t(isWaiting(saved.id) ? (party ? 'toast.updatedOffline' : 'toast.addedOffline') : (party ? 'toast.updated' : 'toast.added'), { name: saved.name }))
       onSaved(saved)
     } catch (err) {
@@ -110,7 +113,7 @@ export function PartyFormDrawer({ open, party, existing, defaultState = '', onCl
             {STATES.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.name}</option>)}
           </Select>
         </Field>
-        <Field label={t('form.balance')} error={errors.balance} hint={t('form.balanceHint')}>
+        <Field label={t('form.balance')} error={errors.balance} hint={party ? t('form.balanceHintEdit') : t('form.balanceHint')}>
           <Input name="balance" value={d.balance} onChange={(e) => set('balance', e.target.value)} inputMode="decimal" className="num" />
         </Field>
         <div className="col-span-2"><Field label={t('form.address')}><Textarea name="address" rows={3} value={d.address} onChange={(e) => set('address', e.target.value)} /></Field></div>

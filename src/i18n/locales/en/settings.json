@@ -38,7 +38,7 @@
     "title": "Billing",
     "hint": "Defaults for new vouchers.",
     "prefix": "Voucher prefix",
-    "prefixHint": "Numbers look like SI-2026-0001",
+    "prefixHint": "Numbers look like SI-2627-0001",
     "defaultType": "Default voucher type",
     "taxInvoice": "Tax Invoice",
     "invoice": "Invoice",
@@ -63,7 +63,7 @@
     "account": "Account number",
     "ifsc": "IFSC",
     "upi": "UPI ID",
-    "upiHint": "Printed as text, no QR code yet"
+    "upiHint": "Printed as text. Turn on \"UPI QR code\" under Invoice to print a QR for what is due on credit bills"
   },
   "data": {
     "title": "Data",
@@ -130,6 +130,7 @@
       "partyAddress": "Customer address",
       "placeOfSupply": "Place of supply",
       "paymentMode": "Payment mode",
+      "paymentDetails": "Paid and balance due (credit bills)",
       "hsnSummary": "HSN-wise tax summary",
       "amountInWords": "Amount in words",
       "bank": "Bank details",
@@ -137,7 +138,8 @@
       "terms": "Terms and conditions",
       "signature": "Signature line",
       "baseQty": "Also show the quantity in the item's own unit, e.g. 900 GM (0.9 KG)",
-      "taxable": "Taxable amount (before tax)"
+      "taxable": "Taxable amount (before tax)",
+      "upiQr": "UPI QR code to pay what is due (credit bills)"
     },
     "termsLabel": "Terms and conditions text",
     "termsHint": "Leave empty to print the standard line.",

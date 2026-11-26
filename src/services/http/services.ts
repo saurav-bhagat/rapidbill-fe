@@ -2,8 +2,9 @@ import { AppError } from '../errors'
 import type { BillingService, VoucherInput } from '../voucher'
 import type { ImportOp, InventoryService } from '../inventory'
 import type { SettingsService } from '../settings'
-import type { Item, ItemService, Meta, Party, PartyService, Repo, Settings, StockLedgerEntry, Voucher, VoucherService } from '../types'
+import type { Item, ItemService, Meta, Party, PartyService, Receipt, ReceiptInput, Repo, ReturnInput, SalesReturn, Settings, Statement, StockLedgerEntry, Voucher, VoucherService } from '../types'
 import { api, apiAll } from './client'
+import type { GstReport } from '@/lib/gstReport'
 
 const META: (keyof Meta)[] = ['id', 'workspaceId', 'createdBy', 'createdAt', 'updatedAt']
 /** The API refuses unknown fields, so record bookkeeping is stripped before sending. */
@@ -77,8 +78,30 @@ export function createHttpBilling(): BillingService {
     nextNumber: async (date) => (await api<{ number: string }>('/vouchers/next-number', { query: { date } })).number,
     save: (input: VoucherInput) => api<Voucher>('/vouchers', { method: 'POST', body: input }),
     update: (id, input) => api<Voucher>(`/vouchers/${encodeURIComponent(id)}`, { method: 'PUT', body: input }),
-    cancel: (id) => api<Voucher>(`/vouchers/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
+    cancel: (id, opts) => api<Voucher>(`/vouchers/${encodeURIComponent(id)}/cancel`, { method: 'POST', ...(opts?.keepPaid && { body: { keepPaid: true } }) }),
   }
+}
+
+/** Receipts on the server. The device chooses the id, so a receipt sent twice is saved once. */
+export const httpReceipts = {
+  create: (input: ReceiptInput & { id: string; clientCreatedAt: string }) => api<Receipt>('/receipts', { method: 'POST', body: input, timeoutMs: 8000 }),
+  cancel: (id: string) => api<Receipt>(`/receipts/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
+  listForParty: (partyId: string) => apiAll<Receipt>('/receipts', { partyId }),
+  statement: (partyId: string, range: { from?: string; to?: string } = {}) => api<Statement>(`/parties/${encodeURIComponent(partyId)}/statement`, { query: { from: range.from, to: range.to } }),
+}
+
+/** Sales returns (credit notes) on the server. The device chooses the id, so a return sent twice is saved once. */
+export const httpReturns = {
+  create: (input: ReturnInput & { id: string; clientCreatedAt: string }) => api<SalesReturn>('/returns', { method: 'POST', body: input, timeoutMs: 8000 }),
+  cancel: (id: string) => api<SalesReturn>(`/returns/${encodeURIComponent(id)}/cancel`, { method: 'POST' }),
+  listForBill: (invoiceId: string) => apiAll<SalesReturn>('/returns', { invoiceId }),
+  /** Active returns dated in a range (Home shows sales after them). */
+  listRange: (from: string, to: string) => apiAll<SalesReturn>('/returns', { from, to, status: 'ACTIVE' }),
+}
+
+/** GST figures for a period, worked out on the server (needs the internet). */
+export const httpReports = {
+  gst: (from: string, to: string) => api<GstReport>('/reports/gst', { query: { from, to }, timeoutMs: 30_000 }),
 }
 
 export function createHttpSettings(): SettingsService {

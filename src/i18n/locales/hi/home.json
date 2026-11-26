@@ -13,7 +13,8 @@
     "taxMonth": "इस महीने वसूला टैक्स",
     "stockValue": "स्टॉक की कीमत (लागत पर)",
     "itemCount_one": "{{count}} आइटम",
-    "itemCount_other": "{{count}} आइटम"
+    "itemCount_other": "{{count}} आइटम",
+    "afterReturns": "{{amount}} की वापसी घटाकर"
   },
   "trend": {
     "title": "बिलिंग का रुझान",
@@ -52,5 +53,11 @@
     "title": "अपनी बिज़नेस प्रोफ़ाइल पूरी करें।",
     "body": "अपना पता और राज्य जोड़ें ताकि इनवॉइस और टैक्स सही बनें।",
     "cta": "अभी जोड़ें"
+  },
+  "owed": {
+    "title": "मिलना बाकी",
+    "viewAll": "सभी पार्टियाँ",
+    "from_one": "{{count}} पार्टी से",
+    "from_other": "{{count}} पार्टियों से"
   }
 }

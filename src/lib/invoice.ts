@@ -4,7 +4,28 @@ import type { PaymentStatus, Voucher } from '@/services/types'
 
 export interface HsnRow { hsn: string; gstPct: number; taxable: Paise; cgst: Paise; sgst: Paise; igst: Paise; tax: Paise }
 
-export const isInterState = (v: Voucher, sellerState: string): boolean => v.partyStateCode !== null && sellerState !== '' && v.partyStateCode !== sellerState
+/** What a bill adds to the party's balance: a credit bill's total minus what was paid when it was made. Any other bill adds nothing. */
+export const dueOf = (v: Pick<Voucher, 'payment' | 'totals' | 'paidAmount'>): Paise => (v.payment === 'CREDIT' ? Math.max(0, v.totals.grandTotal - (v.paidAmount ?? 0)) : 0)
+
+/**
+ * What is still due on a credit bill today, for a reprint, its UPI QR and the WhatsApp message: the unpaid part less goods returned on it
+ * and taken off the balance, never more than the party owes right now (payments are made against the party, not one bill).
+ * `partyBalance` undefined = not known, so only returns are taken off. Same in the web app and the phone app.
+ */
+export function dueToday(
+  v: Pick<Voucher, 'payment' | 'totals' | 'paidAmount' | 'status'>,
+  returns: { status: string; settlement: string; totals: { grandTotal: Paise } }[],
+  partyBalance?: Paise,
+): Paise {
+  if (v.status === 'CANCELLED') return 0
+  const back = returns.filter((r) => r.status === 'ACTIVE' && r.settlement === 'ADJUST').reduce((s, r) => s + r.totals.grandTotal, 0)
+  const due = Math.max(0, dueOf(v) - back)
+  return partyBalance === undefined ? due : Math.max(0, Math.min(due, partyBalance))
+}
+
+/** IGST or CGST+SGST as the bill charged it (the shop's state may have been set or changed since); only a 0% bill falls back to the states. */
+export const isInterState = (v: Pick<Voucher, 'partyStateCode'> & { totals?: Pick<Voucher['totals'], 'igst' | 'cgst' | 'sgst'> }, sellerState: string): boolean =>
+  v.totals && v.totals.igst > 0 ? true : v.totals && v.totals.cgst + v.totals.sgst > 0 ? false : v.partyStateCode !== null && sellerState !== '' && v.partyStateCode !== sellerState
 
 /** Key (in the `invoice` catalogue) of what the document is called. An invoice that carries no tax (non-GST business) is just an INVOICE. */
 export const docTitleKey = (v: Voucher): 'title.challan' | 'title.taxInvoice' | 'title.invoice' =>

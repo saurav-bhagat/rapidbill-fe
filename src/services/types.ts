@@ -55,6 +55,9 @@ export interface Party extends Meta {
 export type VoucherMode = 'TAX_INVOICE' | 'CHALLAN'
 export type VoucherStatus = 'ACTIVE' | 'CANCELLED'
 export type PaymentStatus = 'PAID_CASH' | 'PAID_UPI' | 'PAID_BANK' | 'CREDIT' | 'INTERNAL'
+/** How money came in when a credit bill was part paid, or when a receipt was entered. */
+export const RECEIPT_MODES = ['CASH', 'UPI', 'BANK'] as const
+export type ReceiptMode = (typeof RECEIPT_MODES)[number]
 
 export interface VoucherLine {
   itemId: string
@@ -110,13 +113,19 @@ export interface Voucher extends Meta {
     grandTotal: Paise
   }
   payment: PaymentStatus
+  /** CREDIT bills only: what was paid when the bill was made (paise, less than the total) and how. The unpaid rest is on the party's balance. Absent = nothing paid. */
+  paidAmount?: Paise
+  paidMode?: ReceiptMode
+  /** How much of each line has come back on active returns (in the unit it was sold in). Missing = nothing returned. */
+  returned?: number[]
   status: VoucherStatus
   cancelledAt?: string
   /** When the device made the bill, if it was made offline. */
   clientCreatedAt?: string
 }
 
-export type LedgerType = 'OPENING' | 'IMPORT' | 'ISSUE' | 'CANCEL' | 'EDIT_REVERSE' | 'ADJUST'
+/** RETURN = goods came back on a credit note; RETURN_CANCEL = that credit note was cancelled. */
+export type LedgerType = 'OPENING' | 'IMPORT' | 'ISSUE' | 'CANCEL' | 'EDIT_REVERSE' | 'ADJUST' | 'RETURN' | 'RETURN_CANCEL'
 
 export interface StockLedgerEntry extends Meta {
   itemId: string
@@ -166,11 +175,130 @@ export type BusinessType = (typeof BUSINESS_TYPES)[number]
 
 export const INVOICE_FIELD_KEYS = [
   'hsn', 'batchExpiry', 'mrp', 'unit', 'discount', 'hsnSummary', 'amountInWords', 'bank', 'upi', 'terms', 'signature',
-  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan', 'baseQty', 'taxable',
+  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan', 'baseQty', 'taxable', 'paymentDetails', 'upiQr',
 ] as const
 export type InvoiceFieldKey = (typeof INVOICE_FIELD_KEYS)[number]
 /** Columns that are not printed unless the business turns them on, so the description keeps the room. */
-export const INVOICE_FIELDS_OFF_BY_DEFAULT: readonly InvoiceFieldKey[] = ['hsn', 'batchExpiry', 'unit', 'taxable']
+export const INVOICE_FIELDS_OFF_BY_DEFAULT: readonly InvoiceFieldKey[] = ['hsn', 'batchExpiry', 'unit', 'taxable', 'hsnSummary', 'paymentDetails', 'upiQr']
+
+/** Money received from a party. Never edited or deleted: a mistake is cancelled and entered again. */
+export interface Receipt extends Meta {
+  /** RC-2627-0001. Empty while the receipt is still waiting on this device to be sent (the server gives the number). */
+  number: string
+  date: string
+  partyId: string
+  partyName: string
+  amount: Paise
+  mode: ReceiptMode
+  note: string
+  status: 'ACTIVE' | 'CANCELLED'
+  cancelledAt?: string
+  /** Only on this device: made without a connection and not sent yet. */
+  waiting?: boolean
+}
+export interface ReceiptInput { partyId: string; date: string; amount: Paise; mode: ReceiptMode; note: string }
+
+export type StatementRowType = 'OPENING' | 'BILL' | 'BILL_CANCEL' | 'BILL_EDIT_REVERSE' | 'RECEIPT' | 'RECEIPT_CANCEL' | 'ADJUST' | 'RETURN' | 'RETURN_CANCEL'
+export interface StatementRow {
+  date: string
+  type: StatementRowType
+  number?: string
+  voucherId?: string
+  receiptId?: string
+  returnId?: string
+  /** Paise the party owes more. */
+  debit: Paise
+  /** Paise the party owes less. */
+  credit: Paise
+  /** Running balance after this row (positive = the party owes us). */
+  balance: Paise
+  /** A bill that was part paid when made: its total and the part paid then (the unpaid rest is the debit). */
+  billTotal?: Paise
+  paidNow?: Paise
+  note?: string
+  /** A cancelled part-paid bill: the money paid at billing was kept as an advance (true) or given back (false). */
+  paidKept?: boolean
+}
+export interface Statement {
+  party: { id: string; name: string; type: PartyType; gstin: string; stateCode: string; address: string; phone: string }
+  from: string | null
+  to: string | null
+  opening: Paise
+  rows: StatementRow[]
+  debit: Paise
+  credit: Paise
+  closing: Paise
+  /** The party's balance right now, whatever range was asked for. */
+  balance: Paise
+}
+export interface ReceiptService {
+  /** Lowers the party's balance. Online it is saved on the server; with no connection it is kept here and sent later (`waiting`). */
+  create(input: ReceiptInput): Promise<Receipt>
+  /** Cancel a receipt: the money goes back on the party's balance. A receipt still waiting here is simply dropped. */
+  cancel(id: string): Promise<Receipt>
+  /** Newest first. Needs the internet for receipts already on the server; receipts waiting on this device are always included. */
+  listForParty(partyId: string): Promise<Receipt[]>
+  /** Needs the internet. */
+  statement(partyId: string, range?: { from?: string; to?: string }): Promise<Statement>
+}
+
+/** How the money for a return is settled: taken off the party's balance, or paid back. */
+export const RETURN_SETTLEMENTS = ['ADJUST', 'CASH', 'UPI', 'BANK'] as const
+export type ReturnSettlement = (typeof RETURN_SETTLEMENTS)[number]
+
+export interface ReturnLine {
+  /** Which line of the bill (0-based). */
+  line: number
+  itemId: string
+  name: string
+  code: string
+  hsn: string
+  unit: Unit
+  qty: number
+  per: number
+  baseUnit: Unit
+  stockQty: number
+  rate: Paise
+  discPct: number
+  gstPct: number
+  taxable: Paise
+  tax: Paise
+  total: Paise
+}
+
+/** A sales return (under GST, a credit note): goods back on a bill. Never edited: a mistake is cancelled and made again. */
+export interface SalesReturn extends Meta {
+  /** CN-2627-0001. Empty while it is still waiting on this device to be sent (the server gives the number). */
+  number: string
+  date: string
+  invoiceId: string
+  invoiceNo: string
+  invoiceDate: string
+  taxApplicable: boolean
+  interState: boolean
+  partyId: string | null
+  partyName: string
+  partyGstin: string
+  partyStateCode: string | null
+  partyAddress: string
+  lines: ReturnLine[]
+  totals: { itemCount: number; totalQty: number; taxable: Paise; cgst: Paise; sgst: Paise; igst: Paise; roundOff: Paise; grandTotal: Paise }
+  settlement: ReturnSettlement
+  reason: string
+  status: 'ACTIVE' | 'CANCELLED'
+  cancelledAt?: string
+  /** Only on this device: made without a connection and not sent yet. */
+  waiting?: boolean
+}
+export interface ReturnInput { invoiceId: string; date: string; lines: { line: number; qty: number }[]; settlement: ReturnSettlement; reason: string }
+export interface ReturnService {
+  /** Goods back on a bill. Online it is saved on the server; with no connection it is kept here and sent later (`waiting`). */
+  create(input: ReturnInput): Promise<SalesReturn>
+  /** Cancel a return: stock goes back out and any amount taken off the balance is put back. One still waiting here is simply dropped. */
+  cancel(id: string): Promise<SalesReturn>
+  /** Returns against a bill, newest first. Needs the internet for ones on the server; ones waiting here are always included. */
+  listForBill(invoiceId: string): Promise<SalesReturn[]>
+}
 
 /** Async service contracts. The localStorage implementations below can be swapped for an HTTP client. */
 export interface Repo<T extends Meta> {

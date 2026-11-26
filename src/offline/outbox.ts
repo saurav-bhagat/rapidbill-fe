@@ -3,7 +3,7 @@ import { AppError, type ErrorKey, type ErrorParams } from '@/services/errors'
 import { api } from '@/services/http/client'
 import { createBillingService, type BillingOwner, type VoucherInput } from '@/services/voucher'
 import type { StorageAdapter } from '@/services/storage/localStorageAdapter'
-import type { Item, Meta, Party, Voucher } from '@/services/types'
+import type { Item, Meta, Party, ReceiptInput, ReturnInput, SalesReturn, Voucher } from '@/services/types'
 import { formatVoucherNo } from '@/lib/voucherNo'
 import type { Mirror } from './db'
 import { noticeRefused } from './notices'
@@ -36,11 +36,23 @@ export interface VoucherEntry extends EntryBase {
   payload: VoucherPayload
   /** Cancelled before it reached the server: it is sent, then cancelled there, so the number stays on record as a cancelled bill. */
   cancel?: boolean
+  /** With `cancel`: the money paid at billing on this part-paid credit bill is kept as the party's advance. */
+  cancelKeepPaid?: boolean
 }
 export interface ItemEntry extends EntryBase { kind: 'item'; payload: ItemPayload }
 export interface PartyEntry extends EntryBase { kind: 'party'; payload: PartyPayload }
-export type OutboxEntry = VoucherEntry | ItemEntry | PartyEntry
+/** Money received from a party, made on this device and not sent yet. The id is chosen here so a retry saves once; the server gives the number. */
+export type ReceiptPayload = ReceiptInput & { id: string; clientCreatedAt: string }
+export interface ReceiptEntry extends EntryBase { kind: 'receipt'; payload: ReceiptPayload }
+/** Goods back on a bill, made on this device and not sent yet. `record` is the return as this device worked it out (shown and printed until the server answers). */
+export type ReturnPayload = ReturnInput & { id: string; clientCreatedAt: string }
+export interface ReturnEntry extends EntryBase { kind: 'return'; payload: ReturnPayload; record: SalesReturn }
+export type OutboxEntry = VoucherEntry | ItemEntry | PartyEntry | ReceiptEntry | ReturnEntry
 export const isVoucherEntry = (e: OutboxEntry): e is VoucherEntry => !e.kind || e.kind === 'voucher'
+export const isReceiptEntry = (e: OutboxEntry): e is ReceiptEntry => e.kind === 'receipt'
+export const isReturnEntry = (e: OutboxEntry): e is ReturnEntry => e.kind === 'return'
+/** Returns waiting here against a bill: the bill cannot be changed or cancelled until they are sent and cancelled there, or dropped. */
+const returnsWaitingFor = async (m: Mirror, billId: string) => (await listOutbox(m)).filter(isReturnEntry).some((r) => r.payload.invoiceId === billId)
 
 export const listOutbox = async (m: Mirror) => (await m.all<OutboxEntry>('outbox')).sort((a, b) => a.seq - b.seq)
 
@@ -86,8 +98,8 @@ const SERIES_PREFIX = '__series__:'
 async function stubs(m: Mirror): Promise<Voucher[]> {
   const top = (await m.getMeta<Record<string, number>>('numbering')) ?? {}
   return Object.entries(top).map(([series, seq]) => {
-    const i = series.lastIndexOf('-') // "SI-2026" -> prefix "SI", year 2026
-    return { id: SERIES_PREFIX + series, number: formatVoucherNo(series.slice(0, i), Number(series.slice(i + 1)), seq) } as unknown as Voucher
+    const i = series.lastIndexOf('-') // "SI-2627" -> prefix "SI", financial year 2626-27
+    return { id: SERIES_PREFIX + series, number: formatVoucherNo(series.slice(0, i), series.slice(i + 1), seq) } as unknown as Voucher
   })
 }
 
@@ -163,6 +175,7 @@ function differs(saved: Voucher | undefined, want: VoucherPayload): boolean {
   const savedLines = saved.lines.map((l) => ({ ...l, unit: (l.per ?? 1) !== 1 ? l.unit : undefined }))
   return lines(savedLines) !== lines(want.lines)
     || saved.partyId !== want.partyId || saved.payment !== want.payment || saved.date !== want.date
+    || (saved.paidAmount ?? 0) !== (want.paidAmount ?? 0) || (saved.paidMode ?? '') !== (want.paidMode ?? '')
     || (saved.remarks ?? '') !== (want.remarks ?? '') || JSON.stringify(saved.billDiscount ?? null) !== JSON.stringify(want.billDiscount ?? null)
 }
 
@@ -186,11 +199,19 @@ async function send(e: OutboxEntry, as?: AsBusiness): Promise<void> {
     if (saved && typeof saved.name === 'string' && !sameFields(saved, e.payload, PARTY_FIELDS)) await api<Party>(`/parties/${e.id}`, { method: 'PATCH', body: pickFields(e.payload, PARTY_FIELDS), timeoutMs: 20_000, as })
     return
   }
+  if (e.kind === 'return') {
+    await api('/returns', { method: 'POST', body: e.payload, timeoutMs: 20_000, as }) // a copy the server already has is simply returned
+    return
+  }
+  if (e.kind === 'receipt') {
+    await api('/receipts', { method: 'POST', body: e.payload, timeoutMs: 20_000, as }) // a copy the server already has is simply returned
+    return
+  }
   const saved = await api<Voucher>('/vouchers', { method: 'POST', body: e.payload, timeoutMs: 20_000, as })
   // Same idea for a bill: an older copy is replaced by sending the newer one as an edit.
   if (differs(saved, e.payload)) await api<Voucher>(`/vouchers/${e.id}`, { method: 'PUT', body: e.payload, timeoutMs: 20_000, as })
   if (e.cancel) {
-    try { await api<Voucher>(`/vouchers/${e.id}/cancel`, { method: 'POST', timeoutMs: 20_000, as }) } catch (err) {
+    try { await api<Voucher>(`/vouchers/${e.id}/cancel`, { method: 'POST', timeoutMs: 20_000, as, ...(e.cancelKeepPaid && { body: { keepPaid: true } }) }) } catch (err) {
       if (!(err instanceof AppError && err.key === 'alreadyCancelled')) throw err // already cancelled counts as done
     }
   }
@@ -238,6 +259,7 @@ export function editWaiting(m: Mirror, owner: BillingOwner, id: string, input: V
     const e = await m.get<OutboxEntry>('outbox', id)
     if (!e || !isVoucherEntry(e)) return undefined
     if (e.cancel) throw new AppError('cancelledNoEdit')
+    if (await returnsWaitingFor(m, id)) throw new AppError('billHasReturns')
     const { adapter, changes } = bufferedAdapter(m, await stubs(m))
     const voucher = await createBillingService(adapter, owner).update(id, { ...input, id })
     // If the edit adds an item or party that was made after this bill was queued, the bill must be sent after it.
@@ -261,18 +283,19 @@ export function editWaiting(m: Mirror, owner: BillingOwner, id: string, input: V
 }
 
 /** Cancel a bill that has not reached the server yet: stock and credit come back here, and the bill is sent and then cancelled there. */
-export function cancelWaiting(m: Mirror, owner: BillingOwner, id: string): Promise<Voucher | undefined> {
+export function cancelWaiting(m: Mirror, owner: BillingOwner, id: string, keepPaid = false): Promise<Voucher | undefined> {
   return exclusive(flushLock(m), () => exclusive('rapidbill-local-write', async () => {
     const e = await m.get<OutboxEntry>('outbox', id)
     if (!e || !isVoucherEntry(e)) return undefined
     if (e.status === 'failed') throw new AppError('billNeedsAttention')
+    if (await returnsWaitingFor(m, id)) throw new AppError('billHasReturns')
     const { adapter, changes } = bufferedAdapter(m, [])
-    const voucher = await createBillingService(adapter, owner).cancel(id)
+    const voucher = await createBillingService(adapter, owner).cancel(id, { keepPaid })
     await m.batch([
       { store: 'items', put: changes<Item>('items') },
       { store: 'parties', put: changes<Party>('parties') },
       { store: 'vouchers', put: [voucher] },
-      { store: 'outbox', put: [{ ...e, cancel: true }] },
+      { store: 'outbox', put: [{ ...e, cancel: true, ...(keepPaid && { cancelKeepPaid: true }) }] },
     ])
     await refreshOutboxState(m)
     return voucher
@@ -304,6 +327,7 @@ export async function renumberEntry(m: Mirror, owner: BillingOwner, id: string) 
 /** Drop a bill the server refused. The stock and credit it took on this device are given back, since the server never counted it. */
 export function discardEntry(m: Mirror, owner: BillingOwner, id: string) {
   return exclusive('rapidbill-local-write', async () => {
+    if (await returnsWaitingFor(m, id)) throw new AppError('billHasReturns')
     const { adapter, changes } = bufferedAdapter(m, [])
     if (await m.get<Voucher>('vouchers', id)) await createBillingService(adapter, owner).cancel(id)
     await m.batch([

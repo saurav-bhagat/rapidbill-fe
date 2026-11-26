@@ -64,6 +64,10 @@
     "earn": {
       "label": "Earn",
       "title": "Refer & Earn"
+    },
+    "reports": {
+      "label": "GST reports",
+      "title": "GST reports for the accountant"
     }
   },
   "layout": {
@@ -120,7 +124,11 @@
       "rename": "It is different: change the code or name",
       "newValue": "New code / name",
       "renameSend": "Save and send",
-      "discardRecordConfirm": "Discard this? It is removed from this device and never sent."
+      "discardRecordConfirm": "Discard this? It is removed from this device and never sent.",
+      "receiptLabel": "Payment",
+      "returnLabel": "Return",
+      "discardReceiptConfirm": "Throw away this payment? It was never saved on the server, so the amount goes back on the party's balance on this device.",
+      "discardReturnConfirm": "Throw away this return? It was never saved on the server, so the stock and any amount taken off the balance go back on this device."
     },
     "stale": "{{count}} bill(s) have been waiting to sync since {{time}}. Download a backup so they cannot be lost.",
     "staleBtn": "Download backup",

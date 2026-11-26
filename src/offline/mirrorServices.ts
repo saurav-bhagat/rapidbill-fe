@@ -2,13 +2,15 @@ import { AppError } from '@/services/errors'
 import type { BillingService } from '@/services/voucher'
 import type { InventoryService } from '@/services/inventory'
 import type { SettingsService } from '@/services/settings'
-import type { Item, ItemService, Party, PartyService, Settings, Voucher, VoucherService } from '@/services/types'
+import type { Item, ItemService, Party, PartyService, ReceiptService, ReturnService, Settings, Voucher, VoucherService } from '@/services/types'
 import { newId } from '@/lib/id'
 import { useAuth } from '@/auth/session'
 import { canWriteNow, lockedError } from '@/license/store'
 import { api } from '@/services/http/client'
-import { createHttpBilling, createHttpInventory, createHttpItems, createHttpParties, createHttpSettings, createHttpVouchers } from '@/services/http/services'
+import { createHttpBilling, createHttpInventory, createHttpItems, createHttpParties, createHttpSettings, createHttpVouchers, httpReceipts, httpReturns } from '@/services/http/services'
 import { cancelWaiting, editWaiting, listOutbox, localNextNumber, saveLocally } from './outbox'
+import { cancelWaitingReceipt, createReceiptLocally, waitingReceipts } from './receipts'
+import { cancelWaitingReturn, createReturnLocally, waitingReturns } from './returns'
 import { createItemLocally, createPartyLocally, editWaitingRecord, removeWaitingParty } from './records'
 import { setSync, useSync } from './state'
 import { currentMirror, syncNow } from './sync'
@@ -73,6 +75,8 @@ export function createMirrorServices() {
       writable()
       const local = await editWaitingRecord(m(), 'party', id, p)
       if (local) { void syncNow(); return local }
+      // The balance shown here includes bills, payments and returns not sent yet; correcting it now would count them twice.
+      if (p.balance !== undefined && (await listOutbox(m())).length > 0) throw new AppError('syncFirst')
       return written(httpParties.update(id, p))
     },
     remove: async (id) => { writable(); if (await removeWaitingParty(m(), id)) return; await written(httpParties.remove(id)) },
@@ -193,15 +197,80 @@ export function createMirrorServices() {
       if (local) { void syncNow(); return local }
       return written(httpBilling.update(id, i))
     },
+    cancel: async (id, opts) => {
+      writable()
+      const local = await cancelWaiting(m(), owner(), id, opts?.keepPaid)
+      if (local) { void syncNow(); return local }
+      return written(httpBilling.cancel(id, opts))
+    },
+  }
+
+  /**
+   * Money received from a party. Online with nothing waiting: straight to the server. Otherwise it is made here (the balance drops at once)
+   * and sent later. The statement and the list of earlier receipts need the internet; receipts still waiting here are always shown.
+   */
+  const receipts: ReceiptService = {
+    create: async (input) => {
+      writable()
+      const id = newId()
+      const clientCreatedAt = new Date().toISOString()
+      if (await goDirect()) {
+        try { const r = await httpReceipts.create({ ...input, id, clientCreatedAt }); await syncNow(); return r } catch (e) { offlineOrThrow(e) }
+      }
+      const r = await createReceiptLocally(m(), owner(), input, id, clientCreatedAt)
+      void syncNow()
+      return r
+    },
     cancel: async (id) => {
       writable()
-      const local = await cancelWaiting(m(), owner(), id)
+      const local = await cancelWaitingReceipt(m(), id)
       if (local) { void syncNow(); return local }
-      return written(httpBilling.cancel(id))
+      return written(httpReceipts.cancel(id))
+    },
+    listForParty: async (partyId) => {
+      const waiting = await waitingReceipts(m(), partyId)
+      try {
+        const sent = await httpReceipts.listForParty(partyId)
+        return [...waiting, ...sent]
+      } catch (e) {
+        if (e instanceof AppError && e.key === 'networkError') { setSync({ online: false }); return waiting }
+        throw e
+      }
+    },
+    statement: (partyId, range) => httpReceipts.statement(partyId, range),
+  }
+
+  /** Goods back on a bill. Same pattern as receipts: straight to the server when online with nothing waiting, otherwise made here and sent later. */
+  const returns: ReturnService = {
+    create: async (input) => {
+      writable()
+      const id = newId()
+      const clientCreatedAt = new Date().toISOString()
+      if (await goDirect()) {
+        try { const r = await httpReturns.create({ ...input, id, clientCreatedAt }); await syncNow(); return r } catch (e) { offlineOrThrow(e) }
+      }
+      const r = await createReturnLocally(m(), owner(), input, id, clientCreatedAt)
+      void syncNow()
+      return r
+    },
+    cancel: async (id) => {
+      writable()
+      const local = await cancelWaitingReturn(m(), id)
+      if (local) { void syncNow(); return local }
+      return written(httpReturns.cancel(id))
+    },
+    listForBill: async (invoiceId) => {
+      const waiting = await waitingReturns(m(), invoiceId)
+      try {
+        return [...waiting, ...(await httpReturns.listForBill(invoiceId))]
+      } catch (e) {
+        if (e instanceof AppError && e.key === 'networkError') { setSync({ online: false }); return waiting }
+        throw e
+      }
     },
   }
 
   const ledger = { list: async () => { throw new Error('The stock ledger is read per item through the API') }, forItem: inventory.ledgerFor, append: async () => { throw new Error('read-only') } }
 
-  return { items, parties, vouchers, settings, inventory, billing, ledger }
+  return { items, parties, vouchers, settings, inventory, billing, receipts, returns, ledger }
 }

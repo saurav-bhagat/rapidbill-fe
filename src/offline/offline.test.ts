@@ -139,7 +139,7 @@ describe('services on the device copy', () => {
     const { mirror, netErr } = await fresh()
     await mirror.putMany('items', [item('b', 'Bravo'), item('a', 'Alpha')])
     await mirror.putMany('parties', [{ id: 'p', name: 'Zed' }])
-    await mirror.putMany('vouchers', [{ id: 'v1', number: 'SI-2026-0002', date: day(-1) }, { id: 'v2', number: 'SI-2026-0010', date: day(-1) }])
+    await mirror.putMany('vouchers', [{ id: 'v1', number: 'SI-2627-0002', date: day(-1) }, { id: 'v2', number: 'SI-2627-0010', date: day(-1) }])
     const { api } = await import('@/services/http/client')
     vi.mocked(api).mockImplementation((async () => { throw netErr() }) as never)
     const { createMirrorServices } = await import('./mirrorServices')
@@ -147,8 +147,8 @@ describe('services on the device copy', () => {
     expect((await s.items.list()).map((i) => i.name)).toEqual(['Alpha', 'Bravo'])
     expect((await s.items.get('a'))?.name).toBe('Alpha')
     expect((await s.parties.list()).map((p) => p.name)).toEqual(['Zed'])
-    expect((await s.vouchers.list()).map((v) => v.number)).toEqual(['SI-2026-0010', 'SI-2026-0002']) // newest first, numbers in natural order
-    expect((await s.vouchers.get('v1'))?.number).toBe('SI-2026-0002')
+    expect((await s.vouchers.list()).map((v) => v.number)).toEqual(['SI-2627-0010', 'SI-2627-0002']) // newest first, numbers in natural order
+    expect((await s.vouchers.get('v1'))?.number).toBe('SI-2627-0002')
     expect(vi.mocked(api)).not.toHaveBeenCalledWith('/items', expect.anything())
   })
 

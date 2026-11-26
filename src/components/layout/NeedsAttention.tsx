@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/auth/session'
 import { errorText } from '@/lib/errors'
 import { formatINR } from '@/lib/format'
-import { discardEntry, isVoucherEntry, listOutbox, renumberEntry, retryEntry, type OutboxEntry } from '@/offline/outbox'
+import { discardEntry, isReceiptEntry, isReturnEntry, isVoucherEntry, listOutbox, renumberEntry, retryEntry, type OutboxEntry } from '@/offline/outbox'
+import { discardReceipt } from '@/offline/receipts'
+import { discardReturn } from '@/offline/returns'
 import { discardRecord, renameRecord, useExisting } from '@/offline/records'
 import { useSync } from '@/offline/state'
 import { currentMirror, syncNow } from '@/offline/sync'
@@ -34,7 +36,7 @@ export function NeedsAttention({ open, onClose }: { open: boolean; onClose: () =
     setBusy(true); setProblem('')
     try { await fn(); toast.success(t(done)); await syncNow() } catch (e) { const m = errorText(t, e); setProblem(m); toast.error(m) } finally { setBusy(false) }
   }
-  const label = (e: OutboxEntry) => (e.kind === 'item' ? t('sync.dlg.itemLabel') : e.kind === 'party' ? t('sync.dlg.partyLabel') : t('sync.dlg.billLabel'))
+  const label = (e: OutboxEntry) => (e.kind === 'item' ? t('sync.dlg.itemLabel') : e.kind === 'party' ? t('sync.dlg.partyLabel') : e.kind === 'receipt' ? t('sync.dlg.receiptLabel') : e.kind === 'return' ? t('sync.dlg.returnLabel') : t('sync.dlg.billLabel'))
 
   return (
     <>
@@ -46,14 +48,14 @@ export function NeedsAttention({ open, onClose }: { open: boolean; onClose: () =
           {rows.map((e) => (
             <li key={e.id} className="rounded border border-line p-3">
               <div className="flex items-baseline justify-between gap-3">
-                <span><span className="mr-2 text-xs uppercase text-ink-400">{label(e)}</span><span className="font-mono font-medium">{e.number}</span></span>
-                <span className="text-ink-600">{isVoucherEntry(e) ? `${e.partyName} · ${formatINR(e.total)}` : e.partyName}</span>
+                <span><span className="mr-2 text-xs uppercase text-ink-400">{label(e)}</span><span className="font-mono font-medium">{e.number || formatINR(e.total)}</span></span>
+                <span className="text-ink-600">{isVoucherEntry(e) || isReceiptEntry(e) || isReturnEntry(e) ? `${e.partyName} · ${formatINR(e.total)}` : e.partyName}</span>
               </div>
               {e.error && <p className="mt-1 text-sm text-danger">{t('sync.dlg.reason')}: {errorText(t, new AppError(e.error.key, e.error.params))}</p>}
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button disabled={busy} onClick={() => run(() => retryEntry(currentMirror(), e.id), 'sync.done.retry')}>{t('sync.dlg.retry')}</Button>
                 {isVoucherEntry(e) && e.error?.key === 'duplicateNumber' && <Button disabled={busy} onClick={() => run(() => renumberEntry(currentMirror(), owner(), e.id), 'sync.done.renumber')}>{t('sync.dlg.renumber')}</Button>}
-                {!isVoucherEntry(e) && e.error && CLASH.includes(e.error.key) && (
+                {!isVoucherEntry(e) && !isReceiptEntry(e) && !isReturnEntry(e) && e.error && CLASH.includes(e.error.key) && (
                   <>
                     <Button disabled={busy} onClick={() => run(() => useExisting(currentMirror(), e.id), 'sync.done.useExisting')}>{t('sync.dlg.useExisting')}</Button>
                     <Button disabled={busy} onClick={() => setRenaming({ id: e.id, value: e.number })}>{t('sync.dlg.rename')}</Button>
@@ -68,7 +70,7 @@ export function NeedsAttention({ open, onClose }: { open: boolean; onClose: () =
                 </form>
               )}
               {isVoucherEntry(e) && e.error?.key === 'duplicateNumber' && <p className="mt-1 text-sm text-ink-400">{t('sync.dlg.renumberHint')}</p>}
-              {!isVoucherEntry(e) && e.error && CLASH.includes(e.error.key) && <p className="mt-1 text-sm text-ink-400">{t('sync.dlg.useExistingHint')}</p>}
+              {!isVoucherEntry(e) && !isReceiptEntry(e) && !isReturnEntry(e) && e.error && CLASH.includes(e.error.key) && <p className="mt-1 text-sm text-ink-400">{t('sync.dlg.useExistingHint')}</p>}
             </li>
           ))}
         </ul>
@@ -76,9 +78,9 @@ export function NeedsAttention({ open, onClose }: { open: boolean; onClose: () =
       <ConfirmDialog open={!!discarding} danger title={t('sync.dlg.discard')} confirmLabel={t('sync.dlg.discard')} onCancel={() => setDiscarding(undefined)}
         onConfirm={() => {
           const e = discarding; setDiscarding(undefined)
-          if (e) void run(() => (isVoucherEntry(e) ? discardEntry(currentMirror(), owner(), e.id) : discardRecord(currentMirror(), e.id)), 'sync.done.discard')
+          if (e) void run(() => (isVoucherEntry(e) ? discardEntry(currentMirror(), owner(), e.id) : isReceiptEntry(e) ? discardReceipt(currentMirror(), e.id) : isReturnEntry(e) ? discardReturn(currentMirror(), e.id) : discardRecord(currentMirror(), e.id)), 'sync.done.discard')
         }}>
-        {discarding && isVoucherEntry(discarding) ? t('sync.dlg.discardConfirm') : t('sync.dlg.discardRecordConfirm')}
+        {discarding && isVoucherEntry(discarding) ? t('sync.dlg.discardConfirm') : discarding && isReceiptEntry(discarding) ? t('sync.dlg.discardReceiptConfirm') : discarding && isReturnEntry(discarding) ? t('sync.dlg.discardReturnConfirm') : t('sync.dlg.discardRecordConfirm')}
       </ConfirmDialog>
     </>
   )

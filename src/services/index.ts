@@ -11,7 +11,8 @@ import { createMirrorServices } from '../offline/mirrorServices'
 import { workspaceApi } from './http/services'
 import type { StockLedgerService } from './ledger'
 import type { SettingsService } from './settings'
-import type { Item, ItemService, Party, PartyService, Voucher, VoucherService } from './types'
+import { AppError } from './errors'
+import type { Item, ItemService, Party, PartyService, ReceiptService, ReturnService, Voucher, VoucherService } from './types'
 
 const adapter = createLocalStorageAdapter()
 
@@ -19,6 +20,8 @@ interface Services {
   items: ItemService
   inventory: InventoryService
   billing: BillingService
+  receipts: ReceiptService
+  returns: ReturnService
   parties: PartyService
   vouchers: VoucherService
   ledger: StockLedgerService
@@ -30,6 +33,9 @@ function localServices(): Services {
     items: createRepo<Item>(adapter, 'items'),
     inventory: createInventoryService(adapter),
     billing: createBillingService(adapter),
+    // Money received and statements are kept on the server; browser-only mode (no account) has no receipts.
+    returns: Object.fromEntries(['create', 'cancel', 'listForBill'].map((k) => [k, async () => { throw new AppError('serverMessage', { message: 'Returns need an account' }) }])) as unknown as ReturnService,
+    receipts: Object.fromEntries(['create', 'cancel', 'listForParty', 'statement'].map((k) => [k, async () => { throw new AppError('serverMessage', { message: 'Receipts need an account' }) }])) as unknown as ReceiptService,
     parties: { ...createRepo<Party>(adapter, 'parties'), importParties: createLocalPartyImport(adapter) },
     vouchers: createRepo<Voucher>(adapter, 'vouchers'),
     ledger: createLedgerService(adapter),

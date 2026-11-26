@@ -2,8 +2,8 @@ import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { addDays, format, startOfMonth } from 'date-fns'
-import { Ban, Copy, Pencil, Plus, Printer } from 'lucide-react'
-import { formatAmount, formatDate, todayISO } from '@/lib/format'
+import { Ban, Copy, Pencil, Plus, Printer, Undo2 } from 'lucide-react'
+import { formatAmount, formatDate, formatINR, todayISO } from '@/lib/format'
 import { useHotkey } from '@/lib/hotkeys'
 import { matchesQuery } from '@/lib/search'
 import { isWaiting } from '@/lib/saved'
@@ -12,8 +12,11 @@ import { useSync } from '@/offline/state'
 import { services, type Voucher } from '@/services'
 import { errorText } from '@/lib/errors'
 import { toast } from '@/store/toast'
-import { paymentLabel, voucherTypeLabel } from '@/lib/invoice'
+import { dueToday, paymentLabel, voucherTypeLabel } from '@/lib/invoice'
 import { PrintPreviewModal } from '@/components/print/PrintPreviewModal'
+import { ReturnDrawer } from '@/components/register/ReturnDrawer'
+import { hasReturns } from '@/lib/returns'
+import { useLicense } from '@/license/store'
 import { Badge } from '@/components/ui/Badge'
 import { LoadFailed } from '@/components/ui/LoadFailed'
 import { Button } from '@/components/ui/Button'
@@ -61,7 +64,18 @@ export function Issues() {
   const [sort, setSort] = useState<SortState>({ key: 'date', dir: 'desc' })
   const [selectedId, setSelectedId] = useState<string>()
   const [preview, setPreview] = useState<Voucher>()
+  // a reprint of a credit bill shows (and its UPI QR asks for) what is still due today: less returns on it, at most what the party owes now
+  const { data: due } = useAsync(async () => {
+    const v = preview
+    if (!v || v.payment !== 'CREDIT' || !v.partyId || v.status === 'CANCELLED') return undefined
+    const [rets, party] = await Promise.all([services.returns.listForBill(v.id).catch(() => []), services.parties.get(v.partyId).catch(() => undefined)])
+    return { id: v.id, amount: dueToday(v, rets, party?.balance) }
+  }, [preview?.id])
+  const dueNow = due && due.id === preview?.id ? due.amount : undefined
   const [toCancel, setToCancel] = useState<Voucher>()
+  const [keepPaid, setKeepPaid] = useState(false)
+  const [returnId, setReturnId] = useState<string>()
+  const canWrite = useLicense()?.canWrite ?? true
   const searchRef = useRef<HTMLInputElement>(null)
 
   const rows = useMemo(() => {
@@ -85,20 +99,28 @@ export function Issues() {
   const edit = (v?: Voucher) => {
     if (!v) return
     if (v.status === 'CANCELLED') return toast.error(t('toast.cancelledNoEdit'))
+    if (hasReturns(v)) return toast.error(t('billHasReturns', { ns: 'errors' }))
     navigate(`/issue/${v.id}/edit`)
   }
   const duplicate = (v?: Voucher) => { if (v) navigate(`/issue/new?from=${v.id}`) }
   const askCancel = (v?: Voucher) => {
     if (!v) return
     if (v.status === 'CANCELLED') return toast.error(t('toast.alreadyCancelled', { number: v.number }))
+    if (hasReturns(v)) return toast.error(t('billHasReturns', { ns: 'errors' }))
+    setKeepPaid(false)
     setToCancel(v)
+  }
+  const openReturn = (v?: Voucher) => {
+    if (!v) return
+    if (v.status === 'CANCELLED') return toast.error(t('returnBillCancelled', { ns: 'errors' }))
+    setSelectedId(v.id); setReturnId(v.id)
   }
   const doCancel = async () => {
     const v = toCancel
     setToCancel(undefined)
     if (!v) return
     try {
-      await services.billing.cancel(v.id)
+      await services.billing.cancel(v.id, { keepPaid })
       toast.success(t(isWaiting(v.id) ? 'toast.cancelledOffline' : 'toast.cancelled', { number: v.number }))
       reload()
     } catch (e) {
@@ -112,6 +134,7 @@ export function Issues() {
   useHotkey('p', () => view(selected))
   useHotkey('c', () => askCancel(selected))
   useHotkey('mod+d', () => duplicate(selected))
+  useHotkey('t', () => openReturn(selected))
 
   const columns: VColumn<Voucher>[] = [
     { key: 'number', header: t('columns.voucher'), width: '140px', sortable: true, cell: (v) => <span className={`font-mono font-medium ${v.status === 'CANCELLED' ? 'text-ink-400 line-through' : ''}`}>{v.number}</span> },
@@ -119,11 +142,12 @@ export function Issues() {
     { key: 'party', header: t('columns.party'), sortable: true, cell: (v) => <span className={v.partyId ? '' : 'text-ink-600'}>{v.partyName}</span> },
     { key: 'type', header: t('columns.type'), width: '120px', cell: (v) => <Badge tone={v.mode === 'TAX_INVOICE' && v.taxApplicable ? 'primary' : 'neutral'}>{voucherTypeLabel(v, t)}</Badge> },
     { key: 'items', header: t('columns.items'), width: '70px', align: 'right', cell: (v) => v.totals.itemCount },
-    { key: 'payment', header: t('columns.payment'), width: '170px', cell: (v) => <span className="text-ink-600">{paymentLabel(v.payment, t)}</span> },
+    { key: 'payment', header: t('columns.payment'), width: '170px', cell: (v) => <span className="text-ink-600">{v.payment === 'CREDIT' && v.paidAmount ? t('partPaid', { label: paymentLabel(v.payment, t), paid: formatINR(v.paidAmount) }) : paymentLabel(v.payment, t)}</span> },
     { key: 'total', header: t('columns.total'), width: '130px', align: 'right', sortable: true, cell: (v) => <span className={v.status === 'CANCELLED' ? 'text-ink-400 line-through' : 'font-medium'}>{formatAmount(v.totals.grandTotal)}</span> },
     { key: 'status', header: t('columns.status'), width: '190px', cell: (v) => (
       <span className="flex flex-wrap items-center gap-1">
         <Badge tone={v.status === 'ACTIVE' ? 'ok' : 'danger'}>{v.status === 'ACTIVE' ? t('status.active') : t('status.cancelled')}</Badge>
+        {hasReturns(v) && <Badge tone="warn">{t('status.returned')}</Badge>}
         {pendingIds.includes(v.id) && <Badge tone="warn">{t('sync.notSynced', { ns: 'common' })}</Badge>}
         {failedIds.includes(v.id) && <Badge tone="danger">{t('sync.refused', { ns: 'common' })}</Badge>}
       </span>
@@ -165,6 +189,7 @@ export function Issues() {
         <Button icon={<Pencil size={14} />} hotkey="e" disabled={!has || selected?.status === 'CANCELLED'} onClick={() => edit(selected)}>{t('actions.edit')}</Button>
         <Button icon={<Copy size={14} />} hotkey="mod+d" disabled={!has} onClick={() => duplicate(selected)}>{t('actions.duplicate')}</Button>
         <Button icon={<Ban size={14} />} hotkey="c" disabled={!has || selected?.status === 'CANCELLED'} onClick={() => askCancel(selected)}>{t('actions.cancelVoucher')}</Button>
+        <Button icon={<Undo2 size={14} />} hotkey="t" disabled={!has || selected?.status === 'CANCELLED'} onClick={() => openReturn(selected)}>{t('actions.returnItems')}</Button>
         <p className="ml-auto text-sm text-ink-600">
           {t('summary.count', { count: rows.length })}{cancelledCount > 0 && ` ${t('summary.cancelled', { count: cancelledCount })}`}
           <span className="mx-2 text-line">|</span>{t('summary.activeTotal')} <span className="font-mono text-ink-900">₹{formatAmount(activeTotal)}</span>
@@ -185,12 +210,21 @@ export function Issues() {
       />
       <p className="text-sm text-ink-400">{t('hint')}</p>
 
-      <PrintPreviewModal voucher={preview} settings={settings} onClose={() => setPreview(undefined)} />
+      <PrintPreviewModal voucher={preview} settings={settings} dueNow={dueNow} onClose={() => setPreview(undefined)} />
+      <ReturnDrawer open={!!returnId} bill={vouchers.find((v) => v.id === returnId)} settings={settings} canWrite={canWrite} onClose={() => setReturnId(undefined)} onChanged={reload} />
       <ConfirmDialog open={!!toCancel} title={t('cancel.title')} confirmLabel={t('actions.cancelVoucher')} danger onConfirm={doCancel} onCancel={() => setToCancel(undefined)}>
         {toCancel && (
           <div className="space-y-2">
             <p><span className="font-mono font-medium text-ink-900">{toCancel.number}</span> {t('cancel.summary', { party: toCancel.partyName, amount: formatAmount(toCancel.totals.grandTotal) })}</p>
             <p>{t(toCancel.payment === 'CREDIT' && toCancel.partyId ? 'cancel.bodyCredit' : 'cancel.body', { count: toCancel.totals.itemCount })}</p>
+            {toCancel.payment === 'CREDIT' && toCancel.partyId && (toCancel.paidAmount ?? 0) > 0 && (
+              <fieldset className="space-y-1 rounded border border-line p-2" data-testid="cancel-paid">
+                <legend className="px-1 text-sm text-ink-600">{t('cancel.paidQuestion', { amount: formatINR(toCancel.paidAmount ?? 0) })}</legend>
+                <label className="flex items-center gap-2"><input type="radio" name="keepPaid" checked={!keepPaid} onChange={() => setKeepPaid(false)} />{t('cancel.paidBack')}</label>
+                <label className="flex items-center gap-2"><input type="radio" name="keepPaid" checked={keepPaid} onChange={() => setKeepPaid(true)} />{t('cancel.paidKeep', { party: toCancel.partyName })}</label>
+              </fieldset>
+            )}
+            {toCancel.mode === 'TAX_INVOICE' && toCancel.date.slice(0, 7) < todayISO().slice(0, 7) && <p role="alert" className="rounded bg-warn-soft px-2 py-1 text-warn">{t('cancel.filedWarn')}</p>}
           </div>
         )}
       </ConfirmDialog>

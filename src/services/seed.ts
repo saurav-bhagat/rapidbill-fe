@@ -6,7 +6,7 @@ import { stampLedger, type NewLedgerEntry } from './ledger'
 import { defaultSettings } from './settings'
 import type { StorageAdapter } from './storage/localStorageAdapter'
 import { LOCAL_USER, WORKSPACE_ID, type Item, type Meta, type Party, type StockLedgerEntry, type Unit, type Voucher } from './types'
-import { formatVoucherNo } from '@/lib/voucherNo'
+import { financialYearOf, formatVoucherNo } from '@/lib/voucherNo'
 
 const meta = (at: string): Meta => ({ id: newId(), workspaceId: WORKSPACE_ID, createdBy: LOCAL_USER, createdAt: at, updatedAt: at })
 
@@ -88,7 +88,7 @@ export function buildSeed(now = new Date()): SeedBundle {
       taxApplicable: s.tax, sellerState, partyState: s.party?.stateCode ?? null, roundOff: true,
     })
     const id = newId()
-    const number = formatVoucherNo('SI', d.getFullYear(), idx + 1)
+    const number = formatVoucherNo('SI', financialYearOf(format(d, 'yyyy-MM-dd')), idx + 1)
     lines.forEach(({ it, qty }) => {
       it.currentStock -= qty
       ledgerNew.push({ at, e: { itemId: it.id, type: 'ISSUE', qtyDelta: -qty, balanceAfter: it.currentStock, voucherId: id, voucherNo: number } })

@@ -15,6 +15,8 @@ export interface CalcInput {
   partyState: string | null
   billDiscount?: { type: 'PCT' | 'AMT'; value: number } // AMT is in paise
   roundOff: boolean
+  /** Editing a saved bill for the same party: keep the split it was charged with (the shop's or party's state may have changed since). */
+  interState?: boolean
 }
 
 export interface CalcLine {
@@ -50,7 +52,7 @@ export interface CalcResult {
 export function calcVoucher(input: CalcInput): CalcResult {
   // Unknown party state (cash counter) is treated as intra-state.
   // no seller state set yet = treat as same state (CGST+SGST) rather than guessing IGST
-  const interState = input.partyState !== null && input.sellerState !== '' && input.partyState !== input.sellerState
+  const interState = input.interState ?? (input.partyState !== null && input.sellerState !== '' && input.partyState !== input.sellerState)
 
   const base = input.lines.map((l) => {
     const gross = Math.round(l.qty * l.rate)
@@ -105,4 +107,22 @@ export function calcVoucher(input: CalcInput): CalcResult {
     grandTotal: rounded,
     interState,
   }
+}
+
+/** The split a saved bill was charged with: IGST, CGST+SGST, or unknown (no tax on it, so the states decide). */
+export const chargedInterState = (t: { igst: number; cgst: number; sgst: number }): boolean | undefined => (t.igst > 0 ? true : t.cgst + t.sgst > 0 ? false : undefined)
+
+/**
+ * Editing a saved bill: which saved line each line of the edit stands for. Each line takes the first saved line of the same item that is
+ * not taken yet, in order. The server, the web app and the phone app all use this, so the totals on screen are the totals that get saved.
+ */
+export function matchSavedLines<T extends { itemId: string }>(itemIds: string[], saved: T[] | undefined): (T | undefined)[] {
+  if (!saved) return itemIds.map(() => undefined)
+  const used = new Set<number>()
+  return itemIds.map((id) => {
+    const i = saved.findIndex((o, j) => !used.has(j) && o.itemId === id)
+    if (i < 0) return undefined
+    used.add(i)
+    return saved[i]
+  })
 }

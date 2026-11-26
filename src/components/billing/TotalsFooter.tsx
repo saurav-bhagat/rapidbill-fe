@@ -1,10 +1,10 @@
-import { forwardRef } from 'react'
+import { forwardRef, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { paymentLabel } from '@/lib/invoice'
 import { amountInWords } from '@/lib/words'
 import type { CalcResult } from '@/lib/calc'
 import { formatAmount, formatQty } from '@/lib/format'
-import type { PaymentStatus } from '@/services'
+import { RECEIPT_MODES, type PaymentStatus, type ReceiptMode } from '@/services'
 import { Button } from '../ui/Button'
 import { Keycap } from '../ui/Keycap'
 
@@ -23,6 +23,17 @@ interface Props {
   onRoundOff: (v: boolean) => void
   payment: PaymentStatus
   onPayment: (p: PaymentStatus) => void
+  /** Credit bills: money received now (rupees as typed), how it was paid, and whether the text is not an amount. */
+  paidNow: string
+  onPaidNow: (v: string) => void
+  paidMode: ReceiptMode
+  onPaidMode: (m: ReceiptMode) => void
+  paidInvalid: boolean
+  /** Paise of the bill still unpaid after what was received now. */
+  due: number
+  paidInputRef?: Ref<HTMLInputElement>
+  /** Set when money is being paid by UPI now: opens the QR for the customer to scan. */
+  onShowQr?: () => void
   saving: boolean
   onSavePrint: () => void
   onSaveNew: () => void
@@ -71,6 +82,29 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
             {PAYMENT_CODES.map((k) => <option key={k} value={k}>{paymentLabel(k, t)}</option>)}
           </select>
         </label>
+        {p.payment === 'CREDIT' && (
+          <>
+            <label className="flex items-center gap-2 text-sm text-ink-600">
+              {t('totals.receivedNow')}
+              <input
+                ref={p.paidInputRef}
+                value={p.paidNow}
+                onChange={(e) => p.onPaidNow(e.target.value)}
+                placeholder="0"
+                inputMode="decimal"
+                aria-invalid={p.paidInvalid}
+                className={`num h-8 w-24 rounded border bg-surface px-2 text-base text-ink-900 focus:outline-none focus:ring-1 focus:ring-primary ${p.paidInvalid ? 'border-danger' : 'border-line focus:border-primary'}`}
+              />
+            </label>
+            {p.paidNow.trim() !== '' && !p.paidInvalid && (
+              <select value={p.paidMode} onChange={(e) => p.onPaidMode(e.target.value as ReceiptMode)} aria-label={t('totals.receivedHow')} className="h-8 rounded border border-line bg-surface px-2 text-base text-ink-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                {RECEIPT_MODES.map((m) => <option key={m} value={m}>{t(`totals.mode.${m}`)}</option>)}
+              </select>
+            )}
+            <Stat label={t('totals.balanceDue')} value={formatAmount(p.due)} strong />
+          </>
+        )}
+        {p.onShowQr && <Button onClick={p.onShowQr} data-testid="show-upi-qr">{t('upiQr.show')}</Button>}
         <label className="flex items-center gap-2 text-sm text-ink-600">
           {t('totals.billDiscount')} <Keycap combo="f4" />
           <input

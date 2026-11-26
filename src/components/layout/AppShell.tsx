@@ -21,6 +21,7 @@ function GlobalHotkeys() {
   useHotkey('alt+i', () => navigate('/inventory'))
   useHotkey('alt+p', () => navigate('/parties'))
   useHotkey('alt+e', () => { if (apiEnabled) navigate('/earn') }) // the page sends staff back home
+  useHotkey('alt+g', () => { if (apiEnabled) navigate('/reports') })
   useHotkey('alt+s', () => navigate('/settings'))
   useHotkey('alt+shift+b', () => navigate('/businesses'))
   useHotkey('shift+/', () => setShortcutsOpen(true), { allowInInput: false })
