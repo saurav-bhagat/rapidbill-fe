@@ -89,7 +89,7 @@
     "nameEmpty": "No party name",
     "nameLong": "Name is longer than 120 characters",
     "totals": "Totals row, ignored",
-    "stateMissing": "No state in the file, and your own state is not set. Add it in Settings → Business Profile"
+    "stateMissing": "No state in the file. Choose a state for rows without one above the list, or add it to the file"
   },
   "note": {
     "exists": "Already exists: skipped",
@@ -106,5 +106,7 @@
     "addressLong": "Address is longer than 300 characters: shortened",
     "balance": "Balance \"{{value}}\" is not a number: left at zero",
     "balanceKept": "Balance in the file ignored: existing balance kept"
-  }
+  },
+  "stateForBlank": "State for rows without one",
+  "stateNone": "Choose a state"
 }

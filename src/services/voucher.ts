@@ -4,7 +4,7 @@ import type { Paise } from '@/lib/money'
 import { roundQty } from '@/lib/qty'
 import { lineStockQty, sellingUnit, stockQtyOf } from '@/lib/units'
 import { dueOf } from '@/lib/invoice'
-import { financialYearOf, nextVoucherNo } from '@/lib/voucherNo'
+import { financialYearOf, MAX_NUMBER_LENGTH, nextVoucherNo } from '@/lib/voucherNo'
 import { AppError, type ErrorKey, type ErrorParams } from './errors'
 import { stampLedger } from './ledger'
 import { createSettingsService } from './settings'
@@ -136,6 +136,7 @@ export function createBillingService(adapter: StorageAdapter, owner: BillingOwne
     // Stock never blocks a bill: goods can be on the shelf before the count is updated. Stock simply goes negative until someone fixes the count.
 
     const typed = input.number?.trim()
+    if (typed && typed.length > MAX_NUMBER_LENGTH) throw new BillingError('numberTooLong', 'VALIDATION', { max: MAX_NUMBER_LENGTH })
     if (typed && others.some((v) => v.number.toLowerCase() === typed.toLowerCase())) {
       throw new BillingError('duplicateNumber', 'DUPLICATE_NUMBER', { number: typed })
     }

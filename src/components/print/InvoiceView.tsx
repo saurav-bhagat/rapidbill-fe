@@ -103,6 +103,7 @@ export function InvoiceView({ voucher: v, settings: s, paper, sheet, dueNow: due
           <dt className="text-neutral-500">{t('voucherNo')}</dt><dd className="font-mono font-semibold">{v.number}</dd>
           <dt className="text-neutral-500">{t('date')}</dt><dd>{formatDate(v.date)}</dd>
           {taxed && f.placeOfSupply && pos && <><dt className="text-neutral-500">{t('placeOfSupply')}</dt><dd>{stateName(pos)} ({pos})</dd></>}
+          {taxed && f.reverseCharge && <><dt className="text-neutral-500">{t('reverseCharge')}</dt><dd>{t('reverseChargeNo')}</dd></>}
           {f.paymentMode && <><dt className="text-neutral-500">{t('payment')}</dt><dd>{t(`payments.${v.payment}`)}</dd></>}
           {v.remarks && <><dt className="text-neutral-500">{t('reference')}</dt><dd>{v.remarks}</dd></>}
         </dl>

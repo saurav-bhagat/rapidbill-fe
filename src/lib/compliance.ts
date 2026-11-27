@@ -5,7 +5,7 @@ import type { Paise } from './money'
  * and the rules change. Same file in the web app (src/lib) and the phone app (src/core): keep them identical.
  * (Sources: Rule 46 of the CGST Rules and the HSN digit notification, as summarised by compliance guides. Check with the shop's accountant.)
  */
-export type WarningKey = 'noSellerGstin' | 'hsnMissing' | 'hsnShort' | 'hsnHidden' | 'bigSaleNoParty' | 'bigSaleNoAddress'
+export type WarningKey = 'noSellerState' | 'noSellerAddress' | 'noSellerGstin' | 'hsnMissing' | 'hsnShort' | 'hsnHidden' | 'bigSaleNoParty' | 'bigSaleNoAddress'
 export interface BillWarning { key: WarningKey; params?: Record<string, string | number> }
 
 export interface WarnInput {
@@ -13,6 +13,9 @@ export interface WarnInput {
   /** The bill is a tax invoice that charges tax. Challans and non-GST bills are never checked. */
   taxApplicable: boolean
   sellerGstin: string
+  /** The shop's own state and address (left out = not checked). A tax invoice must show the supplier's address, and the state decides CGST+SGST or IGST. */
+  sellerState?: string
+  sellerAddress?: string
   /** Is the HSN column switched on for printing? */
   hsnColumnOn: boolean
   party: { name: string; gstin: string; address: string } | null
@@ -30,6 +33,8 @@ const names = (ls: { name: string }[]) => { const n = ls.slice(0, 3).map((l) => 
 export function billWarnings(i: WarnInput): BillWarning[] {
   if (!i.gstEnabled || !i.taxApplicable) return []
   const out: BillWarning[] = []
+  if (i.sellerState !== undefined && !i.sellerState.trim()) out.push({ key: 'noSellerState' })
+  if (i.sellerAddress !== undefined && !i.sellerAddress.trim()) out.push({ key: 'noSellerAddress' })
   if (!i.sellerGstin.trim()) out.push({ key: 'noSellerGstin' })
   const registered = !!i.party?.gstin.trim()
   if (registered) {

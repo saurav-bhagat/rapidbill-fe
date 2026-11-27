@@ -10,6 +10,10 @@ export function financialYearOf(dateISO: string): string {
   return `${String(start % 100).padStart(2, '0')}${String((start + 1) % 100).padStart(2, '0')}`
 }
 
+/** GST allows at most 16 characters in a bill number. With a prefix of up to 5, automatic numbers (SI-2627-0001) stay within it up to 99,999 bills a year. */
+export const MAX_NUMBER_LENGTH = 16
+export const MAX_PREFIX_LENGTH = 5
+
 export const formatVoucherNo = (prefix: string, fy: string, seq: number): string =>
   `${prefix}-${fy}-${String(seq).padStart(4, '0')}`
 

@@ -3,7 +3,7 @@ import { newId } from '@/lib/id'
 import { toPaise } from '@/lib/money'
 import { format, subDays } from 'date-fns'
 import { stampLedger, type NewLedgerEntry } from './ledger'
-import { defaultSettings } from './settings'
+import { demoSettings } from './settings'
 import type { StorageAdapter } from './storage/localStorageAdapter'
 import { LOCAL_USER, WORKSPACE_ID, type Item, type Meta, type Party, type StockLedgerEntry, type Unit, type Voucher } from './types'
 import { financialYearOf, formatVoucherNo } from '@/lib/voucherNo'
@@ -14,14 +14,14 @@ const meta = (at: string): Meta => ({ id: newId(), workspaceId: WORKSPACE_ID, cr
 type Row = [string, string, string, Unit, string, string, number, number, number, number, number, number]
 const ITEM_ROWS: Row[] = [
   // Pharma
-  ['Paracetamol 500mg Tab', 'Cipla', '30049099', 'STRIP', 'PCM2411', '08/27', 28.5, 17, 23, 12, 240, 40],
-  ['Dolo 650 Tab', 'Micro Labs', '30049099', 'STRIP', 'D6502509', '03/28', 34, 21, 28.5, 12, 180, 40],
-  ['Amoxicillin 500mg Cap', 'Cipla', '30041010', 'STRIP', 'AMX9917', '01/27', 112, 68, 92, 12, 90, 20],
-  ['Azithromycin 500mg Tab', 'Zydus', '30042099', 'STRIP', 'AZ50331', '11/26', 118, 71, 96, 12, 8, 15],
-  ['Cetirizine 10mg Tab', 'Dr Reddys', '30049099', 'STRIP', 'CTZ1182', '06/27', 42, 24, 33, 12, 150, 30],
+  ['Paracetamol 500mg Tab', 'Cipla', '30049099', 'STRIP', 'PCM2411', '08/27', 28.5, 17, 23, 5, 240, 40],
+  ['Dolo 650 Tab', 'Micro Labs', '30049099', 'STRIP', 'D6502509', '03/28', 34, 21, 28.5, 5, 180, 40],
+  ['Amoxicillin 500mg Cap', 'Cipla', '30041010', 'STRIP', 'AMX9917', '01/27', 112, 68, 92, 5, 90, 20],
+  ['Azithromycin 500mg Tab', 'Zydus', '30042099', 'STRIP', 'AZ50331', '11/26', 118, 71, 96, 5, 8, 15],
+  ['Cetirizine 10mg Tab', 'Dr Reddys', '30049099', 'STRIP', 'CTZ1182', '06/27', 42, 24, 33, 5, 150, 30],
   ['ORS Powder Orange 21g', 'FDC', '30049099', 'PCS', 'ORS7741', '12/26', 24, 14, 19, 5, 300, 50],
-  ['Digene Gel Mint 200ml', 'Abbott', '30049099', 'PCS', 'DG2290', '09/27', 135, 84, 110, 12, 0, 12],
-  ['Betadine Ointment 20g', 'Win-Medicare', '30049099', 'PCS', 'BTD4410', '05/27', 98, 61, 80, 12, 60, 10],
+  ['Digene Gel Mint 200ml', 'Abbott', '30049099', 'PCS', 'DG2290', '09/27', 135, 84, 110, 5, 0, 12],
+  ['Betadine Ointment 20g', 'Win-Medicare', '30049099', 'PCS', 'BTD4410', '05/27', 98, 61, 80, 5, 60, 10],
   // FMCG
   ['Surf Excel Easy Wash 1kg', 'HUL', '34022090', 'PCS', '', '', 135, 98, 118, 18, 120, 24],
   ['Dettol Soap 125g', 'Reckitt', '34011190', 'PCS', '', '', 68, 47, 58, 18, 400, 60],
@@ -30,10 +30,10 @@ const ITEM_ROWS: Row[] = [
   ['Maggi 2-Minute Noodles 12pk', 'Nestle', '19023090', 'BOX', '', '', 168, 132, 150, 18, 75, 10],
   ['Tata Salt 1kg', 'Tata Consumer', '25010020', 'PCS', '', '', 28, 21, 25, 0, 500, 80],
   // General
-  ['A4 Copier Paper 75GSM Ream', 'JK Paper', '48025590', 'NOS', '', '', 380, 295, 345, 12, 40, 10],
-  ['LED Bulb 9W Cool White', 'Syska', '85395000', 'PCS', '', '', 99, 62, 85, 12, 6, 15],
+  ['A4 Copier Paper 75GSM Ream', 'JK Paper', '48025590', 'NOS', '', '', 380, 295, 345, 18, 40, 10],
+  ['LED Bulb 9W Cool White', 'Syska', '85395000', 'PCS', '', '', 99, 62, 85, 18, 6, 15],
   ['Extension Board 4 Socket 3m', 'Anchor', '85366990', 'NOS', '', '', 450, 310, 395, 18, 28, 5],
-  ['Gel Pen Blue (Box of 10)', 'Reynolds', '96081019', 'BOX', '', '', 100, 62, 85, 12, 55, 10],
+  ['Gel Pen Blue (Box of 10)', 'Reynolds', '96081019', 'BOX', '', '', 100, 62, 85, 18, 55, 10],
 ]
 
 const PARTY_ROWS: [string, Party['type'], string, string, string, string, string][] = [
@@ -69,7 +69,7 @@ export function buildSeed(now = new Date()): SeedBundle {
   }))
 
   const byName = (n: string) => items.find((i) => i.name.startsWith(n))!
-  const sellerState = defaultSettings().stateCode
+  const sellerState = demoSettings().stateCode
   const specs: { daysAgo: number; party: Party | null; mode: Voucher['mode']; tax: boolean; basis: Voucher['rateBasis']; pay: Voucher['payment']; remarks: string; lines: [string, number, number][] }[] = [
     { daysAgo: 3, party: parties[0], mode: 'TAX_INVOICE', tax: true, basis: 'SALE', pay: 'CREDIT', remarks: 'PO #442', lines: [['Paracetamol', 40, 0], ['Dolo 650', 30, 2], ['Cetirizine', 20, 0], ['ORS Powder', 50, 0]] },
     { daysAgo: 1, party: parties[3], mode: 'TAX_INVOICE', tax: true, basis: 'SALE', pay: 'CREDIT', remarks: 'Via transporter, LR 88213', lines: [['Surf Excel', 24, 3], ['Dettol Soap', 60, 0], ['Parle-G', 20, 0]] },
@@ -122,5 +122,5 @@ export async function writeSeed(adapter: StorageAdapter): Promise<void> {
   await adapter.write('parties', s.parties)
   await adapter.write('vouchers', s.vouchers)
   await adapter.write('ledger', s.ledger)
-  await adapter.write('settings', [defaultSettings()])
+  await adapter.write('settings', [demoSettings()])
 }

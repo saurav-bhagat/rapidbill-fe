@@ -59,7 +59,11 @@ describe('cell readers', () => {
 })
 
 describe('checking every row', () => {
-  it('new parties get every field, with the business state when the file has none', () => {
+  it('a row with no state is not given one unless the person picked a state for such rows', () => {
+    const [r] = run([HEAD, ['Acme', '', '', '', '', '', '']], [], opts({ defaultState: '' }))
+    expect(r).toMatchObject({ action: 'error', note: { key: 'row.stateMissing' } })
+  })
+  it('new parties get every field, with the state the person picked when the file has none', () => {
     const [r] = run([HEAD, ['Acme', '', '', '', '', '', '']])
     expect(r).toMatchObject({ action: 'create', data: { name: 'Acme', type: 'CUSTOMER', gstin: '', stateCode: '29', address: '', phone: '', balance: 0 } })
     expect(r!.warnings.map((w) => w.key)).toEqual(['warn.stateDefault'])

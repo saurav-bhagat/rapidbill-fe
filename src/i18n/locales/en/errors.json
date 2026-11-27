@@ -107,5 +107,6 @@
   "resetCodeInvalid": "That code is not right, or it has expired. Ask for a new one.",
   "mailUnavailable": "Email is not available yet. Please contact support.",
   "referralCodeUnknown": "We could not find this referral code. Check it, or leave it empty.",
-  "creditsNotOnUpgrade": "Credits can be used on a new plan or a renewal, not on an upgrade."
+  "creditsNotOnUpgrade": "Credits can be used on a new plan or a renewal, not on an upgrade.",
+  "numberTooLong": "A bill number can have at most {{max}} characters (GST rule)."
 }

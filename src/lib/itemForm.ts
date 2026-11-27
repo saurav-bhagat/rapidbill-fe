@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next'
 import { parseRupees, toRupees } from './money'
 import { roundQty } from './qty'
 import { snapPer } from './units'
-import { GST_SLABS, MAX_ALT_UNITS, UNITS, type AltUnit, type Item, type Meta, type Unit } from '@/services/types'
+import { DEFAULT_GST, GST_SLABS, MAX_ALT_UNITS, UNITS, type AltUnit, type Item, type Meta, type Unit } from '@/services/types'
 
 export type ItemData = Omit<Item, keyof Meta>
 export type ItemDraft = Record<'name' | 'code' | 'category' | 'hsn' | 'unit' | 'batchNo' | 'expiry' | 'mrp' | 'purchaseRate' | 'issueRate' | 'gstPercent' | 'currentStock' | 'lowStockThreshold', string> & {
@@ -30,7 +30,7 @@ export function formatExpiryInput(raw: string): string {
 
 export const emptyDraft = (code: string): ItemDraft => ({
   name: '', code, category: '', hsn: '', unit: 'PCS', batchNo: '', expiry: '', mrp: '', purchaseRate: '', issueRate: '',
-  gstPercent: '12', currentStock: '', lowStockThreshold: '10', altUnits: [],
+  gstPercent: String(DEFAULT_GST), currentStock: '', lowStockThreshold: '10', altUnits: [],
 })
 
 export const draftFromItem = (i: Item): ItemDraft => ({

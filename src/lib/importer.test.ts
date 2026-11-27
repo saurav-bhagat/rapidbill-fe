@@ -63,15 +63,15 @@ describe('buildPreview', () => {
     const p = buildPreview(rows, 0, m, seed, UP)
     expect(p).toHaveLength(4)
     const [a, dup, empty, total] = p
-    expect(a.action).toBe('create'); expect(a.code).toBe('ITM-1019'); expect(a.data.issueRate).toBe(5000); expect(a.data.gstPercent).toBe(12)
+    expect(a.action).toBe('create'); expect(a.code).toBe('ITM-1019'); expect(a.data.issueRate).toBe(5000); expect(a.data.gstPercent).toBe(18)
     const wk = a.warnings.map((w) => w.key); expect(wk).toContain('warn.stockNegative'); expect(wk).toContain('warn.gstSlab'); expect(wk).toContain('warn.expiry'); expect(wk).toContain('warn.rateFromMrp')
     expect(dup.action).toBe('skip'); expect(dup.note).toEqual({ key: 'note.mergedInto', params: { row: 2 } }); expect(a.stock).toBe(4)
     expect(empty.action).toBe('error'); expect(total.action).toBe('skip')
   })
   it('does not overwrite with blanks and handles GST fractions', () => {
-    const rows = csv('Item Name,Batch,S.Rate,GST\nParacetamol 500mg Tab,PCM2411,,0.12')
+    const rows = csv('Item Name,Batch,S.Rate,GST\nParacetamol 500mg Tab,PCM2411,,0.18')
     const [u] = buildPreview(rows, 0, autoMap(rows[0]), seed, UP)
-    expect(u.action).toBe('update'); expect(u.data.issueRate).toBeUndefined(); expect(u.data.gstPercent).toBe(12)
+    expect(u.action).toBe('update'); expect(u.data.issueRate).toBeUndefined(); expect(u.data.gstPercent).toBe(18)
   })
 })
 

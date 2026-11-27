@@ -9,6 +9,7 @@ import { calcVoucher, chargedInterState, matchSavedLines, type CalcLine } from '
 import { counterQrAmount } from '@/lib/qr'
 import { UpiQrModal } from '@/components/billing/UpiQrModal'
 import { formatAmount, formatINR, todayISO } from '@/lib/format'
+import { MAX_NUMBER_LENGTH } from '@/lib/voucherNo'
 import { stateName } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
 import { useLicense } from '@/license/store'
@@ -171,7 +172,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
   const qrAmount = counterQrAmount(payment, calc.grandTotal, paid === 'invalid' ? 0 : paid, paidMode)
   const [showQr, setShowQr] = useState(false)
   const warnings = useMemo(() => billWarnings({
-    gstEnabled: gstOn, taxApplicable: effTax, sellerGstin: settings?.gstin ?? '', hsnColumnOn: settings ? invoiceFieldsOf(settings).hsn : true,
+    gstEnabled: gstOn, taxApplicable: effTax, sellerGstin: settings?.gstin ?? '', sellerState: settings?.stateCode ?? '', sellerAddress: settings?.address ?? '', hsnColumnOn: settings ? invoiceFieldsOf(settings).hsn : true,
     party: party ? { name: party.name, gstin: party.gstin, address: party.address } : null,
     lines: billable.map((r) => ({ name: r.item.name, hsn: r.item.hsn })), grandTotal: calc.grandTotal,
   }), [gstOn, effTax, settings, party, billable, calc.grandTotal])
@@ -321,6 +322,7 @@ export function StockIssueNew({ editId }: { editId?: string }) {
             <input
               value={number}
               onChange={(e) => { setNumber(e.target.value); setNumberTouched(true) }}
+              maxLength={MAX_NUMBER_LENGTH}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); dateInput.current?.focus() } }}
               className={`${input} w-36 font-mono`}
               aria-label={t('header.voucherNumber')}
@@ -453,7 +455,6 @@ export function StockIssueNew({ editId }: { editId?: string }) {
       <PartyFormDrawer
         open={partyDrawer.open}
         existing={parties}
-        defaultState={settings.stateCode}
         onClose={() => { setPartyDrawer({ open: false }); partyInput.current?.focus() }}
         onSaved={(p) => { setPartyDrawer({ open: false }); reloadParties(); setPartyId(p.id); goGrid() }}
       />

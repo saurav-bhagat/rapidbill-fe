@@ -1,17 +1,25 @@
 import type { StorageAdapter } from './storage/localStorageAdapter'
 import { LOCAL_USER, WORKSPACE_ID, type Settings } from './types'
 
+/** A blank business: no name, address, GSTIN or state is assumed (the person fills them in; billing warns until they do). */
 export const defaultSettings = (): Settings => {
   const now = new Date().toISOString()
   return {
     id: 'settings', workspaceId: WORKSPACE_ID, createdBy: LOCAL_USER, createdAt: now, updatedAt: now,
-    gstEnabled: true, printLanguage: 'en', companyName: 'Shree Ganesh Traders', address: '14, Market Road, Jayanagar, Bengaluru 560011', phone: '080 2653 1180',
-    gstin: '29AAKFS4821M1ZM', stateCode: '29', invoicePrefix: 'SI', defaultTaxMode: 'TAX_INVOICE',
+    gstEnabled: true, printLanguage: 'en', companyName: '', address: '', phone: '',
+    gstin: '', stateCode: '', invoicePrefix: 'SI', defaultTaxMode: 'TAX_INVOICE',
     overIssue: 'ALLOW_WARN', roundOffDefault: true, paperSize: 'A4',
-    bankName: 'Canara Bank, Jayanagar', bankAccount: '0412101003388', bankIfsc: 'CNRB0000412', upiId: 'shreeganesh@canarabank',
+    bankName: '', bankAccount: '', bankIfsc: '', upiId: '',
     email: '', pan: '', terms: '', businessType: '',
   }
 }
+
+/** The sample company written with the sample data only (never used as a default for a real business). */
+export const demoSettings = (): Settings => ({
+  ...defaultSettings(), companyName: 'Shree Ganesh Traders', address: '14, Market Road, Jayanagar, Bengaluru 560011', phone: '080 2653 1180',
+  gstin: '29AAKFS4821M1ZM', stateCode: '29',
+  bankName: 'Canara Bank, Jayanagar', bankAccount: '0412101003388', bankIfsc: 'CNRB0000412', upiId: 'shreeganesh@canarabank',
+})
 
 export interface SettingsService {
   get(): Promise<Settings>

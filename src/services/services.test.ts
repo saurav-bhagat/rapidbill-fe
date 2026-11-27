@@ -106,8 +106,8 @@ describe('search & export', () => {
 
 describe('demo data', () => {
   it('uses GSTINs with valid check digits', async () => {
-    const { defaultSettings } = await import('./settings')
+    const { demoSettings } = await import('./settings')
     const seed = buildSeed()
-    for (const g of [defaultSettings().gstin, ...seed.parties.map((p) => p.gstin).filter(Boolean)]) expect(checkGstin(g), g).toEqual({ stateCode: g.slice(0, 2) })
+    for (const g of [demoSettings().gstin, ...seed.parties.map((p) => p.gstin).filter(Boolean)]) expect(checkGstin(g), g).toEqual({ stateCode: g.slice(0, 2) })
   })
 })

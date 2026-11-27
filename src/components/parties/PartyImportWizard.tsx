@@ -4,12 +4,11 @@ import { Download, FileSpreadsheet, UploadCloud } from 'lucide-react'
 import { download } from '@/lib/download'
 import { errorText } from '@/lib/errors'
 import { formatINR } from '@/lib/format'
-import { stateName } from '@/lib/gst'
+import { STATES, stateName } from '@/lib/gst'
 import { useHotkey } from '@/lib/hotkeys'
 import type { Msg } from '@/lib/itemForm'
 import { autoMapParties, buildPartyPreview, detectHeaderRow, PARTY_FIELDS, SAMPLE_PARTIES_CSV, type PartyData, type PartyFieldKey, type PartyImportOptions, type PartyMapping, type PartyPreviewRow, type Sheet } from '@/lib/partyImporter'
 import { colLetter, readWorkbook } from '@/lib/importerIO'
-import { useAsync } from '@/lib/useAsync'
 import { services, type Party, type PartyImportOp } from '@/services'
 import { syncNow } from '@/offline/sync'
 import { toast } from '@/store/toast'
@@ -31,7 +30,6 @@ interface Props { open: boolean; parties: Party[]; onClose: () => void; onDone: 
 export function PartyImportWizard({ open, parties, onClose, onDone }: Props) {
   const { t } = useTranslation('partyImport')
   const m = (x: Msg) => t(x.key, { ...x.params })
-  const { data: settings } = useAsync(() => services.settings.get())
   const [step, setStep] = useState<Step>('upload')
   const [fileName, setFileName] = useState('')
   const [sheets, setSheets] = useState<Sheet[]>([])
@@ -46,7 +44,7 @@ export function PartyImportWizard({ open, parties, onClose, onDone }: Props) {
   const [selected, setSelected] = useState<string>()
   const fileInput = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { if (open) { setStep('upload'); setSheets([]); setFileName(''); setError(''); setFilter('all'); setOpts(DEFAULTS) } }, [open])
+  useEffect(() => { if (open) { setStep('upload'); setSheets([]); setFileName(''); setError(''); setFilter('all'); setOpts(DEFAULTS); setDefaultState('') } }, [open])
 
   const rows = sheets[sheetIdx]?.rows ?? []
   const headers = rows[headerRow] ?? []
@@ -59,7 +57,8 @@ export function PartyImportWizard({ open, parties, onClose, onDone }: Props) {
     finally { setBusy(false) }
   }
 
-  const defaultState = settings?.stateCode ?? ''
+  // rows with no state: the person picks one here (nothing is assumed, not even the shop's own state)
+  const [defaultState, setDefaultState] = useState('')
   const preview = useMemo(() => (step === 'preview' ? buildPartyPreview(rows, headerRow, map, parties, { ...opts, defaultState }) : []), [step, rows, headerRow, map, parties, opts, defaultState])
   const counts = useMemo(() => ({
     create: preview.filter((r) => r.action === 'create').length, update: preview.filter((r) => r.action === 'update').length,
@@ -179,6 +178,12 @@ export function PartyImportWizard({ open, parties, onClose, onDone }: Props) {
             <div className="flex items-center gap-2 text-sm text-ink-600">{t('ifExists')}
               <Segmented label={t('dupHandling')} value={opts.mode} onChange={(mode) => setOpts((o) => ({ ...o, mode }))} options={[{ value: 'UPSERT', label: t('modeUpsert') }, { value: 'SKIP', label: t('modeSkip') }]} />
             </div>
+            <label className="flex items-center gap-2 text-sm text-ink-600">{t('stateForBlank')}
+              <Select value={defaultState} onChange={(e) => setDefaultState(e.target.value)} className="!w-52" aria-label={t('stateForBlank')}>
+                <option value="">{t('stateNone')}</option>
+                {STATES.map((s) => <option key={s.code} value={s.code}>{s.code} · {s.name}</option>)}
+              </Select>
+            </label>
             {opts.mode === 'UPSERT' && map.balance >= 0 && (
               <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-600">
                 <input type="checkbox" checked={opts.updateBalance} onChange={(e) => setOpts((o) => ({ ...o, updateBalance: e.target.checked }))} className="h-4 w-4 accent-[rgb(var(--primary))]" />

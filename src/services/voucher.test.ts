@@ -320,3 +320,12 @@ describe('editing a saved bill keeps what it was billed with (same rule as the s
     expect(e.totals).toEqual(v.totals)
   })
 })
+
+describe('bill numbers are at most 16 characters (same rule as the server)', () => {
+  it('refuses a longer typed number', async () => {
+    const { svc, para } = await setup()
+    const line = [{ itemId: para.id, qty: 1, rate: 100, discPct: 0 }]
+    await expect(svc.save(base({ number: 'ABCDEFGHIJ-123456', lines: line }))).rejects.toMatchObject({ key: 'numberTooLong' })
+    expect((await svc.save(base({ number: 'ABCDEFGHIJ-12345', lines: line }))).number).toBe('ABCDEFGHIJ-12345')
+  })
+})

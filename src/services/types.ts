@@ -13,7 +13,10 @@ export interface Meta {
 
 export type Unit = 'PCS' | 'BOX' | 'STRIP' | 'KG' | 'LTR' | 'NOS' | 'GM' | 'ML' | 'MTR' | 'FT' | 'SQFT' | 'DOZ' | 'PKT' | 'BAG' | 'ROLL' | 'SET' | 'PAIR' | 'SHEET' | 'TON' | 'QTL'
 export const UNITS: Unit[] = ['PCS', 'BOX', 'STRIP', 'KG', 'LTR', 'NOS', 'GM', 'ML', 'MTR', 'FT', 'SQFT', 'DOZ', 'PKT', 'BAG', 'ROLL', 'SET', 'PAIR', 'SHEET', 'TON', 'QTL']
-export const GST_SLABS = [0, 5, 12, 18, 28] as const
+/** GST rates since the rate change of 22 September 2025 (3% is gold, silver and jewellery; 40% is luxury and sin goods). New items start at 18%. */
+export const GST_SLABS = [0, 3, 5, 18, 40] as const
+/** The rate a new item starts with. */
+export const DEFAULT_GST = 18
 
 /** Another unit an item is also sold in: `per` of them make 1 of the item's own (stock) unit. 1 KG = 1000 GM is { unit: 'GM', per: 1000 }. */
 export interface AltUnit { unit: Unit; per: number }
@@ -175,11 +178,11 @@ export type BusinessType = (typeof BUSINESS_TYPES)[number]
 
 export const INVOICE_FIELD_KEYS = [
   'hsn', 'batchExpiry', 'mrp', 'unit', 'discount', 'hsnSummary', 'amountInWords', 'bank', 'upi', 'terms', 'signature',
-  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan', 'baseQty', 'taxable', 'paymentDetails', 'upiQr',
+  'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'companyPhone', 'companyEmail', 'companyPan', 'baseQty', 'taxable', 'paymentDetails', 'upiQr', 'reverseCharge',
 ] as const
 export type InvoiceFieldKey = (typeof INVOICE_FIELD_KEYS)[number]
 /** Columns that are not printed unless the business turns them on, so the description keeps the room. */
-export const INVOICE_FIELDS_OFF_BY_DEFAULT: readonly InvoiceFieldKey[] = ['hsn', 'batchExpiry', 'unit', 'taxable', 'hsnSummary', 'paymentDetails', 'upiQr']
+export const INVOICE_FIELDS_OFF_BY_DEFAULT: readonly InvoiceFieldKey[] = ['hsn', 'batchExpiry', 'unit', 'taxable', 'hsnSummary', 'paymentDetails', 'upiQr', 'reverseCharge']
 
 /** Money received from a party. Never edited or deleted: a mistake is cancelled and entered again. */
 export interface Receipt extends Meta {

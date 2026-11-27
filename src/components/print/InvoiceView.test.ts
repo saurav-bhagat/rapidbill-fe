@@ -109,3 +109,10 @@ describe('a reprint shows what is due today', () => {
     expect(renderToStaticMarkup(createElement(InvoiceView, { voucher: credit, settings: { ...settings, ...on }, paper: 'A4' }))).not.toContain('Due today')
   })
 })
+
+describe('reverse charge line', () => {
+  it('prints "Tax payable on reverse charge: No" on a tax invoice only when switched on', () => {
+    expect(render(voucher(), { invoiceFields: { reverseCharge: true } as Settings['invoiceFields'] })).toContain('Tax payable on reverse charge')
+    expect(render(voucher())).not.toContain('reverse charge')
+  })
+})

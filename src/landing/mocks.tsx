@@ -62,7 +62,7 @@ export function PhoneMock({ className = '' }: { className?: string }) {
 }
 
 export function BillMock() {
-  const rows = [['Dettol Soap 125g', '60', '52.00', '18%', '3,120.00'], ['Surf Excel Easy Wash 1kg', '24', '135.00', '18%', '3,240.00'], ['Parle-G Biscuit 800g', '20', '85.00', '5%', '1,700.00'], ['A4 Copier Paper Ream', '5', '295.00', '12%', '1,475.00']]
+  const rows = [['Dettol Soap 125g', '60', '52.00', '18%', '3,120.00'], ['Surf Excel Easy Wash 1kg', '24', '135.00', '18%', '3,240.00'], ['Parle-G Biscuit 800g', '20', '85.00', '5%', '1,700.00'], ['A4 Copier Paper Ream', '5', '295.00', '18%', '1,475.00']]
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-[0_30px_80px_-20px_rgba(15,23,42,0.3)]">
       <div className="flex items-center justify-between border-b border-line px-5 py-3">

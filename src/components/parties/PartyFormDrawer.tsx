@@ -21,12 +21,11 @@ interface Props {
   party?: Party
   existing: Party[]
   /** Default state for new parties (the seller's own state). */
-  defaultState?: string
   onClose: () => void
   onSaved: (p: Party) => void
 }
 
-export function PartyFormDrawer({ open, party, existing, defaultState = '', onClose, onSaved }: Props) {
+export function PartyFormDrawer({ open, party, existing, onClose, onSaved }: Props) {
   const { t } = useTranslation('parties')
   const ref = useRef<HTMLFormElement>(null)
   const [d, setD] = useState<Draft>(empty)
@@ -34,8 +33,9 @@ export function PartyFormDrawer({ open, party, existing, defaultState = '', onCl
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (open) { setErrors({}); setD(party ? fromParty(party) : { ...empty, stateCode: defaultState }) }
-  }, [open, party, defaultState])
+    // a new party has no state until the person picks one (typing a GSTIN fills it): nothing is assumed
+    if (open) { setErrors({}); setD(party ? fromParty(party) : { ...empty }) }
+  }, [open, party])
 
   const gst = checkGstin(d.gstin)
   const set = (k: keyof Draft, v: string) => {

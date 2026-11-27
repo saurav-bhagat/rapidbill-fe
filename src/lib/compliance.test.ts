@@ -45,3 +45,10 @@ describe('bill warnings', () => {
     expect(keys({ party: { name: 'Walk-in Co', gstin: '', address: 'Pune' }, grandTotal: BIG_SALE * 3 })).toEqual([])
   })
 })
+
+describe('the shop\'s own details', () => {
+  it('asks for the business state and address when they are not set', () => {
+    expect(keys({ sellerState: '', sellerAddress: ' ' })).toEqual(['noSellerState', 'noSellerAddress'])
+    expect(keys({ sellerState: '29', sellerAddress: '12 MG Road' })).toEqual([])
+  })
+})

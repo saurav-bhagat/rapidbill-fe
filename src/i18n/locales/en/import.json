@@ -109,13 +109,13 @@
     "unit": "Unit \"{{value}}\" not recognised, left as is",
     "expiry": "Expiry \"{{value}}\" not understood, ignored",
     "negative": "{{label}} is negative, ignored",
-    "gstSlab": "GST {{value}}% is not a standard slab (0, 5, 12, 18, 28), ignored",
+    "gstSlab": "GST {{value}}% is not a standard slab (0, 3, 5, 18, 40), ignored",
     "stockNegative": "Stock is negative ({{value}}), treated as 0",
     "merged": "Row {{row}} merged into this row",
     "codeTaken": "Code {{code}} is taken, a new one was assigned",
     "rateFromMrp": "No sale rate, using MRP",
     "rateZero": "No sale rate and no MRP, rate is 0",
-    "gstMissing": "GST % missing, using 12%",
+    "gstMissing": "GST % missing, using 18%",
     "altPer": "\"{{value}}\" needs a number for how many make one of the item's unit, other unit ignored",
     "altSame": "{{value}} is already the item's unit, other unit ignored"
   }

@@ -84,7 +84,7 @@
     "companyName": "Company name is needed on every invoice",
     "gstinNeeded": "Enter your GSTIN, or switch to Non-GST business above",
     "stateMismatch": "GSTIN says state {{code}}",
-    "prefix": "1 to 6 letters or digits",
+    "prefix": "1 to 5 letters or digits",
     "upi": "Looks like name@bank",
     "ifsc": "IFSC is 11 characters, like CNRB0000412",
     "email": "Enter a valid email, like name@example.com",
@@ -139,7 +139,8 @@
       "signature": "Signature line",
       "baseQty": "Also show the quantity in the item's own unit, e.g. 900 GM (0.9 KG)",
       "taxable": "Taxable amount (before tax)",
-      "upiQr": "UPI QR code to pay what is due (credit bills)"
+      "upiQr": "UPI QR code to pay what is due (credit bills)",
+      "reverseCharge": "Reverse charge (prints \"Tax payable on reverse charge: No\")"
     },
     "termsLabel": "Terms and conditions text",
     "termsHint": "Leave empty to print the standard line.",

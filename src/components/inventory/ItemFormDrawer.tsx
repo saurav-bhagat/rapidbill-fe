@@ -5,7 +5,7 @@ import { useHotkey } from '@/lib/hotkeys'
 import { enterAsTab, focusFirstError } from '@/lib/formNav'
 import { draftFromItem, emptyDraft, formatExpiryInput, msgText, nextItemCode, validateItemDraft, type ItemDraft, type ItemErrors } from '@/lib/itemForm'
 import { parseRupees } from '@/lib/money'
-import { services, GST_SLABS, UNITS, type Item } from '@/services'
+import { services, DEFAULT_GST, GST_SLABS, UNITS, type Item } from '@/services'
 import { isWaiting } from '@/lib/saved'
 import { useAsync } from '@/lib/useAsync'
 import { toast } from '@/store/toast'
@@ -44,7 +44,7 @@ export function ItemFormDrawer({ open, item, initialName, existingItems, onClose
   useEffect(() => {
     if (!open) return
     setErrors({})
-    setDraft(item ? draftFromItem(item) : { ...emptyDraft(nextItemCode(codes)), name: initialName ?? '', gstPercent: settings?.gstEnabled === false ? '0' : '12' })
+    setDraft(item ? draftFromItem(item) : { ...emptyDraft(nextItemCode(codes)), name: initialName ?? '', gstPercent: settings?.gstEnabled === false ? '0' : String(DEFAULT_GST) })
     // codes intentionally excluded: only seed the draft when the drawer opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item?.id, settings?.gstEnabled])

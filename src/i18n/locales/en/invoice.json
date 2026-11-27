@@ -122,5 +122,7 @@
     "forward": "Brought forward",
     "paidBack": "{{paid}} paid when the bill was made was given back",
     "paidKept": "{{paid}} paid when the bill was made kept as an advance"
-  }
+  },
+  "reverseCharge": "Tax payable on reverse charge",
+  "reverseChargeNo": "No"
 }

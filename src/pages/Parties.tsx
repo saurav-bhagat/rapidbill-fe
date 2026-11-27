@@ -40,7 +40,6 @@ export function Parties() {
   const refused = useSync((x) => x.failedIds)
   const { data: loaded, error: loadError, reload } = useAsync(() => services.parties.list())
   const parties = loaded ?? []
-  const { data: settings } = useAsync(() => services.settings.get())
   const [query, setQuery] = useState('')
   const [type, setType] = useState<PartyType | ''>('')
   const [sort, setSort] = useState<SortState>({ key: 'name', dir: 'asc' })
@@ -153,7 +152,6 @@ export function Parties() {
         open={form.open}
         party={form.party}
         existing={parties}
-        defaultState={settings?.stateCode}
         onClose={() => setForm({ open: false })}
         onSaved={(p) => { setForm({ open: false }); setSelectedId(p.id); reload() }}
       />

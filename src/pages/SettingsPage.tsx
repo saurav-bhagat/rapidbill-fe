@@ -27,7 +27,7 @@ type Tab = 'general' | 'profile' | 'invoice'
 const PROFILE_KEYS = ['companyName', 'address', 'phone', 'email', 'pan', 'gstin', 'stateCode', 'bankName', 'bankAccount', 'bankIfsc', 'upiId']
 const FIELD_GROUPS: { title: string; keys: InvoiceFieldKey[] }[] = [
   { title: 'columns', keys: ['hsn', 'batchExpiry', 'mrp', 'unit', 'baseQty', 'discount', 'taxable'] },
-  { title: 'header', keys: ['companyPhone', 'companyEmail', 'companyPan', 'partyGstin', 'partyAddress', 'placeOfSupply', 'paymentMode', 'paymentDetails'] },
+  { title: 'header', keys: ['companyPhone', 'companyEmail', 'companyPan', 'partyGstin', 'partyAddress', 'placeOfSupply', 'reverseCharge', 'paymentMode', 'paymentDetails'] },
   { title: 'summary', keys: ['hsnSummary', 'amountInWords'] },
   { title: 'footer', keys: ['bank', 'upi', 'upiQr', 'terms', 'signature'] },
 ]
@@ -68,7 +68,7 @@ export function SettingsPage() {
     else if (gst.error) e.gstin = gst.errorKey ? t(gst.errorKey, { ns: 'errors', ...gst.params }) : gst.error
     else if (gst.stateCode && gst.stateCode !== d.stateCode) e.stateCode = t('errors.stateMismatch', { code: gst.stateCode })
     if (d.gstEnabled && !d.stateCode) e.stateCode = t('errors.stateNeeded')
-    if (!/^[A-Za-z0-9]{1,6}$/.test(d.invoicePrefix)) e.invoicePrefix = t('errors.prefix')
+    if (!/^[A-Za-z0-9]{1,5}$/.test(d.invoicePrefix)) e.invoicePrefix = t('errors.prefix')
     if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) e.email = t('errors.email')
     if (d.pan && !/^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/.test(d.pan)) e.pan = t('errors.pan')
     if (d.upiId && !/^[\w.\-]{2,}@[A-Za-z]{2,}$/.test(d.upiId)) e.upiId = t('errors.upi')

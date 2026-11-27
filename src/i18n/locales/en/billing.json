@@ -185,7 +185,9 @@
     "hsnHidden": "The HSN column is turned off for printing. A bill to a GST-registered business should show HSN. Turn it on in Settings, Invoice.",
     "bigSaleNoParty": "A sale of ₹50,000 or more to an unregistered buyer should carry the buyer's name, address and state. Choose a party with those details.",
     "bigSaleNoAddress": "A sale of ₹50,000 or more to an unregistered buyer should carry the buyer's address. {{name}} has no address saved.",
-    "note": "These are reminders, not rules we can check for you. Ask your accountant if unsure."
+    "note": "These are reminders, not rules we can check for you. Ask your accountant if unsure.",
+    "noSellerState": "Your business state is not set, so CGST+SGST or IGST may be wrong on this bill. Add it in Settings.",
+    "noSellerAddress": "Your business address is not set, so this tax invoice will not show it. Add it in Settings."
   },
   "upiQr": {
     "show": "Show UPI QR",

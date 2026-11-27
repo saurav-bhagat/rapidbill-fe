@@ -1,7 +1,7 @@
 import { nextItemCode, type Msg } from './itemForm'
 import { toPaise } from './money'
 import { roundQty } from './qty'
-import { GST_SLABS, UNITS, type Item, type Meta, type Unit } from '@/services/types'
+import { DEFAULT_GST, GST_SLABS, UNITS, type Item, type Meta, type Unit } from '@/services/types'
 
 export type { Msg }
 export type FieldKey = 'name' | 'code' | 'category' | 'hsn' | 'unit' | 'altUnit' | 'altPer' | 'batchNo' | 'expiry' | 'mrp' | 'purchaseRate' | 'issueRate' | 'gstPercent' | 'currentStock' | 'lowStockThreshold'
@@ -275,7 +275,7 @@ export function buildPreview(rows: Cell[][], headerRow: number, map: Mapping, ex
     }
     if (data.gstPercent === undefined) {
       if (opts.gstEnabled === false) data.gstPercent = 0
-      else { data.gstPercent = 12; warnings.push({ key: 'warn.gstMissing' }) }
+      else { data.gstPercent = DEFAULT_GST; warnings.push({ key: 'warn.gstMissing' }) }
     }
     const full: Partial<ItemData> = {
       category: '', hsn: '', unit: 'PCS', batchNo: '', expiry: '', mrp: 0, purchaseRate: 0, lowStockThreshold: 10, ...data, code: finalCode,

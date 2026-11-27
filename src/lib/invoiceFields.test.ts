@@ -3,9 +3,9 @@ import { INVOICE_FIELD_KEYS, INVOICE_FIELDS_OFF_BY_DEFAULT } from '@/services/ty
 import { invoiceFieldsOf } from './invoiceFields'
 
 describe('invoiceFieldsOf', () => {
-  it('for an account that never chose: HSN, batch / expiry, unit, taxable, the HSN summary, the payment details and the UPI QR start off; everything else shows', () => {
+  it('for an account that never chose: HSN, batch / expiry, unit, taxable, the HSN summary, the payment details, the UPI QR and the reverse charge line start off; everything else shows', () => {
     const f = invoiceFieldsOf({})
-    expect(INVOICE_FIELDS_OFF_BY_DEFAULT).toEqual(['hsn', 'batchExpiry', 'unit', 'taxable', 'hsnSummary', 'paymentDetails', 'upiQr'])
+    expect(INVOICE_FIELDS_OFF_BY_DEFAULT).toEqual(['hsn', 'batchExpiry', 'unit', 'taxable', 'hsnSummary', 'paymentDetails', 'upiQr', 'reverseCharge'])
     for (const k of INVOICE_FIELD_KEYS) expect(f[k]).toBe(!INVOICE_FIELDS_OFF_BY_DEFAULT.includes(k))
     expect(f.bank && f.signature && f.mrp && f.discount).toBe(true)
   })
