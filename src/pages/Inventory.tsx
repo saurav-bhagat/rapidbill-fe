@@ -116,7 +116,7 @@ export function Inventory() {
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="page-toolbar">
         <SearchInput value={query} onChange={setQuery} inputRef={searchRef} placeholder={t('page.searchPlaceholder')} onEnterResults={focusTable} />
         <Select value={category} onChange={(e) => setCategory(e.target.value)} className="!w-44" aria-label={t('page.category')}>
           <option value="">{t('page.allCategories')}</option>
@@ -125,7 +125,7 @@ export function Inventory() {
         <Select value={stockF} onChange={(e) => setStockF(e.target.value as StockFilter)} className="!w-36" aria-label={t('page.stockLevel')}>
           <option value="all">{t('page.filterAll')}</option><option value="low">{t('page.filterLow')}</option><option value="out">{t('page.filterOut')}</option>
         </Select>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex max-w-full flex-wrap gap-2">
           <Button icon={<Upload size={14} />} hotkey="i" disabled={!canWrite} onClick={() => setPanel('import')}>{t('page.import')}</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => doExport('xlsx')}>.xlsx</Button>
           <Button variant="ghost" icon={<Download size={14} />} onClick={() => doExport('csv')}>.csv</Button>
@@ -133,7 +133,7 @@ export function Inventory() {
         </div>
       </div>
 
-      <p className="text-sm text-ink-600">
+      <p className="summary-strip">
         {rows.length === items.length ? t('page.countAll', { n: items.length }) : t('page.countSome', { shown: rows.length, total: items.length })}
         <span className="mx-2 text-line">|</span>{t('page.lowCount', { n: stats.low })}
         <span className="mx-2 text-line">|</span>{t('page.outCount', { n: stats.out })}

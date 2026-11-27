@@ -34,8 +34,8 @@ const FIELD_GROUPS: { title: string; keys: InvoiceFieldKey[] }[] = [
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="grid grid-cols-[220px_1fr] gap-8 border-b border-line py-5 last:border-b-0">
-      <div><h2 className="text-lg font-semibold">{title}</h2>{hint && <p className="mt-1 text-sm text-ink-600">{hint}</p>}</div>
+    <section className="grid grid-cols-1 gap-5 rounded-xl border border-line bg-surface p-5 lg:grid-cols-[200px_1fr] lg:gap-8">
+      <div><h2 className="text-lg font-medium">{title}</h2>{hint && <p className="mt-1 text-sm text-ink-600">{hint}</p>}</div>
       <div className="grid max-w-2xl grid-cols-2 gap-x-4 gap-y-3">{children}</div>
     </section>
   )
@@ -99,10 +99,10 @@ export function SettingsPage() {
   )
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div role="tablist" className="mb-2 flex gap-1 border-b border-line">
+    <div className="mx-auto max-w-5xl space-y-4">
+      <div role="tablist" className="flex flex-wrap gap-1 rounded-lg border border-line bg-section px-2">
         {(['general', 'profile', 'invoice'] as Tab[]).map((k) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`-mb-px border-b-2 px-4 py-2.5 text-base font-semibold ${tab === k ? 'border-primary text-primary' : 'border-transparent text-ink-600 hover:text-ink-900'}`}>{t(`tabs.${k}`)}</button>
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)} className={`-mb-px border-b-2 px-4 py-2.5 text-base font-medium ${tab === k ? 'border-primary text-primary' : 'border-transparent text-ink-600 hover:text-ink-900'}`}>{t(`tabs.${k}`)}</button>
         ))}
       </div>
 
@@ -225,7 +225,7 @@ export function SettingsPage() {
         <p className="pb-4 text-sm text-ink-600">{t('invoiceFields.alwaysShown')}</p>
       </>}
 
-      <div className="sticky bottom-0 -mx-5 flex items-center justify-end gap-3 border-t border-line bg-paper/95 px-5 py-3">
+      <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-line rounded-lg bg-surface/95 px-5 py-3">
         <span className="text-sm text-ink-600" role="status">{dirty ? t('footer.unsaved') : t('footer.saved')}</span>
         <Button onClick={() => { setD(saved); setErrors({}) }} disabled={!dirty}>{t('footer.discard')}</Button>
         <Button variant="primary" hotkey="mod+s" onClick={save} disabled={!dirty || saving}>{t('footer.save')}</Button>

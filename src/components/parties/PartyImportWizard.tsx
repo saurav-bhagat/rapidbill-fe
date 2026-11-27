@@ -109,7 +109,7 @@ export function PartyImportWizard({ open, parties, onClose, onDone }: Props) {
       footer={
         <>
           <ol className="mr-auto flex items-center gap-3 text-sm text-ink-600" aria-label={t('steps.label')}>
-            {(['upload', 'map', 'preview'] as Step[]).map((s, n) => <li key={s} aria-current={s === step} className={s === step ? 'font-semibold text-primary' : ''}>{n + 1}. {t(`steps.${s}`)}</li>)}
+            {(['upload', 'map', 'preview'] as Step[]).map((s, n) => <li key={s} aria-current={s === step} className={s === step ? 'font-medium text-primary' : ''}>{n + 1}. {t(`steps.${s}`)}</li>)}
           </ol>
           {step !== 'upload' && <Button onClick={() => setStep(step === 'preview' ? 'map' : 'upload')}>{t('back')}</Button>}
           <Button onClick={onClose}>{t('cancel')}</Button>

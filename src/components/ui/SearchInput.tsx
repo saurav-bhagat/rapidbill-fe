@@ -13,7 +13,7 @@ interface Props {
 
 export function SearchInput({ value, onChange, inputRef, placeholder, onEnterResults }: Props) {
   return (
-    <div className="relative w-80">
+    <div className="relative w-80 max-w-full">
       <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
       <input
         ref={inputRef}

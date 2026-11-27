@@ -89,7 +89,7 @@ function GateInner({ children }: { children: ReactNode }) {
   if (phase === 'storageBlocked') {
     return (
       <div className="mx-auto mt-24 max-w-md space-y-3 p-6">
-        <h1 className="text-lg font-semibold">{t('storageBlocked.title')}</h1>
+        <h1 className="text-lg font-medium">{t('storageBlocked.title')}</h1>
         <p className="text-ink-600">{t('storageBlocked.body')}</p>
         <SupportLine />
       </div>
@@ -98,7 +98,7 @@ function GateInner({ children }: { children: ReactNode }) {
   if (phase === 'needsInternet') {
     return (
       <div className="mx-auto mt-24 max-w-md space-y-3 p-6">
-        <h1 className="text-lg font-semibold">{t('needsInternet.title')}</h1>
+        <h1 className="text-lg font-medium">{t('needsInternet.title')}</h1>
         <p className="text-ink-600">{online ? t('needsInternet.retryHint') : t('needsInternet.body')}</p>
         <Button variant="primary" onClick={() => { setPhase('opening'); setAttempt((n) => n + 1) }}>{t('needsInternet.retry')}</Button>
         <SupportLine />

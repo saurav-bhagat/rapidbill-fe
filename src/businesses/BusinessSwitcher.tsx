@@ -110,20 +110,20 @@ export function BusinessSwitcher({ collapsed }: { collapsed: boolean }) {
   })()
 
   return (
-    <div className="shrink-0 border-b border-white/10 p-2">
+    <div className="shrink-0 border-b border-nav-active p-2">
       <button ref={btn} type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={t('switcherLabel', { name })}
         title={collapsed ? name : undefined}
         onClick={() => useSwitcherUI.set(!open)}
-        className="flex w-full items-center gap-2.5 rounded-md p-1.5 text-left text-white hover:bg-nav-hover">
+        className="flex w-full items-center gap-2.5 rounded-md p-1.5 text-left text-heading hover:bg-nav-hover">
         <BusinessAvatar name={name} color={cur?.color ?? null} size={collapsed ? 36 : 32} />
         {!collapsed && (
           <>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">{name}</span>
-              <span className="block truncate text-xs text-white/60">{[cur?.stateCode ? stateName(cur.stateCode) : '', cur ? roleText(cur.role) : ''].filter(Boolean).join(' · ')}</span>
+              <span className="block truncate text-sm font-medium">{name}</span>
+              <span className="block truncate text-xs text-ink-600">{[cur?.stateCode ? stateName(cur.stateCode) : '', cur ? roleText(cur.role) : ''].filter(Boolean).join(' · ')}</span>
             </span>
             {unsent > 0 && <span className="rounded bg-warn px-1.5 text-xs font-medium text-white" title={t('unsent', { count: unsent })}>{unsent}</span>}
-            <ChevronsUpDown size={16} className="shrink-0 text-white/60" />
+            <ChevronsUpDown size={16} className="shrink-0 text-ink-600" />
           </>
         )}
       </button>
@@ -147,7 +147,7 @@ export function BusinessSwitcher({ collapsed }: { collapsed: boolean }) {
                     className={`flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-2 ${i === active ? 'bg-sunken' : ''}`}>
                     <BusinessAvatar name={b.name} color={b.color} size={32} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">{b.name}</span>
+                      <span className="block truncate text-sm font-medium">{b.name}</span>
                       <span className="block truncate text-xs text-ink-600">{[b.stateCode ? stateName(b.stateCode) : '', roleText(b.role)].filter(Boolean).join(' · ')}</span>
                     </span>
                     {waiting(b) > 0 && <span className="shrink-0 rounded bg-warn-soft px-1.5 text-xs font-medium text-warn" title={t('unsent', { count: waiting(b) })}>⏳ {waiting(b)}</span>}

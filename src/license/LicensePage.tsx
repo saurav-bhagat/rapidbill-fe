@@ -118,7 +118,7 @@ function LicenseContent() {
 
   if (lic?.isOwner === false) {
     // The plan belongs to the owner: staff only see whose it is, never prices or payments.
-    return <div className="mx-auto max-w-xl rounded-xl border border-line bg-surface p-6"><h1 className="text-xl font-semibold">{t('staff.title')}</h1><p className="mt-2 text-ink-600">{t('staff.body', { owner: lic.ownerName ?? '' })}</p></div>
+    return <div className="mx-auto max-w-xl rounded-xl border border-line bg-surface p-6"><h1 className="text-xl font-medium">{t('staff.title')}</h1><p className="mt-2 text-ink-600">{t('staff.body', { owner: lic.ownerName ?? '' })}</p></div>
   }
 
   if (error && !plans) return <LoadFailed error={error} onRetry={reload} />
@@ -134,7 +134,7 @@ function LicenseContent() {
     <div className="mx-auto max-w-5xl space-y-8 pb-10">
       {testPricing && (
         <div role="status" data-testid="test-pricing" className="rounded-xl border-2 border-warn bg-warn-soft px-5 py-4 text-warn">
-          <p className="font-semibold">{t('pay.testPricingTitle', { amount: formatINR(testPricing.price) })}</p>
+          <p className="font-medium">{t('pay.testPricingTitle', { amount: formatINR(testPricing.price) })}</p>
           <p className="mt-1 text-sm">{t('pay.testPricingBody')}</p>
         </div>
       )}
@@ -144,14 +144,14 @@ function LicenseContent() {
 
       {/* Early Bird banner */}
       {plans.earlyBird.active && (
-        <div className="relative overflow-hidden rounded-xl bg-primary px-6 py-5 text-white shadow-sm">
+        <div className="relative overflow-hidden rounded-xl border border-line bg-gradient-to-br from-primary-soft to-section px-6 py-5 text-heading shadow-card">
           <Sparkles size={120} className="pointer-events-none absolute -right-4 -top-6 opacity-10" />
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-white/20 px-3 py-1 text-sm font-semibold uppercase tracking-wide">{t('offer.title')}</span>
-            {maxOff > 0 && <span className="text-2xl font-bold">{t('offer.upTo', { percent: maxOff })}</span>}
+            <span className="rounded-full bg-surface/80 px-3 py-1 text-sm font-medium uppercase tracking-wide text-primary">{t('offer.title')}</span>
+            {maxOff > 0 && <span className="text-2xl font-medium">{t('offer.upTo', { percent: maxOff })}</span>}
           </div>
-          <p className="mt-2 max-w-2xl text-white/90">{t('offer.body')}</p>
-          {plans.taxInclusive && <p className="mt-1 text-sm text-white/70">{t('offer.taxes')}</p>}
+          <p className="mt-2 max-w-2xl text-ink-600">{t('offer.body')}</p>
+          {plans.taxInclusive && <p className="mt-1 text-sm text-ink-600">{t('offer.taxes')}</p>}
         </div>
       )}
 
@@ -169,18 +169,18 @@ function LicenseContent() {
       {/* Plan cards */}
       <TermToggle years={years} onChange={setYears} saves={threeYearSavingPercent(plans.plans, 'BOTH')} />
       {creditsAvailable > 0 && <CreditsToggle available={creditsAvailable} on={useCredits} onChange={setUseCredits} />}
-      <div className="grid items-stretch gap-5 md:grid-cols-3">
+      <div className="grid items-stretch gap-5 xl:grid-cols-3">
         {cards.map((p) => <PlanCard key={p.id} plan={p} plans={plans} credits={creditsOn} active={lic?.status === 'ACTIVE'} busy={busy === p.id} disabled={!canPay || !!busy} onBuy={() => void buy(p)} />)}
       </div>
 
       {/* Highlights */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold">{t('highlights.title')}</h2>
+        <h2 className="mb-4 text-xl font-medium">{t('highlights.title')}</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {HIGHLIGHTS.map(({ key, icon: Icon }) => (
             <div key={key} className="rounded-lg border border-line bg-surface p-4">
               <div className="mb-2 grid h-9 w-9 place-items-center rounded-lg bg-primary-soft text-primary"><Icon size={18} /></div>
-              <div className="font-semibold">{t(`highlights.${key}.title`)}</div>
+              <div className="font-medium">{t(`highlights.${key}.title`)}</div>
               <p className="mt-1 text-sm text-ink-600">{t(`highlights.${key}.body`)}</p>
             </div>
           ))}
@@ -191,11 +191,11 @@ function LicenseContent() {
 
       {/* History */}
       <section>
-        <h2 className="mb-3 text-xl font-semibold">{t('history.title')}</h2>
+        <h2 className="mb-3 text-xl font-medium">{t('history.title')}</h2>
         {history && history.data.length > 0 ? (
           <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-            <table className="w-full text-base">
-              <thead><tr className="h-9 border-b border-line text-left text-sm text-ink-600"><th className="px-3 font-medium">{t('history.date')}</th><th className="px-3 font-medium">{t('history.plan')}</th><th className="px-3 text-right font-medium">{t('history.amount')}</th><th className="px-3 font-medium">{t('history.validity')}</th><th className="px-3 font-medium">{t('history.reference')}</th><th className="px-3 font-medium">{t('history.business')}</th><th className="px-3 font-medium">{t('history.invoice')}</th></tr></thead>
+            <table className="w-full min-w-[640px] text-base">
+              <thead><tr className="h-9 border-b border-line bg-sunken text-left text-sm text-ink-600"><th className="px-3 font-medium">{t('history.date')}</th><th className="px-3 font-medium">{t('history.plan')}</th><th className="px-3 text-right font-medium">{t('history.amount')}</th><th className="px-3 font-medium">{t('history.validity')}</th><th className="px-3 font-medium">{t('history.reference')}</th><th className="px-3 font-medium">{t('history.business')}</th><th className="px-3 font-medium">{t('history.invoice')}</th></tr></thead>
               <tbody>
                 {history.data.map((h) => (
                   <tr key={h.id} className="h-9 border-b border-line last:border-b-0">
@@ -240,7 +240,7 @@ function CurrentLicense({ plans }: { plans: PlansView }) {
       <div className="flex flex-wrap items-start gap-4">
         <div className="grid h-10 w-11 shrink-0 place-items-center rounded-full bg-surface"><Icon size={22} className={ended ? 'text-danger' : lic.status === 'ACTIVE' ? 'text-ok' : 'text-primary'} /></div>
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl font-medium">
             {lic.status === 'ACTIVE' ? t(`planName.${lic.planId}`, { defaultValue: t('card.active') }) : ended ? t('current.expiredTitle') : t('current.trialTitle')}
           </h1>
           {lic.status === 'TRIAL' && <p className="mt-1 text-ink-600">{t('current.trialBody', { count: lic.daysLeft, total: plans.trialDays })}</p>}
@@ -272,7 +272,7 @@ function CreditsToggle({ available, on, onChange }: { available: number; on: boo
     <label className="mx-auto flex max-w-xl cursor-pointer items-start gap-3 rounded-xl border border-ok/30 bg-ok-soft px-4 py-3">
       <input type="checkbox" checked={on} onChange={(e) => onChange(e.target.checked)} className="mt-1 h-5 w-5 accent-[rgb(var(--ok))]" />
       <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-baseline gap-x-2 font-semibold">{t('credits.title')}<span className="text-ok">{t('credits.available', { amount: formatINR(available) })}</span></span>
+        <span className="flex flex-wrap items-baseline gap-x-2 font-medium">{t('credits.title')}<span className="text-ok">{t('credits.available', { amount: formatINR(available) })}</span></span>
         <span className="block text-sm text-ink-600">{t('credits.note')}</span>
       </span>
     </label>
@@ -288,10 +288,10 @@ function ReferBanner({ credits }: { credits: number }) {
     <Link to="/earn" className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/25 bg-primary-soft px-5 py-3 hover:border-primary/50">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-white"><Gift size={20} /></span>
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold">{t('refer.title', { percent: 10 })}</span>
+        <span className="block font-medium">{t('refer.title', { percent: 10 })}</span>
         <span className="block text-sm text-ink-600">{credits > 0 ? t('refer.bodyCredits', { amount: formatINR(credits) }) : t('refer.body')}</span>
       </span>
-      <span className="text-sm font-semibold text-primary">{t('refer.cta')} →</span>
+      <span className="text-sm font-medium text-primary">{t('refer.cta')} →</span>
     </Link>
   )
 }
@@ -315,7 +315,7 @@ function UpgradeCard({ quote, busy, disabled, onUpgrade }: { quote: UpgradeQuote
     <section aria-label={t('upgrade.title')} className="flex flex-wrap items-center gap-4 rounded-xl border border-primary/30 bg-surface p-5 shadow-sm">
       <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-primary"><ArrowUpCircle size={22} /></div>
       <div className="min-w-0 flex-1">
-        <h2 className="text-lg font-semibold">{t('upgrade.title')}</h2>
+        <h2 className="text-lg font-medium">{t('upgrade.title')}</h2>
         <p className="text-ink-600">{t('upgrade.body', { days: quote.remainingDays, date: longDate(quote.endsAt) })}</p>
         <p className="mt-1 text-sm text-ink-600">{t('upgrade.maths', { price: rupees(quote.price), credit: rupees(quote.credit) })}</p>
       </div>
@@ -332,7 +332,7 @@ function TermToggle({ years, onChange, saves }: { years: 1 | 3; onChange: (y: 1 
         {([1, 3] as const).map((y) => (
           <button key={y} type="button" role="radio" aria-checked={years === y} onClick={() => onChange(y)}
             className={`h-9 rounded-md px-5 text-base font-medium ${years === y ? 'bg-primary text-white' : 'text-ink-600 hover:bg-sunken'}`}>
-            {t(`term.${y}`)}{y === 3 && saves > 0 && <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-semibold ${years === y ? 'bg-white/20' : 'bg-ok-soft text-ok'}`}>{t('term.save', { percent: saves })}</span>}
+            {t(`term.${y}`)}{y === 3 && saves > 0 && <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${years === y ? 'bg-white/20' : 'bg-ok-soft text-ok'}`}>{t('term.save', { percent: saves })}</span>}
           </button>
         ))}
       </div>
@@ -347,25 +347,25 @@ function PlanCard({ plan, plans, credits, active, busy, disabled, onBuy }: { pla
   const credit = credits ? plan.creditApplied ?? 0 : 0
   const payNow = credits ? plan.payNow ?? plan.price : plan.price
   return (
-    <article className={`relative flex flex-col rounded-xl border bg-surface p-6 ${best ? 'border-primary shadow-float ring-2 ring-primary' : 'border-line'}`}>
-      {best && <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-sm font-semibold text-white">{t('plan.bestValue')}</span>}
+    <article className={`relative flex min-w-0 flex-col rounded-xl border bg-surface p-6 shadow-card ${best ? 'border-primary ring-1 ring-primary/20' : 'border-line'}`}>
+      {best && <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-sm font-medium text-white">{t('plan.bestValue')}</span>}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 className="text-xl font-semibold">{t(`platform.${plan.platform}.title`)}</h2>
+          <h2 className="text-xl font-medium">{t(`platform.${plan.platform}.title`)}</h2>
           <p className="text-sm text-ink-600">{t(`platform.${plan.platform}.sub`)}</p>
         </div>
-        {plan.discountPercent > 0 && <span className="rounded-md bg-danger px-2 py-1 text-sm font-bold text-white">{t('plan.off', { percent: plan.discountPercent })}</span>}
+        {plan.discountPercent > 0 && <span className="shrink-0 rounded-md bg-primary-soft px-2 py-1 text-sm font-medium text-primary">{t('plan.off', { percent: plan.discountPercent })}</span>}
       </div>
 
       <div className="mt-5 flex flex-wrap items-baseline gap-x-3">
-        <span className="text-4xl font-bold tracking-tight">{rupees(plan.price)}</span>
+        <span className="text-4xl font-normal tracking-tight text-heading">{rupees(plan.price)}</span>
         {plan.listPrice && <span className="text-lg text-ink-400 line-through" aria-label={`${t('plan.was')} ${rupees(plan.listPrice)}`}>{rupees(plan.listPrice)}</span>}
       </div>
       <p className="mt-1 text-sm text-ink-600">{plan.years > 1 ? `${t('plan.perYear', { price: rupees(plan.perYear) })} · ` : ''}{t('plan.perMonth', { price: rupees(plan.perMonth) })}</p>
       {credit > 0 && (
         <div className="mt-3 rounded-lg bg-ok-soft px-3 py-2 text-sm">
           <div className="flex justify-between text-ink-600"><span>{t('credits.discount')}</span><span className="font-medium text-ok">− {formatINR(credit)}</span></div>
-          <div className="mt-0.5 flex justify-between font-semibold"><span>{t('credits.payNow')}</span><span>{formatINR(payNow)}</span></div>
+          <div className="mt-0.5 flex justify-between font-medium"><span>{t('credits.payNow')}</span><span>{formatINR(payNow)}</span></div>
         </div>
       )}
       {plan.savesVsYearly > 0 && <p className="mt-2 text-sm font-medium text-ok">{t('plan.saves', { amount: rupees(plan.savesVsYearly), years: plan.years })}</p>}
@@ -376,7 +376,7 @@ function PlanCard({ plan, plans, credits, active, busy, disabled, onBuy }: { pla
         <li className="flex items-start gap-2 text-ink-600"><Check size={16} className="mt-1 shrink-0 text-ok" />{t(`platform.${plan.platform}.where`)}</li>
       </ul>
 
-      <Button variant={best ? 'primary' : 'secondary'} className="mt-6 h-9 w-full justify-center text-base" disabled={disabled} onClick={onBuy}>
+      <Button variant={best ? 'primary' : 'secondary'} className="mt-6 h-auto min-h-9 w-full justify-center whitespace-normal py-2 text-base" disabled={disabled} onClick={onBuy}>
         {busy ? t('pay.opening') : credit > 0 && payNow === 0 ? t('plan.renewWithCredits') : active ? t('plan.extend', { plan: name }) : t('plan.buy', { plan: name })}
       </Button>
       {!busy && !disabled && payNow > 0 && <p className="mt-2 text-center text-xs text-ink-400">{t('plan.pay', { amount: credit > 0 ? formatINR(payNow) : rupees(plan.price) })}</p>}
@@ -396,14 +396,14 @@ function Compare({ plans, years }: { plans: PlansView; years: number }) {
   const head = cardsFor(plans.plans, years).map((p) => ({ id: p.id, label: t(`platform.${p.platform}.title`), best: p.highlight === 'BEST_VALUE' }))
   return (
     <section>
-      <h2 className="mb-3 text-xl font-semibold">{t('compare.title')}</h2>
+      <h2 className="mb-3 text-xl font-medium">{t('compare.title')}</h2>
       <div className="overflow-x-auto rounded-lg border border-line bg-surface">
-        <table className="w-full text-base">
+        <table className="w-full min-w-[640px] text-base">
           <thead>
-            <tr className="h-10 border-b border-line text-center text-sm">
+            <tr className="h-10 border-b border-line bg-sunken text-center text-sm">
               <th className="px-4 text-left font-medium text-ink-600">{t('compare.feature')}</th>
-              <th className="px-3 font-semibold">{t('compare.trial')}</th>
-              {head.map((h) => <th key={h.id} className={`px-3 font-semibold ${h.best ? 'bg-primary-soft text-primary' : ''}`}>{h.label}</th>)}
+              <th className="px-3 font-medium">{t('compare.trial')}</th>
+              {head.map((h) => <th key={h.id} className={`px-3 font-medium ${h.best ? 'bg-primary-soft text-primary' : ''}`}>{h.label}</th>)}
             </tr>
           </thead>
           <tbody>

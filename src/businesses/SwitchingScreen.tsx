@@ -11,7 +11,7 @@ export function SwitchingScreen() {
     <div role="status" aria-live="polite" className="fixed inset-0 z-[90] grid place-items-center bg-surface">
       <div className="flex flex-col items-center gap-4">
         <BusinessAvatar name={s.name} color={s.color} size={72} />
-        <p className="text-lg font-semibold">{t('opening', { name: s.name })}</p>
+        <p className="text-lg font-medium">{t('opening', { name: s.name })}</p>
         <div className="h-1 w-40 overflow-hidden rounded bg-sunken"><div className="h-full w-1/2 animate-pulse rounded bg-primary" /></div>
       </div>
     </div>

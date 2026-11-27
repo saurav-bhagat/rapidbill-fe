@@ -27,7 +27,7 @@ export function MovementsDrawer({ item, open, version, onClose, onEdit, onAdjust
           <div className="mb-4 rounded-md border border-line bg-paper p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-lg font-semibold">{item.name}</div>
+                <div className="text-lg font-medium">{item.name}</div>
                 <div className="font-mono text-sm text-ink-600">{item.code}{item.batchNo ? ` · ${t('movements.batch', { batch: item.batchNo })}` : ''}{item.expiry ? ` · ${t('movements.exp', { exp: item.expiry })}` : ''}</div>
               </div>
               <div className="text-right">

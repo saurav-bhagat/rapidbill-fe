@@ -103,12 +103,12 @@ export function Parties() {
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="page-toolbar">
         <SearchInput value={query} onChange={setQuery} inputRef={searchRef} placeholder={t('search')} onEnterResults={() => document.querySelector<HTMLElement>('[role=grid]')?.focus()} />
         <Select value={type} onChange={(e) => setType(e.target.value as PartyType | '')} className="!w-40" aria-label={t('typeLabel')}>
           <option value="">{t('allTypes')}</option><option value="CUSTOMER">{t('typePlural.customer')}</option><option value="DEPARTMENT">{t('typePlural.department')}</option><option value="BRANCH">{t('typePlural.branch')}</option>
         </Select>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex max-w-full flex-wrap items-center gap-2">
           <Button onClick={() => selected && setStatementId(selected.id)} icon={<FileText size={14} />} hotkey="s" disabled={!selected}>{t('page.statement')}</Button>
           <Button onClick={() => selected && setReceiveId(selected.id)} icon={<HandCoins size={14} />} hotkey="r" disabled={!selected || !canWrite}>{t('page.receive')}</Button>
           <Button onClick={() => setImporting(true)} icon={<Upload size={14} />} hotkey="i" disabled={!canWrite}>{t('page.import')}</Button>
@@ -117,7 +117,7 @@ export function Parties() {
           <Button variant="primary" icon={<Plus size={14} />} hotkey="n" disabled={!canWrite} onClick={openNew}>{t('newParty')}</Button>
         </div>
       </div>
-      <p className="text-sm text-ink-600">{rows.length === parties.length ? t('count', { count: parties.length }) : t('countOf', { shown: rows.length, total: parties.length })}</p>
+      <p className="summary-strip">{rows.length === parties.length ? t('count', { count: parties.length }) : t('countOf', { shown: rows.length, total: parties.length })}</p>
       <VirtualTable
         label={t('tableLabel')}
         columns={columns}

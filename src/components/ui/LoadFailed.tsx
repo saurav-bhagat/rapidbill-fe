@@ -8,7 +8,7 @@ export function LoadFailed({ error, onRetry }: { error: unknown; onRetry: () => 
   const { t } = useTranslation('errors')
   return (
     <div role="alert" className="mx-auto mt-16 max-w-md rounded-lg border border-line bg-surface p-6 text-center">
-      <h2 className="text-lg font-semibold">{t('loadFailedTitle')}</h2>
+      <h2 className="text-lg font-medium">{t('loadFailedTitle')}</h2>
       <p className="mt-2 text-ink-600">{errorText(t, error, t('loadFailed'))}</p>
       <Button className="mt-4" variant="primary" icon={<RotateCw size={14} />} onClick={onRetry}>{t('retry')}</Button>
     </div>

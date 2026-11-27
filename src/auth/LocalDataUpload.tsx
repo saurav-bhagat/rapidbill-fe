@@ -48,6 +48,6 @@ export function LocalDataUpload({ variant }: { variant: 'banner' | 'settings' })
     </>
   )
   return variant === 'banner'
-    ? <div className="no-print mb-4 rounded border border-line bg-surface p-4"><h2 className="font-semibold">{t('migrate.title')}</h2>{body}</div>
+    ? <div className="no-print mb-4 rounded border border-line bg-surface p-4"><h2 className="font-medium">{t('migrate.title')}</h2>{body}</div>
     : <div className="col-span-2">{body}</div>
 }

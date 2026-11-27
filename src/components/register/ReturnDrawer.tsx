@@ -143,7 +143,7 @@ export function ReturnDrawer({ open, bill, settings, canWrite, onClose, onChange
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-base">
                 <span>{t('returns.taxable')} <span className="num">{formatAmount(ok.totals.taxable)}</span></span>
                 {bill.taxApplicable && <span>{t('returns.tax')} <span className="num">{formatAmount(ok.totals.cgst + ok.totals.sgst + ok.totals.igst)}</span></span>}
-                <span className="ml-auto font-semibold">{t('returns.total')} <span className="num text-lg">{formatINR(ok.totals.grandTotal)}</span></span>
+                <span className="ml-auto font-medium">{t('returns.total')} <span className="num text-lg">{formatINR(ok.totals.grandTotal)}</span></span>
               </div>
             ) : <span className="text-ink-400">{problem || t('returns.pick')}</span>}
           </div>
@@ -151,7 +151,7 @@ export function ReturnDrawer({ open, bill, settings, canWrite, onClose, onChange
         </>
       )}
 
-      <h3 className="mb-1 mt-4 text-base font-semibold">{t('returns.made')}</h3>
+      <h3 className="mb-1 mt-4 text-base font-medium">{t('returns.made')}</h3>
       {listError && <p className="text-sm text-danger">{listError}</p>}
       {list.length === 0 && !listError && <p className="text-sm text-ink-400">{t('returns.none')}</p>}
       <ul className="divide-y divide-line">

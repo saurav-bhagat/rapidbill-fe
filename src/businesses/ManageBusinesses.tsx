@@ -27,7 +27,7 @@ export function ManageBusinesses() {
     <div className="mx-auto max-w-4xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold">{t('manage.title')}</h2>
+          <h2 className="text-xl font-medium">{t('manage.title')}</h2>
           <p className="text-ink-600">{t('manage.sub')}</p>
         </div>
         <Button variant="primary" icon={<Plus size={16} />} onClick={() => setAddOpen(true)}>{t('add.title')}</Button>
@@ -40,7 +40,7 @@ export function ManageBusinesses() {
               <BusinessAvatar name={b.name} color={b.color} size={44} />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="truncate text-lg font-semibold">{b.name}</span>
+                  <span className="truncate text-lg font-medium">{b.name}</span>
                   {b.current && <span className="rounded-full bg-ok-soft px-2 py-0.5 text-xs font-medium text-ok">{t('manage.open')}</span>}
                 </div>
                 <p className="text-sm text-ink-600">{[b.stateCode ? stateName(b.stateCode) : '', t(`role.${b.role}`), b.createdAt ? t('manage.created', { date: longDate(b.createdAt) }) : ''].filter(Boolean).join(' · ')}</p>

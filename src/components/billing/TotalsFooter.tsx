@@ -43,7 +43,7 @@ interface Props {
 const Stat = ({ label, value, strong, tone }: { label: string; value: string; strong?: boolean; tone?: string }) => (
   <div className="flex items-baseline gap-1.5 whitespace-nowrap text-sm">
     <span className="text-ink-600">{label}</span>
-    <span className={`num !text-left ${strong ? 'font-semibold' : 'font-medium'} ${tone ?? ''}`}>{value}</span>
+    <span className={`num !text-left ${strong ? 'font-medium' : 'font-medium'} ${tone ?? ''}`}>{value}</span>
   </div>
 )
 
@@ -53,7 +53,7 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
   const c = p.calc
   return (
     <div className="shrink-0 rounded-md border border-line bg-surface">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 border-b border-line px-3 py-1">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 border-b border-line bg-section px-3 py-2">
         <Stat label={t('totals.itemsQty')} value={`${c.itemCount} / ${formatQty(c.totalQty)}`} />
         <Stat label={t('totals.gross')} value={formatAmount(c.gross)} />
         {c.lineDiscount > 0 && <Stat label={t('totals.lineDiscount')} value={`-${formatAmount(c.lineDiscount)}`} />}
@@ -71,7 +71,7 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
           </label>
         <div className="flex items-baseline gap-2">
           <span className="text-sm font-medium text-ink-600">{t('totals.grandTotal')}</span>
-          <span className="num text-2xl font-bold leading-8" aria-live="polite">{formatAmount(c.grandTotal)}</span>
+          <span className="num text-2xl font-medium leading-8 text-heading" aria-live="polite">{formatAmount(c.grandTotal)}</span>
         </div>
         </div>
       </div>
@@ -118,7 +118,7 @@ export const TotalsFooter = forwardRef<HTMLInputElement, Props>(function TotalsF
           />
         </label>
         <p className="hidden min-w-0 flex-1 truncate text-sm text-ink-600 xl:block" title={words(c.grandTotal)}>{c.grandTotal ? words(c.grandTotal) : ''}</p>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex max-w-full flex-wrap gap-2">
           <Button className="[&>span]:hidden min-[1200px]:[&>span]:inline" onClick={p.onDiscard} hotkey="escape">{t('totals.discard')}</Button>
           <Button className="[&>span]:hidden min-[1200px]:[&>span]:inline" onClick={p.onSaveNew} hotkey="mod+enter" disabled={p.saving}>{t('totals.saveNew')}</Button>
           <Button variant="primary" className="[&>span]:hidden min-[1200px]:[&>span]:inline" onClick={p.onSavePrint} hotkey="mod+s" disabled={p.saving}>{t('totals.savePrint')}</Button>

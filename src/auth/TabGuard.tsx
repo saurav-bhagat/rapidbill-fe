@@ -16,7 +16,7 @@ export function TabGuard() {
   return (
     <div role="alertdialog" aria-modal="true" aria-labelledby="tab-switched-title" className="fixed inset-0 z-[100] grid place-items-center bg-black/50 p-4">
       <div className="w-full max-w-md space-y-3 rounded-xl bg-surface p-6 shadow-float">
-        <h2 id="tab-switched-title" className="text-lg font-semibold">{t('tabSwitched.title', { name: other })}</h2>
+        <h2 id="tab-switched-title" className="text-lg font-medium">{t('tabSwitched.title', { name: other })}</h2>
         <p className="text-ink-600">{t('tabSwitched.body', { name: other })}</p>
         <Button variant="primary" autoFocus onClick={() => window.location.reload()}>{t('tabSwitched.action', { name: other })}</Button>
       </div>

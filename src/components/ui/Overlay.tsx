@@ -41,19 +41,19 @@ export function Overlay({ open, onClose, title, children, footer, variant = 'mod
         aria-modal="true"
         aria-label={title}
         style={{ width: width ?? (isDrawer ? '440px' : '560px') }}
-        className={`relative flex max-h-full flex-col bg-surface shadow-float outline-none ${
+        className={`relative flex max-h-full max-w-[calc(100vw-2rem)] flex-col bg-surface shadow-float outline-none ${
           isDrawer ? 'ml-auto h-full border-l border-line' : 'm-auto max-h-[85vh] rounded-lg border border-line'
         }`}
       >
-        <header className="flex h-12 shrink-0 items-center justify-between border-b border-line px-4">
-          <h2 className="text-lg font-semibold">{title}</h2>
+        <header className="flex h-12 shrink-0 items-center justify-between rounded-t-lg border-b border-line bg-section px-4">
+          <h2 className="text-lg font-medium">{title}</h2>
           <button onClick={onClose} className="flex items-center gap-2 rounded p-1 text-ink-400 hover:bg-sunken hover:text-ink-900" aria-label={t('actions.close')}>
             <Keycap combo="escape" />
             <X size={16} />
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-auto p-4">{children}</div>
-        {footer && <footer className="flex shrink-0 justify-end gap-2 border-t border-line px-4 py-3">{footer}</footer>}
+        {footer && <footer className="flex shrink-0 flex-wrap justify-end gap-2 border-t border-line bg-section/50 px-4 py-3">{footer}</footer>}
       </div>
     </div>
   )

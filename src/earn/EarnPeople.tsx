@@ -35,7 +35,7 @@ export function EarnPeople({ locked, percent }: { locked: boolean; percent: numb
   return (
     <section className="rounded-2xl border border-line bg-surface p-5 shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-lg font-semibold">{t('people.title')}</h3>
+        <h3 className="text-lg font-medium">{t('people.title')}</h3>
         {!locked && (
           <div role="group" aria-label={t('people.title')} className="flex rounded-lg bg-sunken p-0.5">
             {FILTERS.map((f) => (
@@ -68,7 +68,7 @@ function Empty({ filtered, percent }: { filtered: boolean; percent: number }) {
   return (
     <div className="mx-auto mt-4 max-w-md py-4 text-center">
       <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary-soft text-primary"><Gift size={26} /></span>
-      <h4 className="mt-3 text-lg font-semibold">{t('people.emptyTitle')}</h4>
+      <h4 className="mt-3 text-lg font-medium">{t('people.emptyTitle')}</h4>
       <p className="mt-1 text-ink-600">{t('people.emptyBody', { price: formatINR(EXAMPLE_PRICE).replace('.00', ''), reward: formatINR(exampleReward(EXAMPLE_PRICE, percent)) })}</p>
     </div>
   )
@@ -82,18 +82,18 @@ function SampleRow({ percent }: { percent: number }) {
       <li className="flex flex-wrap items-center gap-3 py-3">
         <Avatar name={t('locked.sampleName')} />
         <div className="min-w-0 flex-1">
-          <div className="font-semibold">{t('locked.sampleName')} <span className="font-normal text-ink-600">· {t('locked.sampleBusiness')}</span></div>
+          <div className="font-medium">{t('locked.sampleName')} <span className="font-normal text-ink-600">· {t('locked.sampleBusiness')}</span></div>
           <div className="text-sm text-ink-600">{t('people.paid')} · {t('people.payments', { count: 2 })}</div>
         </div>
-        <span className="rounded-full bg-ok-soft px-2.5 py-0.5 text-xs font-semibold text-ok">{t('locked.sample')}</span>
-        <span className="font-semibold tabular-nums text-ok">+ {formatINR(exampleReward(EXAMPLE_PRICE, percent) * 2)}</span>
+        <span className="rounded-full bg-ok-soft px-2.5 py-0.5 text-xs font-medium text-ok">{t('locked.sample')}</span>
+        <span className="font-medium tabular-nums text-ok">+ {formatINR(exampleReward(EXAMPLE_PRICE, percent) * 2)}</span>
       </li>
     </ul>
   )
 }
 
 function Avatar({ name }: { name: string }) {
-  return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-bold text-primary">{initialsOf(name)}</span>
+  return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-medium text-primary">{initialsOf(name)}</span>
 }
 
 function PersonRow({ p, percent }: { p: ReferralPerson; percent: number }) {
@@ -107,21 +107,21 @@ function PersonRow({ p, percent }: { p: ReferralPerson; percent: number }) {
       <div className="flex flex-wrap items-center gap-3">
         <Avatar name={p.name} />
         <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold">{p.name}</div>
+          <div className="truncate font-medium">{p.name}</div>
           <div className="truncate text-sm text-ink-600">{[where, t('people.joined', { date: longDate(p.signedUpAt) })].filter(Boolean).join(' · ')}</div>
         </div>
         <div className="flex items-center gap-3 text-right">
           {paid ? (
             <>
-              <span className="rounded-full bg-ok-soft px-2.5 py-0.5 text-xs font-semibold text-ok">{t('people.paid')}</span>
+              <span className="rounded-full bg-ok-soft px-2.5 py-0.5 text-xs font-medium text-ok">{t('people.paid')}</span>
               <div>
-                <div className="font-bold tabular-nums text-ok">+ {formatINR(p.earned)}</div>
+                <div className="font-medium tabular-nums text-ok">+ {formatINR(p.earned)}</div>
                 <div className="text-xs text-ink-600">{t('people.payments', { count: p.paymentsCount })}</div>
               </div>
             </>
           ) : (
             <>
-              <span className="inline-flex items-center gap-1 rounded-full bg-sunken px-2.5 py-0.5 text-xs font-semibold text-ink-600"><Clock size={12} />{t('people.signedUp')}</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-sunken px-2.5 py-0.5 text-xs font-medium text-ink-600"><Clock size={12} />{t('people.signedUp')}</span>
               <span className="hidden text-sm text-ink-400 sm:inline">{t('people.waiting')}</span>
             </>
           )}
@@ -138,7 +138,7 @@ function PersonRow({ p, percent }: { p: ReferralPerson; percent: number }) {
             <li key={x.paymentId} className="flex flex-wrap items-center justify-between gap-2">
               <span>{tl(`planName.${x.planId}`, { defaultValue: x.planId })} <span className="text-ink-400">· {longDate(x.paidAt)}</span></span>
               <span className="tabular-nums text-ink-600">{t('people.fee')}: {formatINR(x.fee)}</span>
-              <span className={`font-semibold tabular-nums ${x.counted && x.reward > 0 ? 'text-ok' : 'text-ink-400'}`}>
+              <span className={`font-medium tabular-nums ${x.counted && x.reward > 0 ? 'text-ok' : 'text-ink-400'}`}>
                 {x.counted && x.reward > 0 ? `${t('people.reward', { percent })}: + ${formatINR(x.reward)}` : t('people.noReward')}
               </span>
             </li>
@@ -174,7 +174,7 @@ export function EarnHistory() {
 
   return (
     <section className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-      <h3 className="text-lg font-semibold">{t('history.title')}</h3>
+      <h3 className="text-lg font-medium">{t('history.title')}</h3>
       {!loaded ? <p className="py-6 text-center text-ink-400" role="status">…</p> : rows.length === 0 ? (
         <p className="py-6 text-center text-ink-600"><Users size={18} className="mx-auto mb-1 text-ink-400" />{t('history.empty')}</p>
       ) : (
@@ -187,7 +187,7 @@ export function EarnHistory() {
                   <div className="truncate">{label(r)}</div>
                   <div className="text-xs text-ink-400">{longDate(r.createdAt)}</div>
                 </div>
-                <span className={`shrink-0 font-semibold tabular-nums ${plus ? 'text-ok' : 'text-ink-900'}`}>{plus ? '+' : '−'} {formatINR(r.amount)}</span>
+                <span className={`shrink-0 font-medium tabular-nums ${plus ? 'text-ok' : 'text-ink-900'}`}>{plus ? '+' : '−'} {formatINR(r.amount)}</span>
               </li>
             )
           })}

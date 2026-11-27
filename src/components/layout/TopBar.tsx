@@ -18,12 +18,12 @@ export function TopBar() {
   const current = NAV.find((n) => (n.path === '/' ? pathname === '/' : pathname.startsWith(n.path)))
   const setShortcutsOpen = useUI((s) => s.setShortcutsOpen)
   return (
-    <header className="no-print flex h-14 shrink-0 items-center justify-between border-b border-line bg-surface px-5">
+    <header className="no-print flex min-h-14 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-line bg-surface px-5 py-2">
       <div className="flex min-w-0 items-center gap-3">
-        <h1 className="text-lg font-semibold">{current ? t(current.titleKey) : pathname.startsWith('/license') ? t('title', { ns: 'license' }) : pathname.startsWith('/businesses') ? t('manage.title', { ns: 'business' }) : 'RapidBill'}</h1>
+        <h1 className="text-lg font-medium">{current ? t(current.titleKey) : pathname.startsWith('/license') ? t('title', { ns: 'license' }) : pathname.startsWith('/businesses') ? t('manage.title', { ns: 'business' }) : 'RapidBill'}</h1>
         <BusinessChip />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="mr-1 flex items-center gap-1 rounded-lg bg-sunken px-1 text-sm text-ink-600">
           <a href={supportTel} className="flex h-8 items-center gap-1.5 rounded-md px-2 hover:bg-white hover:text-primary" title={`${t('account.callSupport')} ${SUPPORT_PHONE_DISPLAY}`} aria-label={`${t('account.callSupport')} ${SUPPORT_PHONE_DISPLAY}`}>
             <Headset size={16} /><span className="hidden font-medium xl:inline">{SUPPORT_PHONE_DISPLAY}</span>
@@ -42,7 +42,7 @@ export function TopBar() {
         <UserMenu />
         {current?.path !== '/issue/new' && current?.path !== '/' && (
           <Link to="/issue/new">
-            <Button variant="primary" icon={<Plus size={16} />} hotkey="alt+k" tabIndex={-1}>{t('nav.newIssue.label')}</Button>
+            <Button variant="secondary" icon={<Plus size={16} />} hotkey="alt+k" tabIndex={-1}>{t('nav.newIssue.label')}</Button>
           </Link>
         )}
       </div>

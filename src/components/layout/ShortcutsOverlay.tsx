@@ -17,7 +17,7 @@ export function ShortcutsOverlay() {
       <div className="grid grid-cols-2 gap-x-8 gap-y-5">
         {GROUPS.map((g) => (
           <section key={g}>
-            <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">{t(`group.${g}`)}</h3>
+            <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-400">{t(`group.${g}`)}</h3>
             <ul className="space-y-1">
               {SHORTCUTS.filter((s) => s.group === g).map((s) => (
                 <li key={s.id} className={`flex items-start justify-between gap-3 ${s.phase > CURRENT_PHASE ? 'opacity-45' : ''}`}>

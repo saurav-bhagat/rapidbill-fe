@@ -25,7 +25,7 @@ export function LicenseCard({ collapsed }: { collapsed: boolean }) {
 
   if (collapsed) {
     return (
-      <div className="border-t border-white/10 p-2">
+      <div className="border-t border-nav-active p-2">
         <Link to="/license" title={`${title}: ${detail}`} aria-label={`${title}: ${detail}`} className={`relative flex h-9 items-center justify-center rounded border ${box} ${text}`}>
           <Icon size={18} />
           {(lic.status === 'EXPIRED' || urgent) && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-current" />}
@@ -35,9 +35,9 @@ export function LicenseCard({ collapsed }: { collapsed: boolean }) {
   }
 
   return (
-    <div className="shrink-0 border-t border-white/10 p-2">
+    <div className="shrink-0 border-t border-nav-active p-2">
       <Link to="/license" className={`block rounded border p-2.5 hover:shadow-sm ${box}`} aria-label={`${title}. ${detail}. ${t('card.viewPlans')}`}>
-        <div className={`flex items-center gap-2 text-sm font-semibold ${text}`}>
+        <div className={`flex items-center gap-2 text-sm font-medium ${text}`}>
           <Icon size={16} className="shrink-0" />
           <span className="truncate">{title}</span>
         </div>

@@ -42,7 +42,7 @@ interface Props {
 const Sum = ({ label, value, strong }: { label: string; value: string; strong?: boolean }) => (
   <div className="rounded border border-line px-3 py-2">
     <div className="text-sm text-ink-600">{label}</div>
-    <div className={`num text-lg ${strong ? 'font-bold' : 'font-medium'}`}>{value}</div>
+    <div className={`num text-lg ${strong ? 'font-medium' : 'font-medium'}`}>{value}</div>
   </div>
 )
 

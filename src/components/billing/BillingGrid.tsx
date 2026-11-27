@@ -152,7 +152,7 @@ export const BillingGrid = forwardRef<GridHandle, Props>(function BillingGrid(
                   </td>
                   <td className="truncate px-2 font-mono text-sm text-ink-600">{r.item?.batchNo || ''}</td>
                   <td className="px-2 font-mono text-sm text-ink-600">{r.item?.expiry || ''}</td>
-                  <td className={`p-0 ${st.shortBy && !blockOverIssue ? '[&_input]:font-semibold [&_input]:text-warn' : ''}`}>{r.item ? numInput(i, 'qty', r.qty, st.qtyInvalid || (!!st.shortBy && blockOverIssue)) : null}</td>
+                  <td className={`p-0 ${st.shortBy && !blockOverIssue ? '[&_input]:font-medium [&_input]:text-warn' : ''}`}>{r.item ? numInput(i, 'qty', r.qty, st.qtyInvalid || (!!st.shortBy && blockOverIssue)) : null}</td>
                   <td className="p-0 text-sm text-ink-600">
                     {r.item && (r.item.altUnits?.length ?? 0) > 0 ? (
                       <select

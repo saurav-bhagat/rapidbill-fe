@@ -13,7 +13,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error?: 
     const t = (k: string) => i18n.t(k, { ns: 'common' })
     return (
       <div role="alert" className="mx-auto mt-24 max-w-md rounded-lg border border-line bg-surface p-6">
-        <h1 className="text-xl font-semibold">{t('errorBoundary.title')}</h1>
+        <h1 className="text-xl font-medium">{t('errorBoundary.title')}</h1>
         <p className="mt-2 text-ink-600">{t('errorBoundary.body')}</p>
         {useSync.getState().pendingIds.length + useSync.getState().failedIds.length > 0 && <p className="mt-2 text-ink-600">{t('errorBoundary.safe')}</p>}
         <pre className="mt-3 max-h-32 overflow-auto rounded bg-sunken p-2 font-mono text-xs text-ink-600">{this.state.error.message}</pre>

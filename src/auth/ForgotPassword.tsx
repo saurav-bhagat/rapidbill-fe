@@ -52,7 +52,7 @@ export function ForgotPassword({ initialEmail, onDone, onBack }: { initialEmail:
   return (
     <div>
       <button type="button" onClick={onBack} className="mb-4 text-sm font-medium text-ink-600 hover:text-primary">← {t('forgot.back')}</button>
-      <h1 className="text-3xl font-bold">{t('forgot.title')}</h1>
+      <h1 className="text-3xl font-medium">{t('forgot.title')}</h1>
       {step === 'email' ? (
         <form onSubmit={send} noValidate className="mt-4 space-y-4">
           <p className="text-base text-ink-600">{t('forgot.sub')}</p>

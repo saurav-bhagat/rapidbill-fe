@@ -27,15 +27,15 @@ function Change({ now, before }: { now: number; before: number }) {
   )
 }
 
-const TONES = { blue: 'bg-primary-soft text-primary', green: 'bg-ok-soft text-ok', violet: 'bg-[#efe9fe] text-[#6d3fd1]', amber: 'bg-warn-soft text-warn' }
+const TONES = { blue: 'bg-primary-soft text-primary', green: 'bg-ok-soft text-ok', violet: 'bg-sunken text-primary', amber: 'bg-warn-soft text-warn' }
 function Tile({ label, value, sub, icon: Icon, tone = 'blue' }: { label: string; value: ReactNode; sub?: ReactNode; icon: LucideIcon; tone?: keyof typeof TONES }) {
   return (
-    <div className="rounded-xl border border-line/70 bg-surface p-4 shadow-card">
+    <div className="metric-tile">
       <div className="flex items-start justify-between gap-3">
         <div className="text-sm font-medium text-ink-600">{label}</div>
         <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${TONES[tone]}`}><Icon size={18} /></div>
       </div>
-      <div className="num mt-3 !text-left text-3xl font-bold tracking-tight">{value}</div>
+      <div className="num mt-3 !text-left text-3xl font-normal tracking-tight text-heading">{value}</div>
       <div className="mt-1 min-h-[18px] text-sm text-ink-600">{sub}</div>
     </div>
   )
@@ -44,8 +44,8 @@ function Tile({ label, value, sub, icon: Icon, tone = 'blue' }: { label: string;
 function Card({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
   return (
     <section className="flex min-w-0 flex-col rounded-xl border border-line/70 bg-surface shadow-card">
-      <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-line px-5">
-        <h2 className="text-base font-semibold">{title}</h2>{right}
+      <header className="flex min-h-12 shrink-0 items-center justify-between gap-3 rounded-t-xl border-b border-line bg-section px-5 py-2">
+        <h2 className="text-base font-medium">{title}</h2>{right}
       </header>
       <div className="min-h-0 flex-1">{children}</div>
     </section>
@@ -62,7 +62,7 @@ function StockList({ items, tone }: { items: Item[]; tone: 'warn' | 'danger' }) 
       {items.slice(0, 5).map((i) => (
         <li key={i.id} className="flex h-11 items-center gap-3 px-5">
           <span className="min-w-0 flex-1 truncate">{i.name}</span>
-          <span className={`num font-semibold ${tone === 'danger' ? 'text-danger' : 'text-warn'}`}>{formatQty(i.currentStock)} {i.unit}</span>
+          <span className={`num font-medium ${tone === 'danger' ? 'text-danger' : 'text-warn'}`}>{formatQty(i.currentStock)} {i.unit}</span>
         </li>
       ))}
       {items.length > 5 && <li className="px-5 py-2 text-sm text-ink-600">{t('attention.more', { count: items.length - 5 })}</li>}
@@ -104,9 +104,9 @@ export function Home() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-5">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-2xl font-bold tracking-tight">{settings.companyName || t('welcome')}</p>
+          <p className="text-2xl font-medium tracking-tight">{settings.companyName || t('welcome')}</p>
           <p className="mt-0.5 text-base text-ink-600">{formatDate(todayISO())}</p>
         </div>
         <Link to="/issue/new" tabIndex={-1}>
@@ -117,10 +117,10 @@ export function Home() {
       {(!settings.address.trim() || !settings.stateCode) && (
         <Link to="/settings?tab=profile" className="flex items-center justify-between gap-3 rounded-xl border border-warn/30 bg-warn-soft px-4 py-3 text-base text-warn hover:brightness-95">
           <span><b>{t('profileNudge.title')}</b> {t('profileNudge.body')}</span>
-          <span className="shrink-0 font-semibold underline">{t('profileNudge.cta')}</span>
+          <span className="shrink-0 font-medium underline">{t('profileNudge.cta')}</span>
         </Link>
       )}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="metric-band">
         <Tile icon={IndianRupee} label={t('tile.todayBilling')} value={formatINR(d.today.amount - backToday.amount)} sub={backToday.count ? t('tile.afterReturns', { amount: formatINR(backToday.amount) }) : <Change now={d.today.amount} before={d.yesterday.amount} />} />
         <Tile icon={FileText} tone="green" label={t('tile.billsToday')} value={d.today.bills} sub={t('tile.unitsIssued', { qty: formatQty(d.today.qty) })} />
         <Tile icon={CalendarDays} tone="violet" label={t('tile.thisMonth')} value={formatINR(d.month.amount - backMonth.amount)} sub={backMonth.count ? t('tile.afterReturns', { amount: formatINR(backMonth.amount) }) : t('tile.monthSub', { count: d.month.bills, qty: formatQty(d.month.qty) })} />
@@ -141,7 +141,7 @@ export function Home() {
                 <div className="flex h-52 items-end gap-1.5 px-5 pb-8 pt-5" role="img" aria-label={t('trend.aria', { days })}>
                   {d.series.map((p) => (
                     <div key={p.date} className="group relative flex h-full min-w-0 flex-1 flex-col justify-end" title={t('trend.bar', { date: formatDate(p.date), amount: formatINR(p.amount), count: p.bills })}>
-                      <div className={`mx-auto w-full max-w-[56px] rounded-t-md ${p.date === todayISO() ? 'bg-primary' : 'bg-primary/40 group-hover:bg-primary/70'}`} style={{ height: `${Math.max(p.amount ? 3 : 0, (p.amount / max) * 100)}%` }} />
+                      <div className={`mx-auto w-full max-w-[56px] rounded-t-md ${p.date === todayISO() ? 'bg-chart-current' : 'bg-chart group-hover:bg-chart-current'}`} style={{ height: `${Math.max(p.amount ? 3 : 0, (p.amount / max) * 100)}%` }} />
                       {(days === '7' || p.date.endsWith('-01') || p.date === todayISO()) && (
                         <span className="num absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs text-ink-600">{p.date.slice(8)}/{p.date.slice(5, 7)}</span>
                       )}
@@ -158,7 +158,7 @@ export function Home() {
               .filter(([, list]) => list.length)
               .map(([label, list, tone]) => (
                 <div key={label}>
-                  <div className="bg-sunken px-5 py-1.5 text-xs font-semibold uppercase tracking-wide text-ink-600">{t('attention.section', { label: t(`attention.${label}`), count: list.length })}</div>
+                  <div className="bg-sunken px-5 py-1.5 text-xs font-medium uppercase tracking-wide text-ink-600">{t('attention.section', { label: t(`attention.${label}`), count: list.length })}</div>
                   <StockList items={list} tone={tone} />
                 </div>
               ))}
@@ -170,15 +170,15 @@ export function Home() {
 
       {owing.length > 0 && (
         <Card title={t('owed.title')} right={<Link to="/parties" className="text-base font-medium text-primary hover:underline">{t('owed.viewAll')}</Link>}>
-          <div className="flex items-baseline gap-3 border-b border-line px-5 py-3">
-            <span className="num text-2xl font-bold">{formatINR(owed)}</span>
+          <div className="flex flex-wrap items-baseline gap-3 border-b border-line bg-ok-soft/70 px-5 py-3">
+            <span className="num text-2xl font-medium">{formatINR(owed)}</span>
             <span className="text-base text-ink-600">{t('owed.from', { count: owing.length })}</span>
           </div>
           <ul className="divide-y divide-line">
             {owing.slice(0, 5).map((p) => (
               <li key={p.id} className="flex h-11 items-center gap-3 px-5">
                 <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
-                <span className="num font-semibold">{formatINR(p.balance)}</span>
+                <span className="num font-medium">{formatINR(p.balance)}</span>
               </li>
             ))}
           </ul>
@@ -191,10 +191,10 @@ export function Home() {
             <ol className="divide-y divide-line">
               {d.topItems.map((t, n) => (
                 <li key={t.itemId} className="flex h-11 items-center gap-3 px-5">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sunken text-sm font-semibold text-ink-600">{n + 1}</span>
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-sunken text-sm font-medium text-ink-600">{n + 1}</span>
                   <span className="min-w-0 flex-1 truncate font-medium">{t.name}</span>
                   <span className="num text-ink-600">{formatQty(t.qty)} {t.unit}</span>
-                  <span className="num w-28 text-right font-semibold">₹{formatAmount(t.amount)}</span>
+                  <span className="num w-28 text-right font-medium">₹{formatAmount(t.amount)}</span>
                 </li>
               ))}
             </ol>
@@ -211,7 +211,7 @@ export function Home() {
                       <span className="block truncate font-medium">{v.partyName || t('recent.walkIn')}</span>
                       <span className="block truncate text-sm text-ink-600"><span className="font-mono">{v.number}</span> · {voucherTypeLabel(v, tc)} · {formatDate(v.date)}</span>
                     </span>
-                    <span className="num shrink-0 text-base font-semibold">₹{formatAmount(v.totals.grandTotal)}</span>
+                    <span className="num shrink-0 text-base font-medium">₹{formatAmount(v.totals.grandTotal)}</span>
                   </Link>
                 </li>
               ))}

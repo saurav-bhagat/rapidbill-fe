@@ -40,8 +40,8 @@ export function Onboarding() {
   return (
     <div className="flex min-h-full items-center justify-center bg-paper p-6">
       <div className="w-full max-w-lg rounded-xl bg-surface p-8 shadow-card">
-        <div className="text-sm font-semibold uppercase tracking-wide text-primary">{t('onboarding.step')}</div>
-        <h1 className="mt-1 text-2xl font-bold">{t('onboarding.title')}</h1>
+        <div className="text-sm font-medium uppercase tracking-wide text-primary">{t('onboarding.step')}</div>
+        <h1 className="mt-1 text-2xl font-medium">{t('onboarding.title')}</h1>
         <p className="mb-5 mt-1 text-base text-ink-600">{t('onboarding.sub', { name: business })}</p>
         <form onSubmit={submit} className="space-y-4" noValidate>
           <Field label={t('onboarding.type')}>

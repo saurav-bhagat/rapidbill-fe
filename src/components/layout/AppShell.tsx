@@ -39,7 +39,7 @@ export function AppShell() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-auto p-5 outline-none">
+        <main id="main" tabIndex={-1} className="app-canvas min-h-0 flex-1 overflow-auto p-4 outline-none lg:p-6">
           <LicenseBanner />
           <DeviceWarnings />
           {apiEnabled && <LocalDataUpload variant="banner" />}

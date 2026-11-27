@@ -80,23 +80,23 @@ export function AuthScreen({ initialMode = 'login' }: { initialMode?: Mode }) {
   return (
     <div className="flex min-h-full bg-paper">
       <div className="absolute right-5 top-4 z-10 flex gap-2"><TextSizeControl /><LanguageSwitcher /></div>
-      <aside className="hidden w-[44%] max-w-xl shrink-0 flex-col justify-between bg-nav p-12 text-white lg:flex">
-        <div className="flex items-center gap-3 text-2xl font-bold"><span className="grid h-10 w-11 place-items-center rounded-lg bg-white text-xl text-primary">₹</span>RapidBill</div>
+      <aside className="hidden w-[44%] max-w-xl shrink-0 flex-col justify-between bg-nav p-12 text-heading lg:flex">
+        <div className="flex items-center gap-3 text-2xl font-medium"><span className="grid h-10 w-11 place-items-center rounded-lg bg-white text-xl text-primary">₹</span>RapidBill</div>
         <div>
-          <p className="text-3xl font-bold leading-tight">{t('tagline')}</p>
-          <ul className="mt-8 space-y-4 text-lg text-white/90">
+          <p className="text-3xl font-medium leading-tight">{t('tagline')}</p>
+          <ul className="mt-8 space-y-4 text-lg text-ink-600">
             {(t('points', { returnObjects: true }) as string[]).map((p) => (
-              <li key={p} className="flex items-start gap-3"><span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/15 text-sm">✓</span>{p}</li>
+              <li key={p} className="flex items-start gap-3"><span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-surface/60 text-sm">✓</span>{p}</li>
             ))}
           </ul>
         </div>
-        <SupportLine className="!text-white/80 [&_a]:!text-white" />
+        <SupportLine className="!text-ink-600 [&_a]:!text-primary" />
       </aside>
       <main className="flex flex-1 flex-col items-center justify-center p-6">
       <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-card">
         {forgot ? <ForgotPassword initialEmail={v.email} onBack={() => setForgot(false)} onDone={(email) => { setV((x) => ({ ...x, email, password: '' })); setForgot(false) }} /> : <>
         <button type="button" onClick={() => go('/')} className="mb-4 text-sm font-medium text-ink-600 hover:text-primary">← Back to home</button>
-        <h1 className="text-3xl font-bold">{mode === 'signup' ? t('createTitle') : t('welcome')}</h1>
+        <h1 className="text-3xl font-medium">{mode === 'signup' ? t('createTitle') : t('welcome')}</h1>
         <p className="mb-6 mt-1 text-base text-ink-600">{mode === 'signup' ? t('createSub') : t('welcomeSub')}</p>
         {notice === 'expired' && (
           <p role="alert" className="mb-3 rounded border border-line bg-warn-soft px-3 py-2 text-sm text-warn">

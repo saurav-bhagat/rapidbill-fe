@@ -30,14 +30,14 @@ export function UserMenu() {
   return (
     <div ref={box} className="relative">
       <button onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open} className="flex h-9 items-center gap-2 rounded-lg border border-line bg-surface pl-1 pr-2 hover:bg-sunken">
-        <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-xs font-bold text-white">{initials}</span>
+        <span className="grid h-7 w-7 place-items-center rounded-md bg-primary text-xs font-medium text-white">{initials}</span>
         <span className="hidden max-w-[120px] truncate text-sm font-medium md:block">{user.name}</span>
         <ChevronDown size={14} className="text-ink-600" />
       </button>
       {open && (
         <div role="menu" className="absolute right-0 top-11 z-40 w-64 overflow-hidden rounded-xl border border-line bg-surface shadow-float">
           <div className="border-b border-line px-4 py-3">
-            <div className="truncate font-semibold">{user.name}</div>
+            <div className="truncate font-medium">{user.name}</div>
             <div className="truncate text-sm text-ink-600">{user.email}</div>
             {workspace && <div className="mt-0.5 truncate text-sm text-ink-600">{workspace.name}</div>}
           </div>

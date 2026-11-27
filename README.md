@@ -17,6 +17,8 @@ npm run docs:shortcuts   # regenerate SHORTCUTS.md after editing src/lib/shortcu
 
 Keyboard reference: [SHORTCUTS.md](SHORTCUTS.md) (also press `?` in the app).
 
+UI reference: [DESIGN_STANDARDS.md](DESIGN_STANDARDS.md) defines the shared Soft Blue palette, typography, components, spacing, accessibility, and review expectations for all frontend work.
+
 ## Structure
 
 ```

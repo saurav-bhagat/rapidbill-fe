@@ -15,7 +15,7 @@ export function UpiQrModal({ open, amount, upiId, shop, onClose }: { open: boole
     <Modal open={open} onClose={onClose} title={t('upiQr.title')} width="420px" footer={<Button variant="primary" onClick={onClose} autoFocus>{t('upiQr.done')}</Button>}>
       {ok ? (
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="num text-3xl font-bold" data-testid="upi-qr-amount">{formatINR(amount)}</div>
+          <div className="num text-3xl font-medium" data-testid="upi-qr-amount">{formatINR(amount)}</div>
           <div className="rounded-lg bg-white p-2" dangerouslySetInnerHTML={{ __html: qrSvg(upiLink({ pa: upiId, pn: shop, am: amount }), 260) }} />
           <div className="text-base font-medium">{shop}</div>
           <div className="font-mono text-sm text-ink-600">{upiId.trim()}</div>

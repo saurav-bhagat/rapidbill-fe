@@ -22,11 +22,11 @@ const pos = (c: string) => `${c} · ${stateName(c)}`
 
 function Table({ head, rows, empty }: { head: string[]; rows: (string | number)[][]; empty: string }) {
   return (
-    <table className="w-full border-collapse text-base">
-      <thead><tr className="border-b border-line text-left text-sm text-ink-600">{head.map((h, i) => <th key={i} className={`py-1 pr-3 font-medium ${i >= head.length - 3 ? 'text-right' : ''}`}>{h}</th>)}</tr></thead>
+    <table className="w-full min-w-[720px] border-collapse text-base">
+      <thead><tr className="border-b border-line bg-sunken text-left text-sm text-ink-600">{head.map((h, i) => <th key={i} className={`px-3 py-2 font-medium ${i >= head.length - 3 ? 'text-right' : ''}`}>{h}</th>)}</tr></thead>
       <tbody>
         {rows.length === 0 && <tr><td colSpan={head.length} className="py-6 text-center text-ink-400">{empty}</td></tr>}
-        {rows.map((r, n) => <tr key={n} className="border-b border-line/60">{r.map((c, i) => <td key={i} className={`py-1 pr-3 ${i >= r.length - 3 ? 'num text-right' : ''}`}>{c}</td>)}</tr>)}
+        {rows.map((r, n) => <tr key={n} className="border-b border-line/60">{r.map((c, i) => <td key={i} className={`px-3 py-2 ${i >= r.length - 3 ? 'num text-right' : ''}`}>{c}</td>)}</tr>)}
       </tbody>
     </table>
   )
@@ -90,7 +90,7 @@ export function Reports() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="page-toolbar">
         <Select value={kind} onChange={(e) => setKind(e.target.value as Kind)} className="!w-48" aria-label={t('period.label')}>
           {(['month', 'lastMonth', 'quarter', 'lastQuarter', 'custom'] as const).map((k) => <option key={k} value={k}>{t(`period.${k}`)}</option>)}
         </Select>
@@ -112,15 +112,15 @@ export function Reports() {
           <p className="text-base text-ink-600">{t('intro', { from: formatDate(data.from), to: formatDate(data.to) })}</p>
           {data.notes.length > 0 && (
             <div className="rounded border border-warn/40 bg-warn-soft p-3">
-              <p className="mb-1 font-semibold text-warn">{t('check')}</p>
+              <p className="mb-1 font-medium text-warn">{t('check')}</p>
               <ul className="list-disc space-y-1 pl-5 text-base">{data.notes.map((n) => <li key={n.key}>{noteText(n)}</li>)}</ul>
             </div>
           )}
           <section className="rounded-xl border border-line/70 bg-surface p-4 shadow-card">
-            <h2 className="mb-3 text-base font-semibold">{t('summary.title')}</h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+            <h2 className="mb-3 text-base font-medium">{t('summary.title')}</h2>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
               {([['taxable', o.taxable], ['cgst', o.cgst], ['sgst', o.sgst], ['igst', o.igst], ['tax', o.cgst + o.sgst + o.igst], ['nil', data.gstr3b.nil]] as const).map(([k, v]) => (
-                <div key={k} className="rounded border border-line px-3 py-2"><div className="text-sm text-ink-600">{t(`summary.${k}`)}</div><div className="num text-lg font-semibold">{formatINR(v)}</div></div>
+                <div key={k} className="rounded border border-line bg-section px-3 py-3"><div className="text-sm text-ink-600">{t(`summary.${k}`)}</div><div className="num text-lg font-medium">{formatINR(v)}</div></div>
               ))}
             </div>
             <p className="mt-2 text-sm text-ink-600">
@@ -130,9 +130,11 @@ export function Reports() {
           </section>
 
           <section className="rounded-xl border border-line/70 bg-surface p-4 shadow-card">
-            <div className="mb-2 overflow-x-auto"><Segmented label={t('period.label')} value={tab} onChange={setTab} options={TABS.map((k) => ({ value: k, label: t(`tab.${k}`) }))} /></div>
+            <div className="mb-2 overflow-x-auto [&>div]:min-w-max"><Segmented label={t('period.label')} value={tab} onChange={setTab} options={TABS.map((k) => ({ value: k, label: t(`tab.${k}`) }))} /></div>
             <p className="mb-2 text-sm text-ink-600">{t(`tabHelp.${tab}`)}</p>
-            <Table head={rows.head} rows={rows.rows} empty={t('empty')} />
+            <div className="overflow-x-auto rounded-lg border border-line">
+              <Table head={rows.head} rows={rows.rows} empty={t('empty')} />
+            </div>
           </section>
         </>
       )}

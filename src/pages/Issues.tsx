@@ -159,7 +159,7 @@ export function Issues() {
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="page-toolbar">
         <SearchInput value={query} onChange={setQuery} inputRef={searchRef} placeholder={t('filters.search')} onEnterResults={() => document.querySelector<HTMLElement>('[role=grid]')?.focus()} />
         <Select value={preset} onChange={(e) => setPreset(e.target.value as Preset)} className="!w-36" aria-label={t('filters.dateRange')}>
           {PRESETS.map((p) => <option key={p} value={p}>{t(`presets.${p}`)}</option>)}
@@ -184,7 +184,7 @@ export function Issues() {
         <div className="ml-auto"><Button variant="primary" icon={<Plus size={14} />} hotkey="n" onClick={() => navigate('/issue/new')}>{t('actions.newIssue')}</Button></div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="summary-strip flex flex-wrap items-center gap-2">
         <Button icon={<Printer size={14} />} hotkey="enter" disabled={!has} onClick={() => view(selected)}>{t('actions.viewPrint')}</Button>
         <Button icon={<Pencil size={14} />} hotkey="e" disabled={!has || selected?.status === 'CANCELLED'} onClick={() => edit(selected)}>{t('actions.edit')}</Button>
         <Button icon={<Copy size={14} />} hotkey="mod+d" disabled={!has} onClick={() => duplicate(selected)}>{t('actions.duplicate')}</Button>
