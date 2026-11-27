@@ -62,7 +62,7 @@
     "noReward": "No reward",
     "more": "Show more",
     "emptyTitle": "No one has signed up with your code yet",
-    "emptyBody": "Share your code with a fellow shopkeeper. For example, if a friend buys Mobile + Web for {{price}}, you earn {{reward}}. When they renew next year, you earn again.",
+    "emptyBody": "Share your code with a fellow shopkeeper. For example, if a friend buys Desktop + Mobile for {{price}}, you earn {{reward}}. When they renew next year, you earn again.",
     "emptyFilter": "No one here yet."
   },
   "history": {

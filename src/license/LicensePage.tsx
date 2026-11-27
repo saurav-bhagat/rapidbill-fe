@@ -38,6 +38,7 @@ function LicenseContent() {
   const user = useAuth((s) => s.user)
   const online = useSync((s) => s.online)
   const { data: plans, error, reload } = useAsync(() => api<PlansView>('/billing/plans'))
+  const testPricing = plans?.testPricing
   const { data: history, reload: reloadHistory } = useAsync(() => api<{ data: PaymentRow[] }>('/billing/payments'))
   const [busy, setBusy] = useState<string>()
   const [test, setTest] = useState<Order>()
@@ -61,7 +62,9 @@ function LicenseContent() {
       reloadHistory(); reloadQuote(); reload()
       setPending(undefined)
       const end = useLicenseStore.getState().license?.endsAt
-      toast.success(asUpgrade ? t('upgrade.success') : t('pay.success', { date: end ? longDate(end) : '' }))
+      // TEMPORARY test pricing: say plainly that this was the test payment
+      if (testPricing) toast.success(t('pay.testSuccess', { amount: formatINR(testPricing.price), date: end ? longDate(end) : '' }))
+      else toast.success(asUpgrade ? t('upgrade.success') : t('pay.success', { date: end ? longDate(end) : '' }))
     } catch (e) {
       // The money may have moved even though we could not confirm it here: say so, and keep checking in the background.
       if (e instanceof AppError && e.key === 'paymentNotConfirmed') { toast.error(errorText(t, e)); return }
@@ -73,7 +76,7 @@ function LicenseContent() {
         if (useLicenseStore.getState().license?.status === 'ACTIVE') { reloadHistory(); setPending(undefined); return }
       }
     }
-  }, [reloadHistory, reloadQuote, reload, asUpgrade, t])
+  }, [reloadHistory, reloadQuote, reload, asUpgrade, t, testPricing])
 
   const buy = async (plan: PlanView) => {
     if (!user) return
@@ -129,6 +132,12 @@ function LicenseContent() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-10">
+      {testPricing && (
+        <div role="status" data-testid="test-pricing" className="rounded-xl border-2 border-warn bg-warn-soft px-5 py-4 text-warn">
+          <p className="font-semibold">{t('pay.testPricingTitle', { amount: formatINR(testPricing.price) })}</p>
+          <p className="mt-1 text-sm">{t('pay.testPricingBody')}</p>
+        </div>
+      )}
       <CurrentLicense plans={plans} />
       <ReferBanner credits={creditsAvailable} />
       {quote && <UpgradeCard quote={quote} busy={upgrading} disabled={!canPay || !!busy || upgrading} onUpgrade={() => void upgrade(quote)} />}

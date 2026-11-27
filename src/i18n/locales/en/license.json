@@ -15,14 +15,14 @@
     "collapsedTitle": "{{status}}: {{detail}}"
   },
   "planName": {
-    "Y1": "Mobile + Web · 1 Year",
-    "Y3": "Mobile + Web · 3 Years",
+    "Y1": "Desktop + Mobile · 1 Year",
+    "Y3": "Desktop + Mobile · 3 Years",
     "MOBILE_Y1": "Mobile · 1 Year",
     "MOBILE_Y3": "Mobile · 3 Years",
-    "DESKTOP_Y1": "Web · 1 Year",
-    "DESKTOP_Y3": "Web · 3 Years",
-    "BOTH_Y1": "Mobile + Web · 1 Year",
-    "BOTH_Y3": "Mobile + Web · 3 Years"
+    "DESKTOP_Y1": "Desktop · 1 Year",
+    "DESKTOP_Y3": "Desktop · 3 Years",
+    "BOTH_Y1": "Desktop + Mobile · 1 Year",
+    "BOTH_Y3": "Desktop + Mobile · 3 Years"
   },
   "banner": {
     "trialSoon_one": "Your free trial ends in {{count}} day. Choose a plan to keep billing without a break.",
@@ -79,8 +79,8 @@
       "Y3": "3 Years",
       "MOBILE_Y1": "Mobile · 1 Year",
       "MOBILE_Y3": "Mobile · 3 Years",
-      "DESKTOP_Y1": "Web · 1 Year",
-      "DESKTOP_Y3": "Web · 3 Years",
+      "DESKTOP_Y1": "Desktop · 1 Year",
+      "DESKTOP_Y3": "Desktop · 3 Years",
       "BOTH_Y1": "1 Year",
       "BOTH_Y3": "3 Years"
     },
@@ -94,7 +94,7 @@
     "extend": "Add {{plan}}",
     "pay": "Pay {{amount}} securely",
     "includes": "Everything included",
-    "bothDevices": "Mobile + Web",
+    "bothDevices": "Desktop + Mobile",
     "businessesUpTo": "Up to {{n}} businesses on one plan",
     "renewWithCredits": "Renew with credits",
     "buyWithCredits": "Pay {{amount}} now"
@@ -106,7 +106,7 @@
       "body": "Keep billing when the internet drops. Everything is saved on your device and sent when you are back online."
     },
     "devices": {
-      "title": "Mobile + Web, one plan",
+      "title": "Desktop + Mobile, one plan",
       "body": "Use it as a website and install it on your phone. One plan covers both."
     },
     "support": {
@@ -146,7 +146,7 @@
     "rows": {
       "duration": "How long it lasts",
       "offlineBilling": "Billing without internet",
-      "mobileAndWeb": "Mobile + Web",
+      "mobileAndWeb": "Desktop + Mobile",
       "gstInvoices": "GST invoices, challans and non-GST bills",
       "inventory": "Inventory and stock tracking",
       "partyLedger": "Party ledger and credit balances",
@@ -190,7 +190,10 @@
     "contact": "Call {{phone}}",
     "failed": "Payment was not completed. You have not been charged.",
     "scriptFailed": "Could not open the payment window. Check your connection and try again.",
-    "paidWithCredits": "Done. Your credits paid for the plan, and it is active until {{date}}."
+    "paidWithCredits": "Done. Your credits paid for the plan, and it is active until {{date}}.",
+    "testPricingTitle": "Test pricing is on for this account: every plan costs {{amount}}.",
+    "testPricingBody": "This is a real payment through Razorpay, only to check that payments work. Other customers see the normal prices.",
+    "testSuccess": "Test payment of {{amount}} received. Your plan is active until {{date}}."
   },
   "footer": {
     "help": "Questions before you buy? Call or WhatsApp",
@@ -200,7 +203,7 @@
     "loadFailed": "Could not load plans. Please try again."
   },
   "upgrade": {
-    "title": "Upgrade to Mobile + Web",
+    "title": "Upgrade to Desktop + Mobile",
     "body": "Use the mobile app and computers with one plan. You pay only the difference for the {{days}} days left, and your end date stays {{date}}.",
     "maths": "New plan for the days left {{price}} minus credit for your current plan {{credit}}.",
     "pay": "Upgrade now – pay {{amount}}",

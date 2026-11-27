@@ -101,7 +101,7 @@
   "platformNotInPlanApp": "Your plan covers computers only. You can look at everything in the app, but new bills and changes need a plan that includes the mobile app.",
   "upgradeNeedsPlan": "You are not on a paid plan yet. Choose a plan instead.",
   "upgradeNotNeeded": "Your plan already covers the app and computers.",
-  "upgradeTarget": "You can upgrade to the Mobile + Web plan of the same length.",
+  "upgradeTarget": "You can upgrade to the Desktop + Mobile plan of the same length.",
   "invoiceNotFound": "We could not find this invoice.",
   "openOnceOnline": "This business has not been opened on this device yet. Open it once while online.",
   "resetCodeInvalid": "That code is not right, or it has expired. Ask for a new one.",

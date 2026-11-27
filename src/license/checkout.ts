@@ -29,6 +29,8 @@ export interface PlansView {
   features: FeatureRow[]
   /** Referral credits the person can use now (paise). */
   credits?: { available: number }
+  /** TEMPORARY: this account sees and pays the test price (live payment test; remove with the backend's TEST_PRICING). */
+  testPricing?: { price: number }
 }
 export interface PaymentRow { id: string; businessId: string; planId: string; amount: number; creditApplied?: number; planPrice?: number; listPrice: number; paidAt: string; licenseFrom: string; licenseTo: string; reference: string; kind: 'PURCHASE' | 'UPGRADE'; hasInvoice: boolean; invoiceNumber: string | null }
 export interface UpgradeQuote { paymentId: string; fromPlanId: string; toPlanId: string; remainingDays: number; credit: number; price: number; amount: number; endsAt: string }
