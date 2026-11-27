@@ -26,6 +26,7 @@ Press `?` anywhere in the app for this list. **Ctrl** on Windows/Linux is **⌘ 
 | `Alt+P` | `⌥P` | Anywhere | Parties & Departments |
 | `Alt+G` | `⌥G` | Anywhere | GST reports for the accountant |
 | `Alt+E` | `⌥E` | Anywhere | Earn with RapidBill (referrals) |
+| `Alt+L` | `⌥L` | Anywhere | Plans & License |
 | `Alt+S` | `⌥S` | Anywhere | Settings |
 | `Alt+B` | `⌥B` | Anywhere | Open the business switcher |
 | `Alt+1` or `Alt+2` or `Alt+3` or `Alt+4` or `Alt+5` | `⌥1` or `⌥2` or `⌥3` or `⌥4` or `⌥5` | Anywhere | Open the 1st to 5th business |

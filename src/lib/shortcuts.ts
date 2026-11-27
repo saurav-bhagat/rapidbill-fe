@@ -25,6 +25,7 @@ export const SHORTCUTS: ShortcutDoc[] = [
   { id: 'navParties', combo: 'alt+p', scope: 'global', group: 'Navigate', description: 'Parties & Departments', phase: 1 },
   { id: 'navReports', combo: 'alt+g', scope: 'global', group: 'Navigate', description: 'GST reports for the accountant', phase: 10 },
   { id: 'navEarn', combo: 'alt+e', scope: 'global', group: 'Navigate', description: 'Earn with RapidBill (referrals)', phase: 9 },
+  { id: 'navLicense', combo: 'alt+l', scope: 'global', group: 'Navigate', description: 'Plans & License', phase: 8 },
   { id: 'navSettings', combo: 'alt+s', scope: 'global', group: 'Navigate', description: 'Settings', phase: 1 },
   { id: 'switchMenu', combo: 'alt+b', scope: 'global', group: 'Navigate', description: 'Open the business switcher', phase: 7 },
   { id: 'switchNth', combo: 'alt+1', alt: ['alt+2', 'alt+3', 'alt+4', 'alt+5'], scope: 'global', group: 'Navigate', description: 'Open the 1st to 5th business', phase: 7 },

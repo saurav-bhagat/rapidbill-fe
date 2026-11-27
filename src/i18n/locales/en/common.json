@@ -61,6 +61,10 @@
       "label": "Settings",
       "title": "Business & Print Settings"
     },
+    "license": {
+      "label": "Plans & License",
+      "title": "Plans & License"
+    },
     "earn": {
       "label": "Earn",
       "title": "Refer & Earn"
